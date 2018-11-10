@@ -1,0 +1,5 @@
+name: nlp-project
+dependencies:
+    - tensorflow
+    - keras
+    - flask
