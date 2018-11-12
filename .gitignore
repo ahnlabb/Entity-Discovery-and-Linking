@@ -1,5 +1,6 @@
 paper.pdf
 src/static/elm.js
+src/static/elm.min.js
 __pycache__
 elm-stuff
 
