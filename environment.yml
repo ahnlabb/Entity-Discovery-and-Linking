@@ -6,3 +6,4 @@ dependencies:
     - pip:
         - texsoup
         - docria
+        - requests

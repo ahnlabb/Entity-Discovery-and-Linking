@@ -1,4 +1,4 @@
-.PHONY: paper site serve
+.PHONY: paper site serve process
 
 site: src/static/elm.js src/server.py src/templates/index.html
 
@@ -16,3 +16,6 @@ paper: paper.pdf
 
 paper.pdf:
 	pdflatex paper.tex
+
+process: src/process.py
+	python3 src/process.py tac_docria/en/eng.2015.train.docria glove/glove.6B.50d.txt
