@@ -8,7 +8,7 @@ import numpy as np
 def get_args():
     parser = ArgumentParser()
     parser.add_argument('file', type=Path)
-    parser.add_argument('glove', type=Path)
+#    parser.add_argument('glove', type=Path)
     return parser.parse_args()
 
 
@@ -28,5 +28,13 @@ if __name__ == '__main__':
         except AttributeError:
             pass
     doc = DocumentIO.read(args.file)
-    for a in doc:
-        print(a.layers)
+    for d in doc:
+        if d.texts and 'main' in d.texts:
+            entity_name = d.props['title']
+            print(entity_name)
+            print('-' * len(entity_name)) # pretty printing
+            for block in str(d.texts['main']).split('\n'):
+                for sentence in block.split('.'):
+                    if entity_name in sentence:
+                        print(sentence.lstrip() + '.')
+            print()
