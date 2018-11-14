@@ -2,6 +2,8 @@
 from pathlib import Path
 from argparse import ArgumentParser
 from docria.storage import DocumentIO
+from keras.layers import Bidirectional, LSTM, Dense, Activation
+from keras.models import Sequential
 import requests
 import numpy as np
 
@@ -35,21 +37,39 @@ def langforia(text, lang, config='corenlp_3.8.0'):
     return request.text
 
 
+def model():
+    model = Sequential()
+    model.add(Bidirectional(LSTM(10, return_sequences=True), input_shape=(5, 10)))
+    model.add(Bidirectional(LSTM(10)))
+    model.add(Dense(5))
+    model.add(Activation('softmax'))
+    model.compile(loss='categorical_crossentropy', optimizer='rmsprop')
+    return model
+
+
 def process(doc, embed, lang):
+    train = []
     for a in doc:
         text = str(a.texts['main']).encode('utf-8')
         corenlp = iter(langforia(text, lang).split('\n'))
         head = next(corenlp).split('\t')[1:]
         sentences = [{}]
+        pos_set = set()
+        ne_set = set()
         for row in corenlp:
             if row:
                 cols = row.split('\t')
                 features = dict(zip(head, cols[1:]))
+                pos_set.add(features['pos'])
+                ne_set.add(features['ne'])
                 sentences[-1][cols[0]] = features
             else:
                 sentences.append({})
         if not sentences[-1]:
             sentences.pop(-1)
+        pos_map = dict(enumerate(pos_set))
+        ne_map = dict(enumerate(ne_set))
+        #pos_labels = [pos_map[features['pos']] for features in 
 
 
 if __name__ == '__main__':
