@@ -12,6 +12,7 @@ import Element.Font as Font
 import Json.Decode as Decode exposing (Decoder, int, string, dict, list)
 import Json.Decode.Pipeline exposing (required)
 import Json.Encode as Encode
+import Time
 
 
 main =
@@ -28,7 +29,10 @@ main =
 
 
 type alias Model =
-    { text : String }
+    { text : String
+    , result : String
+    , change : Change
+    }
 
 
 type alias Docforia =
@@ -59,9 +63,15 @@ type alias Properties =
     Dict.Dict String String
 
 
+type Change
+    = Waiting
+    | Changed
+    | Unchanged
+
+
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Model "", Cmd.none )
+    ( Model "" "" Waiting, Cmd.none )
 
 
 
@@ -71,6 +81,8 @@ init _ =
 type Msg
     = NewDocforia (Result Http.Error Docforia)
     | EditedText String
+    | NewEl (Result Http.Error String)
+    | Tick Time.Posix
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -80,7 +92,26 @@ update msg model =
             ( model, Cmd.none )
 
         EditedText newText ->
-            ( { model | text = newText }, Cmd.none )
+            ( { model | text = newText, change = Changed }, Cmd.none )
+
+        NewEl result ->
+            case result of
+                Ok newResult ->
+                    ( { model | result = newResult }, Cmd.none )
+
+                Err _ ->
+                    ( model, Cmd.none )
+
+        Tick _ ->
+            case model.change of
+                Waiting ->
+                    ( model, Cmd.none )
+
+                Changed ->
+                    ( { model | change = Unchanged }, Cmd.none )
+
+                Unchanged ->
+                    ( { model | change = Waiting }, getEl model.text )
 
 
 
@@ -88,8 +119,8 @@ update msg model =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
-    Sub.none
+subscriptions _ =
+    Time.every 500 Tick
 
 
 
@@ -104,13 +135,13 @@ view model =
 body : Model -> Element Msg
 body model =
     row [ width fill, spacing 30 ]
-        [ textInput
+        [ textInput model.text
         , resultView model
         ]
 
 
-textInput : Element Msg
-textInput =
+textInput : String -> Element Msg
+textInput text =
     el
         [ width fill
         , Border.rounded 3
@@ -122,23 +153,44 @@ textInput =
             , onChange = EditedText
             , placeholder = Nothing
             , spellcheck = False
-            , text = ""
+            , text = text
             }
         )
 
 
 resultView : Model -> Element msg
 resultView model =
-    el [ width fill ] none
+    el [ width fill ] (text model.result)
 
 
 
 -- HTTP
 
 
+localApi : String
+localApi =
+    Url.absolute [ "el" ] []
+
+
+getEl : String -> Cmd Msg
+getEl text =
+    Http.send NewEl (Http.post localApi (Http.jsonBody (Encode.string text)) elDecoder)
+
+
+elDecoder =
+    string
+
+
 getCoreNLP : String -> Cmd Msg
 getCoreNLP lang =
-    Http.send NewDocforia (Http.post (vildeApi lang "corenlp_3.8.0") (Http.jsonBody (Encode.string "This is a test.")) docforiaDecoder)
+    let
+        url =
+            vildeApi lang "corenlp_3.8.0"
+
+        postData =
+            Http.jsonBody (Encode.string "This is a test.")
+    in
+        Http.send NewDocforia (Http.post url postData docforiaDecoder)
 
 
 vildeApi : String -> String -> String
