@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 from pathlib import Path
 from argparse import ArgumentParser
-from json import loads
 from docria.storage import DocumentIO
 import requests
 import numpy as np
@@ -17,7 +16,7 @@ def get_args():
 def load_glove(path):
     with path.open('r') as f:
         rows = map(lambda x: x.split(), f)
-        return {row[0]: np.array(float(v) for v in row[1:]) for row in rows}
+        return {row[0]: np.asarray(row[1:], dtype='float32') for row in rows}
 
 
 def take_twos(iterable):
@@ -36,16 +35,21 @@ def langforia(text, lang, config='corenlp_3.8.0'):
     return request.text
 
 
-def process(doc, lang):
+def process(doc, embed, lang):
     for a in doc:
-        corenlp = langforia(str(a.texts['main']).encode('utf-8'), lang)
-        print(corenlp)
-        # for layer in corenlp['nodes']:
-            # print(layer['layer'])
-            # print(layer)
-            # continue
-            # for start, end in take_twos(layer['nodes'][0]['ranges']):
-                # print(corenlp['text'][start:end])
+        text = str(a.texts['main']).encode('utf-8')
+        corenlp = iter(langforia(text, lang).split('\n'))
+        head = next(corenlp).split('\t')[1:]
+        sentences = [{}]
+        for row in corenlp:
+            if row:
+                cols = row.split('\t')
+                features = dict(zip(head, cols[1:]))
+                sentences[-1][cols[0]] = features
+            else:
+                sentences.append({})
+        if not sentences[-1]:
+            sentences.pop(-1)
 
 
 if __name__ == '__main__':
@@ -58,4 +62,5 @@ if __name__ == '__main__':
         except AttributeError:
             pass
     with DocumentIO.read(args.file) as doc:
-        process(doc, 'en')
+        embed = load_glove(args.glove)
+        process(doc, embed, 'en')
