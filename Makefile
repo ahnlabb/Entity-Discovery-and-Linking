@@ -18,4 +18,4 @@ paper.pdf:
 	pdflatex paper.tex
 
 process: src/process.py
-	python3 src/process.py tac_docria/en/eng.2015.train.docria glove/glove.6B.50d.txt
+	python3 src/process.py tac_docria/en/eng.2015.train.docria glove/glove.6B.50d.pickle
