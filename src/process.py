@@ -135,7 +135,7 @@ if __name__ == '__main__':
             print(len(doc))
             return core_nlp_features(doc, 'en')
 
-    core_nlp = read_and_extract(args.file)
+    core_nlp = pickled(args.file, read_and_extract)
     features = extract_features(embed, core_nlp)
 
-    print(features[0][0])
+    print(features[0][1])
