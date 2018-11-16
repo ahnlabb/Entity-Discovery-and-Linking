@@ -48,11 +48,15 @@ def langforia(text, lang, config='corenlp_3.8.0'):
 
 def model():
     model = Sequential()
-    model.add(Bidirectional(LSTM(10, return_sequences=True), input_shape=(5, 10)))
-    model.add(Bidirectional(LSTM(10)))
-    model.add(Dense(5))
+    # input vectors of dim 108 -> output vectors of dim 25
+    model.add(Embedding(108, 25, input_length=10)
+    # each sample is 10 vectors of 25 dimensions
+    model.add(Bidirectional(LSTM(25, return_sequences=True), input_shape=(10, 25)))
+    # arbitrarily (?) pick 25 hidden units
+    model.add(Bidirectional(LSTM(25)))
+    model.add(Dense(6))
     model.add(Activation('softmax'))
-    model.compile(loss='categorical_crossentropy', optimizer='rmsprop')
+    model.compile(loss='categorical_crossentropy', optimizer='nadam', metrics=['accuracy'])
     return model
 
 
@@ -104,6 +108,7 @@ def extract_features(embed, core_nlp):
 
     for key, lbls in lbl_sets.items():
         labels[key] = [to_categorical(vals, num_classes=len(lbls)) for vals in labels[key]]
+
     return [[np.concatenate(word) for word in zip(*sentence)] for sentence in zip(*labels.values())]
 
 
@@ -138,4 +143,14 @@ if __name__ == '__main__':
     core_nlp = pickled(args.file, read_and_extract)
     features = extract_features(embed, core_nlp)
 
-    print(features[0][1])
+    # remove severe outliers to reduce masking
+    # (is maybe a bad idea)
+    x_train = list(filter(lambda x: len(x) < 50, features))
+    # placeholders
+    y_train = []
+    x_test = []
+    y_test = []
+
+    model = model()
+    model.fit(x_train, y_train, batch_size=8, epochs=1,
+            validation_data=[x_test, y_test])
