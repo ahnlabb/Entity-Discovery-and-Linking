@@ -7,3 +7,4 @@ dependencies:
         - texsoup
         - docria
         - requests
+        - regex

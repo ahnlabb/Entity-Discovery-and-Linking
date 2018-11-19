@@ -6,12 +6,16 @@ from itertools import count
 from pickle import load, dump
 
 from docria.storage import DocumentIO
-from keras.layers import Bidirectional, LSTM, Dense, Activation
-from keras.models import Sequential
-from keras.utils import to_categorical
+
+from utils import pickled
 import requests
 import numpy as np
 
+
+def import_keras():
+    from keras.layers import Bidirectional, LSTM, Dense, Activation
+    from keras.models import Sequential
+    from keras.utils import to_categorical
 
 def get_args():
     parser = ArgumentParser()
@@ -49,12 +53,12 @@ def langforia(text, lang, config='corenlp_3.8.0'):
 def model():
     model = Sequential()
     # input vectors of dim 108 -> output vectors of dim 25
-    model.add(Embedding(108, 25, input_length=10)
+    model.add(Embedding(108, 25, input_length=10))
     # each sample is 10 vectors of 25 dimensions
     model.add(Bidirectional(LSTM(25, return_sequences=True), input_shape=(10, 25)))
     # arbitrarily (?) pick 25 hidden units
     model.add(Bidirectional(LSTM(25)))
-    model.add(Dense(6))
+    model.add(Dense(16))
     model.add(Activation('softmax'))
     model.compile(loss='categorical_crossentropy', optimizer='nadam', metrics=['accuracy'])
     return model
@@ -112,15 +116,6 @@ def extract_features(embed, core_nlp):
     return [[np.concatenate(word) for word in zip(*sentence)] for sentence in zip(*labels.values())]
 
 
-def pickled(path, fun):
-    if path.suffix == '.pickle':
-        with path.open('r+b') as f:
-            return load(f)
-    else:
-        result = fun(path)
-        with path.with_suffix('.pickle').open('w+b') as f:
-            dump(result, f)
-        return result
 
 
 if __name__ == '__main__':
@@ -139,8 +134,10 @@ if __name__ == '__main__':
             doc = list(doc)
             print(len(doc))
             return core_nlp_features(doc, 'en')
-
+    
     core_nlp = pickled(args.file, read_and_extract)
+
+    import_keras()
     features = extract_features(embed, core_nlp)
 
     # remove severe outliers to reduce masking
