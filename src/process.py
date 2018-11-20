@@ -34,12 +34,6 @@ def load_glove(path):
         return embed
 
 
-def take_twos(iterable):
-    itr = iter(iterable)
-    while True:
-        yield next(itr), next(itr)
-
-
 def langforia_url(lang, config, format='json'):
     return f'http://vilde.cs.lth.se:9000/{lang}/{config}/api/{format}'
 
