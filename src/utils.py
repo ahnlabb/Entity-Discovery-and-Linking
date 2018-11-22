@@ -8,7 +8,7 @@ def langforia_url(lang, config, format='json'):
 def langforia(text, lang, config='corenlp_3.8.0', format='tsv'):
     url = langforia_url(lang, config, format=format)
     headers = {"Content-Type": "application/text; charset=UTF-8"}
-    request = requests.post(url, data=text.encode('utf-8', headers=headers))
+    request = requests.post(url, data=text.encode('utf-8'), headers=headers)
     if format == 'tsv':
         return request.text
     return request.json()
