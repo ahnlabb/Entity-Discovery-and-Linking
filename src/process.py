@@ -12,11 +12,25 @@ import requests
 import numpy as np
 
 
-
-def import_keras():
-    from keras.layers import Bidirectional, LSTM, Dense, Activation
-    from keras.models import Sequential
-    from keras.utils import to_categorical
+def gold_std_idx(doc_reader):
+    labels, types = set(), set()
+    index = []
+    for doc in doc_reader:
+        doc_index = {}
+        for node in doc.layers['tac/entity/gold']:
+            labels.add(node.fld.label)
+            types.add(node.fld.type)
+            entity = node.fld.text
+            # ignore xml-only entities (for now)
+            if entity:
+                doc_index[(entity.start, entity.stop)] = (node.fld.type, node.fld.label)
+        index.append(doc_index)
+    categories = {pair: index for index, pair in enumerate(product(types, labels))}
+    # map category to one-hot
+    for doc_index in index:
+        for key in doc_index.keys():
+            doc_index[key] = to_categorical(categories[doc_index[key]], num_classes=len(categories.values()))
+    return index, categories
 
 def get_args():
     parser = ArgumentParser()
@@ -51,6 +65,7 @@ def model():
 
 def core_nlp_features(doc, lang):
     train = []
+    gold = []
     lbl_sets = defaultdict(set)
 
     def add(features, name):
@@ -81,6 +96,8 @@ def core_nlp_features(doc, lang):
 
 def extract_features(embed, core_nlp):
     train, lbl_sets = core_nlp
+    print(len(lbl_sets['pos']), lbl_sets['pos'])
+    print(len(lbl_sets['ne']), lbl_sets['ne'])
 
     labels = {}
     mappings = {key: dict(zip(lbls, count(0))) for key, lbls in lbl_sets.items()}
@@ -118,12 +135,15 @@ if __name__ == '__main__':
     def read_and_extract(path):
         with DocumentIO.read(path) as doc:
             doc = list(doc)
-            print(len(doc))
+            print('Documents:', len(doc))
             return core_nlp_features(doc, 'en')
     
     core_nlp = pickled(args.file, read_and_extract)
+    
+    from keras.layers import Bidirectional, LSTM, Dense, Activation, Embedding
+    from keras.models import Sequential
+    from keras.utils import to_categorical
 
-    import_keras()
     features = extract_features(embed, core_nlp)
 
     # remove severe outliers to reduce masking
