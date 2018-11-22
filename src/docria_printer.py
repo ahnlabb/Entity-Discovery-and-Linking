@@ -1,26 +1,18 @@
 from docria.storage import DocumentIO
 from argparse import ArgumentParser
 from pathlib import Path
-from utils import take_twos
-
-import xml.etree.ElementTree as et
+from utils import take_twos, langforia
 import regex as re
-import requests
+import os
 import json
 
 
-def langforia_url(lang, config, format='json'):
-    return f'http://vilde.cs.lth.se:9000/{lang}/{config}/api/{format}'
-
-def langforia(text, lang, config='corenlp_3.8.0'):
-    url = langforia_url(lang, config, format='json')
-    request = requests.post(url, data=text)
-    return request.json()
 
 def get_args():
     parser = ArgumentParser()
     parser.add_argument('--docria', type=Path)
     parser.add_argument('--json', type=Path)
+    parser.add_argument('--tsv', action='store_true')
     return parser.parse_args()
 
 def remove_number(string):
@@ -46,8 +38,15 @@ def give_context(doc, gold_node):
             context = text[gold_span[0]-10:gold_span[1]+10]
             return context
 
+def gold(doc):
+    for node in doc.layers['tac/entity/gold']:
+        entity = node.fld.text
+        if entity:
+            print(entity.start, entity.stop, entity, node.fld.label, node.fld.type)
+    print(doc.texts['main']) 
+
 def index_layer(nodes):
-    layers = ['NamedEntity', 'Token']
+    layers = ['NamedEntity', 'Token', 'Sentence']
     index = {}
     for d in nodes:
         layer = d['layer'].split('.')[-1]
@@ -64,13 +63,23 @@ def index_layer(nodes):
 if __name__ == '__main__':
     args = get_args()
     if args.docria:
+        format = 'tsv' if args.tsv else 'json'
         with DocumentIO.read(args.docria) as doc_reader:
-            for doc in list(doc_reader)[:1]:
-                docforia = langforia(str(doc.text['main']).encode('utf-8'), 'en')
-                print(json.dumps(docforia['DM10'], indent=2, sort_keys=True))
+            output = 'out'
+            if not os.path.exists(output):
+                os.makedirs(output)
+            for i, doc in enumerate(doc_reader):
+                docforia = langforia(str(doc.text['main']),'en',format=format)
+                fname = str(output / Path(args.docria.stem)) + '.%d.%s' % (i,format)
+                with open(fname, 'w') as out:
+                    if format == 'tsv':
+                        out.write(docforia)
+                    else:
+                        json.dump(docforia, out, indent=2, sort_keys=True)
     if args.json:
         with open(args.json) as json_dump:
             docforia = json.load(json_dump)
-            index = index_layer(docforia['nodes'])
-            for i, v in index['Token'].items():
-                print(i, v)
+            index = index_layer(docforia['DM10']['nodes'])
+            for name, layer in index.items():
+                for i, v in enumerate(layer.items()):
+                    print(name, i, v)

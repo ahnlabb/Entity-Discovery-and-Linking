@@ -7,9 +7,10 @@ from pickle import load, dump
 
 from docria.storage import DocumentIO
 
-from utils import pickled
+from utils import pickled, langforia
 import requests
 import numpy as np
+
 
 
 def import_keras():
@@ -32,16 +33,6 @@ def load_glove(path):
             embed[row[0]] = np.asarray(row[1:], dtype='float32')
 
         return embed
-
-
-def langforia_url(lang, config, format='json'):
-    return f'http://vilde.cs.lth.se:9000/{lang}/{config}/api/{format}'
-
-
-def langforia(text, lang, config='corenlp_3.8.0'):
-    url = langforia_url(lang, config, format='tsv')
-    request = requests.post(url, data=text)
-    return request.text
 
 
 def model():
@@ -68,7 +59,8 @@ def core_nlp_features(doc, lang):
     for i, a in enumerate(doc):
         if i % 10 == 0:
             print(i)
-        text = str(a.texts['main']).encode('utf-8')
+        text = str(a.texts['main'])
+        gold_layer = a.layers['tac/entity/gold']
         corenlp = iter(langforia(text, lang).split('\n'))
         head = next(corenlp).split('\t')[1:]
         sentences = [[]]
