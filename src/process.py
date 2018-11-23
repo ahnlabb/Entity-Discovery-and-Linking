@@ -2,34 +2,69 @@
 from pathlib import Path
 from argparse import ArgumentParser
 from collections import defaultdict
-from itertools import count
+from itertools import count, product
 from pickle import load, dump
-
 from docria.storage import DocumentIO
-
 from utils import pickled, langforia
 import requests
 import numpy as np
 
 
+#               if span[0] not in keys and span[1] not in keys:
+#                   keys[span[0]] = span
+#                   keys[span[1]] = span
+#               elif span[0] in keys and span_gt(span, keys[span[0]]):
+#                   del doc_index[keys[span[0]]]
+#                   del keys[keys[span[0]][1]]
+#                   del keys[span[0]]
+#               elif span[1] in keys and span_gt(span, keys[span[1]]):
+#                   del doc_index[keys[span[1]]]
+#                   del keys[keys[span[1]][0]]
+#                   del keys[span[1]]
+#               else:
+#                   continue
+
 def gold_std_idx(doc_reader):
     labels, types = set(), set()
     index = []
-    for doc in doc_reader:
+
+
+    span_gt = lambda s,t: (s[1] - s[0]) > (t[1] - t[0])
+    for doc in doc_reader[:1]:
         doc_index = {}
+        longest = None
         for node in doc.layers['tac/entity/gold']:
             labels.add(node.fld.label)
             types.add(node.fld.type)
             entity = node.fld.text
             # ignore xml-only entities (for now)
             if entity:
-                doc_index[(entity.start, entity.stop)] = (node.fld.type, node.fld.label)
+                entity_name = str(entity).replace('\n', ' ')
+                span = (entity.start, entity.stop)
+                if longest:
+                    if span[0] == longest[0] and span[1] > longest[1]:
+                        del doc_index[longest]
+                        longest = span
+                    if span[0] > longest[0]:
+                        if span[1] <= longest[1]:
+                            continue
+                        else:
+                            longest = span
+                else:
+                    longest = span
+                doc_index[span] = (node.fld.type, node.fld.label, entity_name)
         index.append(doc_index)
     categories = {pair: index for index, pair in enumerate(product(types, labels))}
+
     # map category to one-hot
-    for doc_index in index:
-        for key in doc_index.keys():
-            doc_index[key] = to_categorical(categories[doc_index[key]], num_classes=len(categories.values()))
+    def one_hot():
+        n_cls = len(categories.values())
+        for doc_index in index:
+            for key in doc_index.keys():
+                doc_index[key] = (doc_index[key][-1],
+                    to_categorical(categories[doc_index[key][:2]], num_classes=n_cls))
+    
+    one_hot()
     return index, categories
 
 def get_args():
@@ -65,7 +100,6 @@ def model():
 
 def core_nlp_features(doc, lang):
     train = []
-    gold = []
     lbl_sets = defaultdict(set)
 
     def add(features, name):
@@ -75,7 +109,6 @@ def core_nlp_features(doc, lang):
         if i % 10 == 0:
             print(i)
         text = str(a.texts['main'])
-        gold_layer = a.layers['tac/entity/gold']
         corenlp = iter(langforia(text, lang).split('\n'))
         head = next(corenlp).split('\t')[1:]
         sentences = [[]]
@@ -130,14 +163,23 @@ if __name__ == '__main__':
             raise FileNotFoundError(arg)
         except AttributeError:
             pass
-    embed = pickled(args.glove, load_glove)
+    #embed = pickled(args.glove, load_glove)
 
     def read_and_extract(path):
         with DocumentIO.read(path) as doc:
             doc = list(doc)
             print('Documents:', len(doc))
-            return core_nlp_features(doc, 'en')
+            return gold_std_idx(doc)
+            #return core_nlp_features(doc, 'en')
     
+    from keras.utils import to_categorical
+    index, cats = read_and_extract(args.file)
+    def print_idx():
+        for doc in index[:1]:
+            for span, entity in doc.items():
+                print(span, entity[0])
+    print_idx()
+    quit()
     core_nlp = pickled(args.file, read_and_extract)
     
     from keras.layers import Bidirectional, LSTM, Dense, Activation, Embedding
