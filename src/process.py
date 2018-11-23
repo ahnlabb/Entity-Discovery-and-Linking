@@ -107,8 +107,7 @@ if __name__ == '__main__':
     embed = pickled(args.glove, load_glove)
 
     def read_and_extract(path):
-        with DocumentIO.read(path) as doc:
-            doc = list(doc)
+        with list(DocumentIO.read(path)) as doc:
             print('Documents:', len(doc))
             return core_nlp_features(doc, 'en')
     
