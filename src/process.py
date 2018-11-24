@@ -2,21 +2,13 @@
 from pathlib import Path
 from argparse import ArgumentParser
 from collections import defaultdict
-from itertools import count
+from itertools import count, product
 from pickle import load, dump
-
 from docria.storage import DocumentIO
-
 from utils import pickled, langforia
 import requests
 import numpy as np
 
-
-
-def import_keras():
-    from keras.layers import Bidirectional, LSTM, Dense, Activation
-    from keras.models import Sequential
-    from keras.utils import to_categorical
 
 def get_args():
     parser = ArgumentParser()
@@ -31,7 +23,6 @@ def load_glove(path):
         embed = {}
         for row in rows:
             embed[row[0]] = np.asarray(row[1:], dtype='float32')
-
         return embed
 
 
@@ -60,7 +51,6 @@ def core_nlp_features(doc, lang):
         if i % 10 == 0:
             print(i)
         text = str(a.texts['main'])
-        gold_layer = a.layers['tac/entity/gold']
         corenlp = iter(langforia(text, lang).split('\n'))
         head = next(corenlp).split('\t')[1:]
         sentences = [[]]
@@ -81,6 +71,8 @@ def core_nlp_features(doc, lang):
 
 def extract_features(embed, core_nlp):
     train, lbl_sets = core_nlp
+    print(len(lbl_sets['pos']), lbl_sets['pos'])
+    print(len(lbl_sets['ne']), lbl_sets['ne'])
 
     labels = {}
     mappings = {key: dict(zip(lbls, count(0))) for key, lbls in lbl_sets.items()}
@@ -102,8 +94,6 @@ def extract_features(embed, core_nlp):
     return [[np.concatenate(word) for word in zip(*sentence)] for sentence in zip(*labels.values())]
 
 
-
-
 if __name__ == '__main__':
     args = get_args()
     for arg in vars(args).values():
@@ -113,23 +103,24 @@ if __name__ == '__main__':
             raise FileNotFoundError(arg)
         except AttributeError:
             pass
+
     embed = pickled(args.glove, load_glove)
 
     def read_and_extract(path):
-        with DocumentIO.read(path) as doc:
-            doc = list(doc)
-            print(len(doc))
+        with list(DocumentIO.read(path)) as doc:
+            print('Documents:', len(doc))
             return core_nlp_features(doc, 'en')
     
     core_nlp = pickled(args.file, read_and_extract)
+    
+    from keras.utils import to_categorical
+    from keras.layers import Bidirectional, LSTM, Dense, Activation, Embedding
+    from keras.models import Sequential
 
-    import_keras()
     features = extract_features(embed, core_nlp)
 
-    # remove severe outliers to reduce masking
-    # (is maybe a bad idea)
-    x_train = list(filter(lambda x: len(x) < 50, features))
     # placeholders
+    x_train = []
     y_train = []
     x_test = []
     y_test = []

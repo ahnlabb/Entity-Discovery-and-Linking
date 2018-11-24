@@ -2,6 +2,14 @@ from pathlib import Path
 from pickle import load, dump
 import requests
 
+
+def trans_mut_map(ab, bc, f=lambda x: x):
+    for k in ab:
+        ab[k] = f(bc[ab[k]])
+
+def trans_map(ab, bc, f=lambda x: x):
+    return {k: f(bc[v]) for k,v in ab.items()}
+
 def langforia_url(lang, config, format='json'):
     return f'http://vilde.cs.lth.se:9000/{lang}/{config}/api/{format}'
 
