@@ -39,8 +39,8 @@ type Model
 
 
 type alias Page =
-    { docs : List Document
-    , selection : Maybe Int
+    { docs : Dict.Dict String Document
+    , selection : Maybe String
     }
 
 
@@ -59,7 +59,7 @@ type alias Entity =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Loading, Cmd.none )
+    ( Loading, getDocuments )
 
 
 
@@ -67,7 +67,7 @@ init _ =
 
 
 type Msg
-    = NewDocuments (Result Http.Error (List Document))
+    = NewDocuments (Result Http.Error (Dict.Dict String Document))
     | NewSelection String
 
 
@@ -83,7 +83,7 @@ update msg model =
                     ( Error e, Cmd.none )
 
         ( NewSelection string, Done page ) ->
-            ( Done { page | selection = String.toInt string }, Cmd.none )
+            ( Done { page | selection = Just string }, Cmd.none )
 
         ( _, _ ) ->
             ( model, Cmd.none )
@@ -110,39 +110,40 @@ view model =
 
         Loading ->
             Element.layout []
-                (none)
+                (el [] (text "loading"))
 
         Error e ->
             Element.layout []
-                (none)
+                (el [] (text (errorString e)))
 
 
 body : Page -> Element Msg
 body { docs, selection } =
     column [ width fill, spacing 30 ]
-        [ selectDoc (List.length docs)
+        [ selectDoc docs
         , resultView docs selection
         ]
 
 
-selectDoc : Int -> Element Msg
-selectDoc numberOfDocs =
+selectDoc : Dict.Dict String Document -> Element Msg
+selectDoc dict =
     el
         [ width fill
         , Border.rounded 3
         , padding 30
         ]
-        (Element.html (select [ onInput NewSelection ] (List.range 1 numberOfDocs |> List.map intToOption)))
+        (Element.html (select [ onInput NewSelection ] (Dict.keys dict |> List.map strToOption)))
 
 
-intToOption int =
-    option [] [ Html.text (String.fromInt int) ]
+strToOption str =
+    option [] [ Html.text str ]
 
 
+resultView : Dict.Dict String Document -> Maybe String -> Element Msg
 resultView docs selection =
     let
-        get list index =
-            List.drop (index - 1) list |> List.head
+        get dict key =
+            Dict.get key dict
     in
         case (selection |> Maybe.andThen (get docs)) of
             Just doc ->
@@ -263,9 +264,9 @@ resultView docs selection =
                     el [ width fill ]
                         (Element.html
                             (Svg.svg
-                                [ SAttr.width "600"
+                                [ SAttr.width "1200"
                                 , SAttr.height "600"
-                                , SAttr.viewBox "0 0 600 600"
+                                , SAttr.viewBox "0 0 1200 600"
                                 ]
                                 ([ svgText fontSz (toFloat margin) (toFloat lineSeparation) doc.text ]
                                     ++ (List.map markEntity doc.entities)
@@ -279,22 +280,19 @@ resultView docs selection =
 
 errorString error =
     case error of
-        Nothing ->
-            "----"
-
-        Just (Http.BadBody str) ->
+        Http.BadBody str ->
             "BadBody: " ++ str
 
-        Just (Http.BadStatus code) ->
+        Http.BadStatus code ->
             "BadStatus: " ++ (String.fromInt code)
 
-        Just (Http.BadUrl str) ->
+        Http.BadUrl str ->
             "BadUrl: " ++ str
 
-        Just Http.NetworkError ->
+        Http.NetworkError ->
             "NetworkError"
 
-        Just Http.Timeout ->
+        Http.Timeout ->
             "Timeout"
 
 
@@ -307,11 +305,11 @@ localApi =
     Url.absolute [ "gold" ] []
 
 
-getDocuments : String -> Cmd Msg
-getDocuments text =
+getDocuments : Cmd Msg
+getDocuments =
     Http.get
         { url = localApi
-        , expect = Http.expectJson NewDocuments (list documentDecoder)
+        , expect = Http.expectJson NewDocuments (dict documentDecoder)
         }
 
 

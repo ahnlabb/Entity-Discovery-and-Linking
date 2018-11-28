@@ -16,10 +16,16 @@ def entity_linking():
 def index():
     return render_template('index.html')
 
+
+@app.route('/debug')
+def debug():
+    return render_template('debug.html')
+
+
 @app.route('/gold')
 def doc_index():
-    path = Path('../corpus/tac/en/eng.2015.eval.docria')
+    path = Path('./corpus/tac/en/eng.2015.eval.docria')
     if path.exists():
         gold_std, _ = gold_std_idx(path)
         index = get_doc_index(path, gold_std)
-        return index
+        return jsonify(index)
