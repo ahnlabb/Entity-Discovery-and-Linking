@@ -10,6 +10,7 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Html exposing (select, option)
+import Html.Attributes as HAttr exposing (style)
 import Html.Events exposing (onInput)
 import Json.Decode as Decode exposing (Decoder, int, string, dict, list)
 import Json.Decode.Pipeline exposing (required, custom)
@@ -258,21 +259,81 @@ resultView docs selection =
                     margin =
                         50
 
+                    colorFromClass class =
+                        case class of
+                            "NAM-PER" ->
+                                "#78CAD2"
+
+                            "NAM-FAC" ->
+                                "#63595C"
+
+                            "NAM-LOC" ->
+                                "#646881"
+
+                            "NAM-ORG" ->
+                                "#62BEC1"
+
+                            "NAM-TTL" ->
+                                "#5AD2F4"
+
+                            "NAM-GPE" ->
+                                "#72DDF7"
+
+                            "NOM-PER" ->
+                                "#F865B0"
+
+                            "NOM-FAC" ->
+                                "#E637BF"
+
+                            "NOM-LOC" ->
+                                "#FF928B"
+
+                            "NOM-ORG" ->
+                                "#FEC3A6"
+
+                            "NOM-TTL" ->
+                                "#FF3C38"
+
+                            "NOM-GPE" ->
+                                "#BB8588"
+
+                            _ ->
+                                "red"
+
+                    annotate : Int -> String -> List Entity -> List (Html.Html Msg)
+                    annotate origin string ent =
+                        let
+                            annotation attrs marks begin end =
+                                Html.span ([] ++ attrs)
+                                    ([ String.slice begin end string |> Html.text ] ++ marks)
+
+                            plain begin end =
+                                Html.text (String.slice begin end string)
+
+                            marked class begin end =
+                                Html.div [ colorFromClass class |> style "background-color", style "display" "inline-block" ] [ plain begin end ]
+                        in
+                            case ent of
+                                { start, stop, class } :: tail ->
+                                    (plain origin start) :: (marked class start stop) :: (annotate stop string tail)
+
+                                [] ->
+                                    []
+
                     markEntity { start, stop, class } =
                         mark class start stop
-                in
-                    el [ width fill ]
-                        (Element.html
-                            (Svg.svg
-                                [ SAttr.width "1200"
-                                , SAttr.height "600"
-                                , SAttr.viewBox "0 0 1200 600"
-                                ]
-                                ([ svgText fontSz (toFloat margin) (toFloat lineSeparation) doc.text ]
-                                    ++ (List.map markEntity doc.entities)
-                                )
+
+                    label =
+                        List.map
+                            (\str ->
+                                el []
+                                    (Html.span [ colorFromClass str |> style "background-color" ] [ Html.text str ] |> Element.html)
                             )
-                        )
+                            [ "NAM-PER", "NAM-FAC", "NAM-LOC", "NAM-ORG", "NAM-TTL", "NAM-GPE", "NOM-PER", "NOM-FAC", "NOM-LOC", "NOM-ORG", "NOM-TTL", "NOM-GPE" ]
+                in
+                    column [ width fill ]
+                        [ annotate 0 doc.text doc.entities |> Html.div [] |> Element.html
+                        ]
 
             Nothing ->
                 none
