@@ -6,6 +6,7 @@ from itertools import count, product
 from pickle import load, dump
 from docria.storage import DocumentIO
 from utils import pickled, langforia
+from gold_std import gold_std_idx, one_hot
 import requests
 import numpy as np
 
@@ -17,6 +18,7 @@ def get_args():
     return parser.parse_args()
 
 
+@pickled
 def load_glove(path):
     with path.open('r') as f:
         rows = map(lambda x: x.split(), f)
@@ -40,37 +42,51 @@ def model():
     return model
 
 
-def core_nlp_features(doc, lang):
-    train = []
+def docria_extract(docs, lang='en'):
+    train, gold = [], []
     lbl_sets = defaultdict(set)
+
+    gold_std, cats = gold_std_idx(docs)
+    one_hot(gold_std, cats)
+    for i, doc in enumerate(docs):
+        if i % 10 == 0:
+            print(i)
+        spans = core_nlp_features(doc, train, lbl_sets, lang=lang)
+        sentence_gold = [gold_std(span) for span in spans]
+        gold.append(sentence_gold)
+
+    return train, lbl_sets, gold
+
+def core_nlp_features(doc, train, lbl_sets, lang='en'):
+    spans = []
 
     def add(features, name):
         lbl_sets[name].add(features[name])
 
-    for i, a in enumerate(doc):
-        if i % 10 == 0:
-            print(i)
-        text = str(a.texts['main'])
-        corenlp = iter(langforia(text, lang).split('\n'))
-        head = next(corenlp).split('\t')[1:]
-        sentences = [[]]
-        for row in corenlp:
-            if row:
-                cols = row.split('\t')
-                features = dict(zip(head, cols[1:]))
-                add(features, 'pos')
-                add(features, 'ne')
-                sentences[-1].append(features)
-            else:
-                sentences.append([])
-        if not sentences[-1]:
-            sentences.pop(-1)
-        train.extend(sentences)
-    return train, lbl_sets
+    text = str(doc.texts['main'])
+    corenlp = iter(langforia(text, lang).split('\n'))
+    head = next(corenlp).split('\t')[1:]
+    print(head)
+    sentences = [[]]
+    for row in corenlp:
+        sentence_span = []
+        if row:
+            cols = row.split('\t')
+            features = dict(zip(head, cols[1:]))
+            add(features, 'pos')
+            add(features, 'ne')
+            sentences[-1].append(features)
+            sentence_span.append((features['start'], features['end']))
+        else:
+            sentences.append([])
+        spans.append(sentence_span)
+    if not sentences[-1]:
+        sentences.pop(-1)
+    train.extend(sentences)
+    return spans
 
 
-def extract_features(embed, core_nlp):
-    train, lbl_sets = core_nlp
+def extract_features(embed, train, lbl_sets):
     print(len(lbl_sets['pos']), lbl_sets['pos'])
     print(len(lbl_sets['ne']), lbl_sets['ne'])
 
@@ -104,26 +120,29 @@ if __name__ == '__main__':
         except AttributeError:
             pass
 
-    embed = pickled(args.glove, load_glove)
+    embed = load_glove(args.glove)
 
-    def read_and_extract(path):
+    @pickled
+    def read_and_extract(path, fun):
         with list(DocumentIO.read(path)) as doc:
-            print('Documents:', len(doc))
-            return core_nlp_features(doc, 'en')
-    
-    core_nlp = pickled(args.file, read_and_extract)
-    
+            return fun(doc)
+    train, lbl_sets, gold = read_and_extract(args.file, lambda doc: docria_extract(doc, lang='en'))
+
+    doc = list(DocumentIO.read(args.file))
+    train, lbl_sets, gold = docria_extract(doc, lang='en')
+
     from keras.utils import to_categorical
     from keras.layers import Bidirectional, LSTM, Dense, Activation, Embedding
     from keras.models import Sequential
 
-    features = extract_features(embed, core_nlp)
+    features = extract_features(embed, train, lbl_sets)
 
-    # placeholders
-    x_train = []
-    y_train = []
-    x_test = []
-    y_test = []
+    # data sets
+    cutoff = 9 * len(x_train) // 10
+    x_train = features[:cutoff]
+    y_train = gold[:cutoff]
+    x_test = features[cutoff:]
+    y_test = gold[cutoff:]
 
     model = model()
     model.fit(x_train, y_train, batch_size=8, epochs=1,
