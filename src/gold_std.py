@@ -10,7 +10,7 @@ def one_hot(index, categories):
     n_cls = len(categories)
     to_cat = lambda x: to_categorical(x, num_classes=n_cls)
     for k in index:
-        index[k] = trans_mut_map(index[k], categories, to_cat)
+        trans_mut_map(index[k], categories, to_cat)
 
 def json_compatible(index):
     def make_dict(span, entity):

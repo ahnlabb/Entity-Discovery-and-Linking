@@ -43,8 +43,8 @@ def docria_extract(docs, lang='en'):
         if i % 10 == 0:
             print(i)
         spans = core_nlp_features(doc, train, lbl_sets, lang=lang)
-        spans = [[get_entity(span) for span in sentence] for sentence in spans]
-        gold.extend(spans)
+        entities = [[get_entity(span) for span in sentence] for sentence in spans]
+        gold.extend(entities)
 
     return train, lbl_sets, gold
 
@@ -93,6 +93,7 @@ def core_nlp_features(doc, train, lbl_sets, lang='en'):
             spans.append([])
     if not sentences[-1]:
         sentences.pop(-1)
+        spans.pop(-1)
     train.extend(sentences)
     return spans
 
@@ -156,9 +157,11 @@ if __name__ == '__main__':
     from keras.models import Sequential
 
     features = extract_features(embed, train, lbl_sets)
-    xy = sorted(zip(features, gold), key=lambda x: len(x[0]), reverse=True)
-    features, gold = [x for x,y in xy], [y for x,y in xy]
-    print(features)
+    features = sorted(enumerate(features), key=lambda x: len(x[1]), reverse=True)
+    gold = [gold[i] for i,_ in features]
+    print(len(gold[0]), len(features[0][1]))
+    #xy = sorted(zip(features, gold), key=lambda x: len(x[0]), reverse=True)
+    #features, gold = [x for x,y in xy], [y for x,y in xy]
     quit()
 
     def batch(feats, gold, batch_len=100):
