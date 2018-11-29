@@ -34,9 +34,11 @@ def docria_extract(docs, lang='en'):
 
     gold_std, cats = gold_std_idx(docs)
     one_hot(gold_std, cats)
+
     def get_entity(span):
         none = np.zeros(len(cats))
         return gold_std.get(span, none)
+
     for i, doc in enumerate(docs):
         if i % 10 == 0:
             print(i)
@@ -45,6 +47,27 @@ def docria_extract(docs, lang='en'):
         gold.extend(spans)
 
     return train, lbl_sets, gold
+
+def build_indices(train, embed):
+    wordset = set([features['form'] for sentence in train for features in sentence])
+    wordset.update(embed.keys())
+    word_ind = dict(enumerate(wordset, 2))
+    return word_ind
+
+def inverted(a):
+    return {v:k for k,v in a.items()}
+
+def build_sequence(l, invind):
+    return [invind[w] for w in l]
+
+def map2(fun, x, y):
+    return fun(x[0], y[0]), fun(x[1], y[1])
+
+def build_sequences(train, embed):
+    indices = list(map(inverted, build_indices(train, embed)))
+    data = 0
+    xy_sequences = tuple(zip(*(map2(build_sequence, tup, indices) for tup in data)))
+    return map(pad_sequences, xy_sequences)
 
 def core_nlp_features(doc, train, lbl_sets, lang='en'):
     spans = []
@@ -100,12 +123,8 @@ def extract_features(embed, train, lbl_sets):
 
 def model():
     model = Sequential()
-    # input vectors of dim 108 -> output vectors of dim 25
-    #model.add(Embedding(108, 25, input_length=10))
-    # each sample is 10 vectors of 25 dimensions
-    model.add(Bidirectional(LSTM(25, return_sequences=True), input_shape=(10, 107)))
-    # arbitrarily (?) pick 25 hidden units
-    model.add(Bidirectional(LSTM(25)))
+    model.add(Embedding(107, 50, mask_zero=True, input_length=None))
+    model.add(Bidirectional(LSTM(25, return_sequences=True), input_shape=(None, 107)))
     model.add(Dense(12))
     model.add(Activation('softmax'))
     model.compile(loss='categorical_crossentropy', optimizer='nadam', metrics=['accuracy'])
@@ -113,6 +132,7 @@ def model():
 
 
 if __name__ == '__main__':
+
     args = get_args()
     for arg in vars(args).values():
         try:
@@ -139,27 +159,32 @@ if __name__ == '__main__':
     xy = sorted(zip(features, gold), key=lambda x: len(x[0]), reverse=True)
     features, gold = [x for x,y in xy], [y for x,y in xy]
     print(features)
+    quit()
 
-    for f in features[:1]:
-        print(len(f))
-        for v in f[:1]:
-            print(len(v))
-
-    def batch(feats, gold, batch_len=10):
+    def batch(feats, gold, batch_len=100):
         batch = feats[:batch_len], gold[:batch_len]
-        feats, gold = feats[batch_len:], gold[batch_len:]
-        longest = max(batch[0], key=len)
-        for i,b in enumerate(batch):
-            diff = longest - len(batch[0])
-            batch = batch[0] + padding, batch[1]
-        return 
+        del feats[:batch_len]
+        del gold[:batch_len:]
+        longest = max(map(len, batch[0]))
+        pad_vec = np.zeros(len(batch[0][0]))
+        for i in range(batch_len):
+            diff = longest - len(batch[0][i])
+            padding = [pad_vec] * diff
+            batch[0][i].extend(padding)
+            batch[1][i].extend(padding)
+        return batch
+
+    f, g = [], []
+    while len(features) > 0:
+        print(len(features), len(gold))
+        f, g = batch(features, gold)
 
     # data sets
-    cutoff = 9 * len(features) // 10
-    x_train = features[:cutoff]
-    y_train = gold[:cutoff]
-    x_test = features[cutoff:]
-    y_test = gold[cutoff:]
+    cutoff = 9 * len(f) // 10
+    x_train = f[:cutoff]
+    y_train = g[:cutoff]
+    x_test = f[cutoff:]
+    y_test = g[cutoff:]
 
     model = model()
-    model.fit(x_train, y_train, batch_size=8, epochs=1)
+    model.fit(x_train, y_train, batch_size=100, epochs=1)
