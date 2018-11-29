@@ -6,6 +6,7 @@ from itertools import count, product
 from pickle import load, dump
 from docria.storage import DocumentIO
 from utils import pickled, langforia
+from gold_std import gold_std_idx, one_hot
 import requests
 import numpy as np
 
@@ -17,6 +18,7 @@ def get_args():
     return parser.parse_args()
 
 
+@pickled
 def load_glove(path):
     with path.open('r') as f:
         rows = map(lambda x: x.split(), f)
@@ -26,51 +28,76 @@ def load_glove(path):
         return embed
 
 
-def model():
-    model = Sequential()
-    # input vectors of dim 108 -> output vectors of dim 25
-    model.add(Embedding(108, 25, input_length=10))
-    # each sample is 10 vectors of 25 dimensions
-    model.add(Bidirectional(LSTM(25, return_sequences=True), input_shape=(10, 25)))
-    # arbitrarily (?) pick 25 hidden units
-    model.add(Bidirectional(LSTM(25)))
-    model.add(Dense(16))
-    model.add(Activation('softmax'))
-    model.compile(loss='categorical_crossentropy', optimizer='nadam', metrics=['accuracy'])
-    return model
-
-
-def core_nlp_features(doc, lang):
-    train = []
+def docria_extract(docs, lang='en'):
+    train, gold = [], []
     lbl_sets = defaultdict(set)
+
+    gold_std, cats = gold_std_idx(docs)
+    one_hot(gold_std, cats)
+
+    def get_entity(span):
+        none = np.zeros(len(cats))
+        return gold_std.get(span, none)
+
+    for i, doc in enumerate(docs):
+        if i % 10 == 0:
+            print(i)
+        spans = core_nlp_features(doc, train, lbl_sets, lang=lang)
+        spans = [[get_entity(span) for span in sentence] for sentence in spans]
+        gold.extend(spans)
+
+    return train, lbl_sets, gold
+
+def build_indices(train, embed):
+    wordset = set([features['form'] for sentence in train for features in sentence])
+    wordset.update(embed.keys())
+    word_ind = dict(enumerate(wordset, 2))
+    return word_ind
+
+def inverted(a):
+    return {v:k for k,v in a.items()}
+
+def build_sequence(l, invind):
+    return [invind[w] for w in l]
+
+def map2(fun, x, y):
+    return fun(x[0], y[0]), fun(x[1], y[1])
+
+def build_sequences(train, embed):
+    indices = list(map(inverted, build_indices(train, embed)))
+    data = 0
+    xy_sequences = tuple(zip(*(map2(build_sequence, tup, indices) for tup in data)))
+    return map(pad_sequences, xy_sequences)
+
+def core_nlp_features(doc, train, lbl_sets, lang='en'):
+    spans = []
 
     def add(features, name):
         lbl_sets[name].add(features[name])
 
-    for i, a in enumerate(doc):
-        if i % 10 == 0:
-            print(i)
-        text = str(a.texts['main'])
-        corenlp = iter(langforia(text, lang).split('\n'))
-        head = next(corenlp).split('\t')[1:]
-        sentences = [[]]
-        for row in corenlp:
-            if row:
-                cols = row.split('\t')
-                features = dict(zip(head, cols[1:]))
-                add(features, 'pos')
-                add(features, 'ne')
-                sentences[-1].append(features)
-            else:
-                sentences.append([])
-        if not sentences[-1]:
-            sentences.pop(-1)
-        train.extend(sentences)
-    return train, lbl_sets
+    text = str(doc.texts['main'])
+    corenlp = iter(langforia(text, lang).split('\n'))
+    head = next(corenlp).split('\t')[1:]
+    sentences = [[]]
+    spans = [[]]
+    for row in corenlp:
+        if row:
+            cols = row.split('\t')
+            features = dict(zip(head, cols[1:]))
+            add(features, 'pos')
+            add(features, 'ne')
+            sentences[-1].append(features)
+            spans[-1].append((features['start'], features['end']))
+        else:
+            sentences.append([])
+            spans.append([])
+    if not sentences[-1]:
+        sentences.pop(-1)
+    train.extend(sentences)
+    return spans
 
 
-def extract_features(embed, core_nlp):
-    train, lbl_sets = core_nlp
+def extract_features(embed, train, lbl_sets):
     print(len(lbl_sets['pos']), lbl_sets['pos'])
     print(len(lbl_sets['ne']), lbl_sets['ne'])
 
@@ -94,7 +121,18 @@ def extract_features(embed, core_nlp):
     return [[np.concatenate(word) for word in zip(*sentence)] for sentence in zip(*labels.values())]
 
 
+def model():
+    model = Sequential()
+    model.add(Embedding(107, 50, mask_zero=True, input_length=None))
+    model.add(Bidirectional(LSTM(25, return_sequences=True), input_shape=(None, 107)))
+    model.add(Dense(12))
+    model.add(Activation('softmax'))
+    model.compile(loss='categorical_crossentropy', optimizer='nadam', metrics=['accuracy'])
+    return model
+
+
 if __name__ == '__main__':
+
     args = get_args()
     for arg in vars(args).values():
         try:
@@ -104,27 +142,49 @@ if __name__ == '__main__':
         except AttributeError:
             pass
 
-    embed = pickled(args.glove, load_glove)
+    embed = load_glove(args.glove)
 
-    def read_and_extract(path):
-        with list(DocumentIO.read(path)) as doc:
-            print('Documents:', len(doc))
-            return core_nlp_features(doc, 'en')
-    
-    core_nlp = pickled(args.file, read_and_extract)
-    
+    @pickled
+    def read_and_extract(path, fun):
+        with DocumentIO.read(path) as doc:
+            return fun(list(doc))
+    train, lbl_sets, gold = read_and_extract(args.file, lambda doc: docria_extract(doc, lang='en'))
+
+    from keras.preprocessing.sequence import pad_sequences
     from keras.utils import to_categorical
     from keras.layers import Bidirectional, LSTM, Dense, Activation, Embedding
     from keras.models import Sequential
 
-    features = extract_features(embed, core_nlp)
+    features = extract_features(embed, train, lbl_sets)
+    xy = sorted(zip(features, gold), key=lambda x: len(x[0]), reverse=True)
+    features, gold = [x for x,y in xy], [y for x,y in xy]
+    print(features)
+    quit()
 
-    # placeholders
-    x_train = []
-    y_train = []
-    x_test = []
-    y_test = []
+    def batch(feats, gold, batch_len=100):
+        batch = feats[:batch_len], gold[:batch_len]
+        del feats[:batch_len]
+        del gold[:batch_len:]
+        longest = max(map(len, batch[0]))
+        pad_vec = np.zeros(len(batch[0][0]))
+        for i in range(batch_len):
+            diff = longest - len(batch[0][i])
+            padding = [pad_vec] * diff
+            batch[0][i].extend(padding)
+            batch[1][i].extend(padding)
+        return batch
+
+    f, g = [], []
+    while len(features) > 0:
+        print(len(features), len(gold))
+        f, g = batch(features, gold)
+
+    # data sets
+    cutoff = 9 * len(f) // 10
+    x_train = f[:cutoff]
+    y_train = g[:cutoff]
+    x_test = f[cutoff:]
+    y_test = g[cutoff:]
 
     model = model()
-    model.fit(x_train, y_train, batch_size=8, epochs=1,
-            validation_data=[x_test, y_test])
+    model.fit(x_train, y_train, batch_size=100, epochs=1)
