@@ -34,12 +34,12 @@ def langforia(text, lang, config='corenlp_3.8.0', format='tsv'):
     return request.json()
 
 def pickled(fun):
-    def wrapper(path):
+    def wrapper(path, *args):
         if path.suffix == '.pickle':
             with path.open('r+b') as f:
                 return load(f)
         else:
-            result = fun(path)
+            result = fun(path, *args)
             with path.with_suffix('.pickle').open('w+b') as f:
                 dump(result, f)
             return result
