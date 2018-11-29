@@ -1,6 +1,6 @@
 .PHONY: paper site serve process
 
-site: src/static/elm.js src/server.py src/templates/index.html
+site: src/static/elm_debug.js src/static/elm.js src/server.py src/templates/debug.html
 
 src/static/elm.min.js: src/static/elm.js
 	uglifyjs $< --compress 'pure_funcs="F2,F3,F4,F5,F6,F7,F8,F9,A2,A3,A4,A5,A6,A7,A8,A9",pure_getters,keep_fargs=false,unsafe_comps,unsafe' | uglifyjs --mangle --output=$@
@@ -8,6 +8,10 @@ src/static/elm.min.js: src/static/elm.js
 src/static/elm.js: src/Main.elm
 	cd src && \
 		elm make Main.elm --optimize --output=static/elm.js
+
+src/static/elm_debug.js: src/Debug.elm
+	cd src && \
+		elm make Debug.elm --optimize --output=static/elm_debug.js
 
 serve: site
 	FLASK_APP=src/server.py python3 -m flask run
