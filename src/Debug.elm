@@ -149,115 +149,17 @@ resultView docs selection =
         case (selection |> Maybe.andThen (get docs)) of
             Just doc ->
                 let
-                    fontSz =
-                        20
-
                     pos x y tag attrs =
                         tag ([ SAttr.x (String.fromFloat x), SAttr.y (String.fromFloat y) ] ++ attrs)
 
                     textStyle sz =
                         SAttr.style ("font-size: " ++ (String.fromInt sz) ++ "px;font-family: 'Source Code Pro', monospace;")
 
-                    lineStyle =
-                        SAttr.style "stroke:rgb(100,100,100);stroke-width:2"
-
-                    svgText sz x y text =
-                        pos x y Svg.text_ [ textStyle sz ] [ Svg.text text ]
-
-                    lineSeparation =
-                        50
-
-                    toSvg i ( start, end ) =
-                        svgText fontSz (toFloat margin) (toFloat (i + 1) * lineSeparation) (String.slice start end doc.text)
-
-                    line x1 y1 x2 y2 =
-                        List.map2 (\f x -> String.fromInt x |> f) [ SAttr.x1, SAttr.y1, SAttr.x2, SAttr.y2 ] [ x1, y1, x2, y2 ]
-                            |> (::) lineStyle
-                            |> \x -> Svg.line x []
-
-                    mark string start end =
-                        let
-                            midX =
-                                (toFloat (start + end)) / 2 * charWidth
-
-                            annoSz =
-                                12
-
-                            scaleFactor =
-                                toFloat annoSz / fontSz
-
-                            scale =
-                                toFloat >> (*) scaleFactor
-
-                            length =
-                                String.length string
-
-                            x =
-                                margin + midX - (scale length) / 2 * charWidth
-
-                            xStr =
-                                String.fromFloat x
-
-                            width =
-                                length * charWidth + 8 |> scale |> String.fromFloat
-
-                            yStr =
-                                lineSeparation + 4 |> String.fromInt
-
-                            height =
-                                charHeight + 8 |> scale |> String.fromFloat
-
-                            y =
-                                lineSeparation + 4 + scale charHeight
-
-                            colorFromPos posStr =
-                                case posStr of
-                                    "DT" ->
-                                        "yellow"
-
-                                    "JJ" ->
-                                        "purple"
-
-                                    "TO" ->
-                                        "purple"
-
-                                    "VBD" ->
-                                        "blue"
-
-                                    "VBN" ->
-                                        "blue"
-
-                                    "NNP" ->
-                                        "green"
-
-                                    "CD" ->
-                                        "green"
-
-                                    _ ->
-                                        "red"
-                        in
-                            Svg.g []
-                                [ Svg.rect
-                                    [ SAttr.x xStr
-                                    , SAttr.width width
-                                    , SAttr.y yStr
-                                    , SAttr.height height
-                                    , SAttr.rx "5"
-                                    , SAttr.ry "5"
-                                    , SAttr.style ("fill:" ++ colorFromPos string ++ ";stroke:black;stroke-width:1;opacity:0.5")
-                                    ]
-                                    []
-                                , svgText annoSz (x + scale 4) (y + scale 4) string
-                                ]
-
                     charWidth =
                         12
 
                     charHeight =
                         15
-
-                    margin =
-                        50
 
                     colorFromClass class =
                         case class of
@@ -300,6 +202,39 @@ resultView docs selection =
                             _ ->
                                 "red"
 
+                    mark string =
+                        let
+                            length =
+                                String.length string
+
+                            w =
+                                length * charWidth + 8 |> String.fromInt
+
+                            height =
+                                charHeight + 8
+
+                            h =
+                                height |> String.fromFloat
+
+                            padding =
+                                4
+                        in
+                            Svg.svg [ SAttr.width w, SAttr.height h, SAttr.viewBox ("0 0 " ++ w ++ " " ++ h) ]
+                                [ Svg.g []
+                                    [ pos 0
+                                        0
+                                        Svg.rect
+                                        [ SAttr.width w
+                                        , SAttr.height h
+                                        , SAttr.rx "5"
+                                        , SAttr.ry "5"
+                                        , SAttr.style ("fill:" ++ colorFromClass string ++ ";stroke:black;stroke-width:1;opacity:0.5")
+                                        ]
+                                        []
+                                    , pos padding (height - padding) Svg.text_ [ textStyle 20 ] [ Svg.text string ]
+                                    ]
+                                ]
+
                     annotate : Int -> String -> List Entity -> List (Html.Html Msg)
                     annotate origin string ent =
                         let
@@ -311,7 +246,20 @@ resultView docs selection =
                                 Html.text (String.slice begin end string)
 
                             marked class begin end =
-                                Html.div [ colorFromClass class |> style "background-color", style "display" "inline-block" ] [ plain begin end ]
+                                Html.div
+                                    [ style "display" "inline-flex"
+                                    , style "flex-direction" "column"
+                                    , style "height" "3em"
+                                    ]
+                                    [ Html.div
+                                        [ style "flex" "0 1 auto"
+                                        , style "text-align" "center"
+                                        , style "border" ("1px solid " ++ colorFromClass class)
+                                        , style "border-radius" "5px"
+                                        ]
+                                        [ plain begin end ]
+                                    , Html.div [ style "flex" "0 1 auto", style "text-align" "center" ] [ Html.div [] [ mark class ] ]
+                                    ]
                         in
                             case ent of
                                 { start, stop, class } :: tail ->
@@ -319,9 +267,6 @@ resultView docs selection =
 
                                 [] ->
                                     []
-
-                    markEntity { start, stop, class } =
-                        mark class start stop
 
                     label =
                         List.map
@@ -332,7 +277,7 @@ resultView docs selection =
                             [ "NAM-PER", "NAM-FAC", "NAM-LOC", "NAM-ORG", "NAM-TTL", "NAM-GPE", "NOM-PER", "NOM-FAC", "NOM-LOC", "NOM-ORG", "NOM-TTL", "NOM-GPE" ]
                 in
                     column [ width fill ]
-                        [ annotate 0 doc.text doc.entities |> Html.div [] |> Element.html
+                        [ annotate 0 doc.text doc.entities |> Html.div [ style "font-family" "'Source Sans Pro', sans-serif" ] |> Element.html
                         ]
 
             Nothing ->
