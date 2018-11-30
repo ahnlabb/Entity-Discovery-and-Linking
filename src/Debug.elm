@@ -4,7 +4,7 @@ import Browser
 import Http
 import Url.Builder as Url
 import Dict
-import Element exposing (Element, el, text, row, column, alignRight, fill, width, height, rgb255, spacing, centerY, padding, none, px)
+import Element exposing (Element, el, text, row, column, alignRight, fill, width, height, rgb255, spacing, centerY, padding, none, px, spacing)
 import Element.Input as Input
 import Element.Background as Background
 import Element.Border as Border
@@ -84,7 +84,7 @@ update msg model =
                     ( Error e, Cmd.none )
 
         ( NewSelection string, Done page ) ->
-            ( Done { page | selection = Just string }, Cmd.none )
+            ( Done { page | selection = Just string }, getPrediction "This is a test!" )
 
         ( _, _ ) ->
             ( model, Cmd.none )
@@ -258,7 +258,11 @@ resultView docs selection =
                                         , style "border-radius" "5px"
                                         ]
                                         [ plain begin end ]
-                                    , Html.div [ style "flex" "0 1 auto", style "text-align" "center" ] [ Html.div [] [ mark class ] ]
+                                    , Html.div
+                                        [ style "flex" "0 1 auto"
+                                        , style "text-align" "center"
+                                        ]
+                                        [ Html.div [] [ mark class ] ]
                                     ]
                         in
                             case ent of
@@ -276,8 +280,13 @@ resultView docs selection =
                             )
                             [ "NAM-PER", "NAM-FAC", "NAM-LOC", "NAM-ORG", "NAM-TTL", "NAM-GPE", "NOM-PER", "NOM-FAC", "NOM-LOC", "NOM-ORG", "NOM-TTL", "NOM-GPE" ]
                 in
-                    column [ width fill ]
-                        [ annotate 0 doc.text doc.entities |> Html.div [ style "font-family" "'Source Sans Pro', sans-serif" ] |> Element.html
+                    row [ width fill, spacing 50, padding 30 ]
+                        [ annotate 0 doc.text doc.entities
+                            |> List.map Element.html
+                            |> Element.paragraph [ Font.family [ Font.typeface "Source Sans Pro", Font.sansSerif ] ]
+                        , annotate 0 doc.text doc.entities
+                            |> List.map Element.html
+                            |> Element.paragraph [ Font.family [ Font.typeface "Source Sans Pro", Font.sansSerif ] ]
                         ]
 
             Nothing ->
@@ -315,6 +324,15 @@ getDocuments : Cmd Msg
 getDocuments =
     Http.get
         { url = localApi
+        , expect = Http.expectJson NewDocuments (dict documentDecoder)
+        }
+
+
+getPrediction : String -> Cmd Msg
+getPrediction text =
+    Http.post
+        { url = Url.absolute [ "predict" ] []
+        , body = Http.jsonBody (Encode.string text)
         , expect = Http.expectJson NewDocuments (dict documentDecoder)
         }
 

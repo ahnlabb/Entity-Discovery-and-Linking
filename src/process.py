@@ -10,6 +10,11 @@ from gold_std import gold_std_idx, one_hot
 import requests
 import numpy as np
 
+from keras.preprocessing.sequence import pad_sequences
+from keras.utils import to_categorical
+from keras.layers import Bidirectional, LSTM, Dense, Activation, Embedding, Flatten
+from keras.models import Sequential
+
 
 def get_args():
     parser = ArgumentParser()
@@ -55,11 +60,16 @@ def build_indices(train, embed):
     word_ind = dict(enumerate(wordset, 2))
     return word_ind
 
+
 def inverted(a):
     return {v:k for k,v in a.items()}
 
-def build_sequence(l, invind):
+
+def build_sequence(l, invind, default=None):
+    if default:
+        return [invind.get(w, default) for w in l]
     return [invind[w] for w in l]
+
 
 def map2(fun, x, y):
     return fun(x[0], y[0]), fun(x[1], y[1])
@@ -123,13 +133,63 @@ def extract_features(embed, train, lbl_sets):
     return [[np.concatenate(word) for word in zip(*sentence)] for sentence in zip(*labels.values())]
 
 
-def model():
+def build_model():
     model = Sequential()
     model.add(Embedding(108, 50, input_shape=(414,), mask_zero=True))
     model.add(Bidirectional(LSTM(25, return_sequences=True)))
     model.add(Dense(13, activation='softmax'))
     model.compile(loss='categorical_crossentropy', optimizer='nadam', metrics=['accuracy'])
     return model
+
+
+def make_prediction(saved, text):
+    def conll_to_word(sentence):
+        return [word['form'] for word in sentence]
+
+    def corenlp_parse(text, lang='en'):
+        result = langforia(text, lang).split('\n')
+        itr = iter(result)
+        head = next(itr).split('\t')[1:]
+        sentences = [[]]
+        spans = [[]]
+        inside = ""
+        for row in itr:
+            if row:
+                cols = row.split('\t')
+                features = dict(zip(head, cols[1:]))
+                if 'ne' in features:
+                    ne = features['ne']
+                    if inside:
+                        if ne == ')':
+                            ne = 'E-' + inside
+                            inside = ''
+                        else:
+                            ne = 'I-' + inside
+                    elif ne[-1] == ')':
+                        ne = 'S-' + ne[1:-1]
+                        inside = ''
+                    else:
+                        inside = ne[1:]
+                        ne = 'B-' + inside
+                    features['ne'] = ne
+                sentences[-1].append(features)
+                spans[-1].append((features['start'], features['end']))
+            else:
+                sentences.append([])
+                spans.append([])
+        if not sentences[-1]:
+            sentences.pop(-1)
+            spans.pop(-1)
+        return sentences, spans
+
+    with saved.open('r+b') as f:
+        model = load(f)
+    model, word_index, out_index = saved
+    word_inv = inverted(word_index)
+    print(text)
+    features, spans = corenlp_parse(text)
+    x = pad_sequences([build_sequence(conll_to_word(sentence), word_inv, 1) for sentence in features])
+    print(model.predict(x))
 
 
 if __name__ == '__main__':
@@ -150,11 +210,6 @@ if __name__ == '__main__':
         with DocumentIO.read(path) as doc:
             return fun(list(doc))
     train, lbl_sets, gold = read_and_extract(args.file, lambda doc: docria_extract(doc, lang='en'))
-
-    from keras.preprocessing.sequence import pad_sequences
-    from keras.utils import to_categorical
-    from keras.layers import Bidirectional, LSTM, Dense, Activation, Embedding, Flatten
-    from keras.models import Sequential
 
     features = extract_features(embed, train, lbl_sets)
     features = sorted(enumerate(features), key=lambda x: len(x[1]), reverse=True)
