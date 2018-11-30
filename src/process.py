@@ -125,8 +125,7 @@ def extract_features(embed, train, lbl_sets):
 
 def model():
     model = Sequential()
-    model.add(Embedding(108, 50, input_shape=(414,), mask_zero=True))
-    model.add(Bidirectional(LSTM(25, return_sequences=True)))
+    model.add(Bidirectional(LSTM(25, return_sequences=True, input_shape=(None,))))
     model.add(Dense(13, activation='softmax'))
     model.compile(loss='categorical_crossentropy', optimizer='nadam', metrics=['accuracy'])
     return model
@@ -161,7 +160,10 @@ if __name__ == '__main__':
     gold = [gold[i] for i,_ in features]
     def print_dims(data):
         try:
-            print(type(data), '(' + str(len(data)) + ')', end=' ')
+            try:
+                print(type(data), str(data.shape), end=' ')
+            except:
+                print(type(data), '(' + str(len(data)) + ')', end=' ')
             print_dims(data[0])
         except:
             print()
@@ -182,9 +184,9 @@ if __name__ == '__main__':
         del gold[:batch_len]
         # longest sentence in batch
         longest = max(map(len, f))
-        pad_f = np.array([1] + [0] * (len(f[0]) - 1))
-        pad_g = np.array([1] + [0] * (len(g[0]) - 1))
-        for i in range(len(f)):
+        pad_f = np.array([1] + [0] * (len(f[0][0]) - 1))
+        pad_g = np.array([1] + [0] * (len(g[0][0]) - 1))
+        for i in range(batch_len):
             diff = longest - len(f[i])
             f[i].extend([pad_f] * diff)
             g[i].extend([pad_g] * diff)
@@ -193,13 +195,14 @@ if __name__ == '__main__':
     x,y = batch(features, gold, batch_len=len(features))
 
     # data sets
-    cutoff = 9 * len(x) // 10
-    x_train = np.array(x)
-    print_dims(x_train)
-    y_train = np.array(y)
+    cutoff = 1 * len(x) // 10
+    x_train = np.array(x[:cutoff])
+    y_train = np.array(y[:cutoff])
     x_test = np.array(x[cutoff:])
     y_test = np.array(y[cutoff:])
+    
+    print_dims(x_train)
+    print_dims(y_train)
 
     model = model()
-    model.summary()
     model.fit(x_train, y_train, batch_size=100, epochs=1)
