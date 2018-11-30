@@ -35,15 +35,16 @@ def docria_extract(docs, lang='en'):
     gold_std, cats = gold_std_idx(docs)
     one_hot(gold_std, cats)
 
-    def get_entity(span):
+    def get_entity(doc, span):
         none = np.zeros(len(cats))
-        return gold_std.get(span, none)
+        docid = doc.props['docid']
+        return gold_std[docid].get(span, none)
 
     for i, doc in enumerate(docs):
         if i % 10 == 0:
             print(i)
         spans = core_nlp_features(doc, train, lbl_sets, lang=lang)
-        entities = [[get_entity(span) for span in sentence] for sentence in spans]
+        entities = [[get_entity(doc, span) for span in sentence] for sentence in spans]
         gold.extend(entities)
 
     return train, lbl_sets, gold
@@ -87,7 +88,7 @@ def core_nlp_features(doc, train, lbl_sets, lang='en'):
             add(features, 'pos')
             add(features, 'ne')
             sentences[-1].append(features)
-            spans[-1].append((features['start'], features['end']))
+            spans[-1].append((int(features['start']), int(features['end'])))
         else:
             sentences.append([])
             spans.append([])
@@ -99,8 +100,8 @@ def core_nlp_features(doc, train, lbl_sets, lang='en'):
 
 
 def extract_features(embed, train, lbl_sets):
-    print(len(lbl_sets['pos']), lbl_sets['pos'])
-    print(len(lbl_sets['ne']), lbl_sets['ne'])
+    #print(len(lbl_sets['pos']), lbl_sets['pos'])
+    #print(len(lbl_sets['ne']), lbl_sets['ne'])
 
     labels = {}
     mappings = {key: dict(zip(lbls, count(0))) for key, lbls in lbl_sets.items()}
@@ -124,10 +125,9 @@ def extract_features(embed, train, lbl_sets):
 
 def model():
     model = Sequential()
-    model.add(Embedding(107, 50, mask_zero=True, input_length=None))
-    model.add(Bidirectional(LSTM(25, return_sequences=True), input_shape=(None, 107)))
-    model.add(Dense(12))
-    model.add(Activation('softmax'))
+    model.add(Embedding(108, 50, input_shape=(414,), mask_zero=True))
+    model.add(Bidirectional(LSTM(25, return_sequences=True)))
+    model.add(Dense(13, activation='softmax'))
     model.compile(loss='categorical_crossentropy', optimizer='nadam', metrics=['accuracy'])
     return model
 
@@ -153,41 +153,53 @@ if __name__ == '__main__':
 
     from keras.preprocessing.sequence import pad_sequences
     from keras.utils import to_categorical
-    from keras.layers import Bidirectional, LSTM, Dense, Activation, Embedding
+    from keras.layers import Bidirectional, LSTM, Dense, Activation, Embedding, Flatten
     from keras.models import Sequential
 
     features = extract_features(embed, train, lbl_sets)
     features = sorted(enumerate(features), key=lambda x: len(x[1]), reverse=True)
     gold = [gold[i] for i,_ in features]
-    print(len(gold[0]), len(features[0][1]))
-    #xy = sorted(zip(features, gold), key=lambda x: len(x[0]), reverse=True)
-    #features, gold = [x for x,y in xy], [y for x,y in xy]
-    quit()
+    def print_dims(data):
+        try:
+            print(type(data), '(' + str(len(data)) + ')', end=' ')
+            print_dims(data[0])
+        except:
+            print()
+            return
+    
+    def add_feature(vec):
+        new_vec = np.zeros(len(vec) + 1)
+        new_vec[1:] = vec
+        return new_vec
+
+    # TODO: add more list comprehensions
+    gold = [[add_feature(e) for e in s] for s in gold]
+    features = [[add_feature(w) for w in v] for _,v in features]
 
     def batch(feats, gold, batch_len=100):
-        batch = feats[:batch_len], gold[:batch_len]
+        f, g = feats[:batch_len], gold[:batch_len]
         del feats[:batch_len]
-        del gold[:batch_len:]
-        longest = max(map(len, batch[0]))
-        pad_vec = np.zeros(len(batch[0][0]))
-        for i in range(batch_len):
-            diff = longest - len(batch[0][i])
-            padding = [pad_vec] * diff
-            batch[0][i].extend(padding)
-            batch[1][i].extend(padding)
-        return batch
+        del gold[:batch_len]
+        # longest sentence in batch
+        longest = max(map(len, f))
+        pad_f = np.array([1] + [0] * (len(f[0]) - 1))
+        pad_g = np.array([1] + [0] * (len(g[0]) - 1))
+        for i in range(len(f)):
+            diff = longest - len(f[i])
+            f[i].extend([pad_f] * diff)
+            g[i].extend([pad_g] * diff)
+        return f, g
 
-    f, g = [], []
-    while len(features) > 0:
-        print(len(features), len(gold))
-        f, g = batch(features, gold)
+    x,y = batch(features, gold, batch_len=len(features))
 
     # data sets
-    cutoff = 9 * len(f) // 10
-    x_train = f[:cutoff]
-    y_train = g[:cutoff]
-    x_test = f[cutoff:]
-    y_test = g[cutoff:]
+    cutoff = 9 * len(x) // 10
+    x_train = np.array(x)
+    print_dims(x_train)
+    y_train = np.array(y)
+    x_test = np.array(x[cutoff:])
+    y_test = np.array(y[cutoff:])
 
     model = model()
+    model.summary()
     model.fit(x_train, y_train, batch_size=100, epochs=1)
