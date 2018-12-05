@@ -4,6 +4,18 @@ import requests
 import numpy as np
 
 
+
+def inverted(a):
+    return {v:k for k,v in a.items()}
+
+def build_sequence(l, invind, default=None):
+    if default:
+        return [invind.get(w, default) for w in l]
+    return [invind[w] for w in l]
+
+def map2(fun, x, y):
+    return fun(x[0], y[0]), fun(x[1], y[1])
+
 def to_categorical(y, num_classes=None, dtype='float32'):
     """DOES NOT WORK !!!"""
     if not num_classes:

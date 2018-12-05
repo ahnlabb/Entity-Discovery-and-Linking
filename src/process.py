@@ -4,9 +4,10 @@ from argparse import ArgumentParser
 from collections import defaultdict
 from itertools import count, product
 from pickle import load, dump
+from random import shuffle
 from docria.storage import DocumentIO
-from utils import pickled, langforia
-from gold_std import gold_std_idx, one_hot
+from utils import pickled, langforia, inverted, build_sequence, map2
+from gold_std import gold_std_idx, one_hot, from_one_hot
 import requests
 import numpy as np
 
@@ -32,8 +33,18 @@ def load_glove(path):
             embed[row[0]] = np.asarray(row[1:], dtype='float32')
         return embed
 
+def get_core_nlp(docs, lang):
+    def call_api(doc):
+        text = str(doc.texts['main'])
+        return langforia(text, lang).split('\n')
+    api_data = []
+    for i,doc in enumerate(docs,1):
+        print("Document %d/%d" % (i,len(docs)))
+        api_data.append(call_api(doc))
+    return iter(api_data), docs
 
-def docria_extract(docs, lang='en'):
+
+def docria_extract(core_nlp, docs):
     train, gold = [], []
     lbl_sets = defaultdict(set)
 
@@ -45,10 +56,8 @@ def docria_extract(docs, lang='en'):
         docid = doc.props['docid']
         return gold_std[docid].get(span, none)
 
-    for i, doc in enumerate(docs):
-        if i % 10 == 0:
-            print(i)
-        spans = core_nlp_features(doc, train, lbl_sets, lang=lang)
+    for cnlp, doc in zip(core_nlp, docs):
+        spans = core_nlp_features(cnlp, train, lbl_sets)
         entities = [[get_entity(doc, span) for span in sentence] for sentence in spans]
         gold.extend(entities)
 
@@ -60,34 +69,19 @@ def build_indices(train, embed):
     word_ind = dict(enumerate(wordset, 2))
     return word_ind
 
-
-def inverted(a):
-    return {v:k for k,v in a.items()}
-
-
-def build_sequence(l, invind, default=None):
-    if default:
-        return [invind.get(w, default) for w in l]
-    return [invind[w] for w in l]
-
-
-def map2(fun, x, y):
-    return fun(x[0], y[0]), fun(x[1], y[1])
-
 def build_sequences(train, embed):
     indices = list(map(inverted, build_indices(train, embed)))
     data = 0
     xy_sequences = tuple(zip(*(map2(build_sequence, tup, indices) for tup in data)))
     return map(pad_sequences, xy_sequences)
 
-def core_nlp_features(doc, train, lbl_sets, lang='en'):
+def core_nlp_features(corenlp, train, lbl_sets):
+    corenlp = iter(corenlp)
     spans = []
 
     def add(features, name):
         lbl_sets[name].add(features[name])
 
-    text = str(doc.texts['main'])
-    corenlp = iter(langforia(text, lang).split('\n'))
     head = next(corenlp).split('\t')[1:]
     sentences = [[]]
     spans = [[]]
@@ -135,9 +129,9 @@ def extract_features(embed, train, lbl_sets):
 
 def build_model():
     model = Sequential()
-    model.add(Bidirectional(LSTM(25, return_sequences=True), input_shape=(None,108)))
+    model.add(Bidirectional(LSTM(25, return_sequences=True, stateful=False), input_shape=(None,108)))
     model.add(Dropout(0.5))
-    model.add(Dense(13, activation='softmax'))
+    model.add(Dense(14, activation='softmax'))
     model.compile(loss='categorical_crossentropy', optimizer='nadam', metrics=['accuracy'])
     return model
 
@@ -209,12 +203,17 @@ if __name__ == '__main__':
     def read_and_extract(path, fun):
         with DocumentIO.read(path) as doc:
             return fun(list(doc))
-    train, lbl_sets, gold, cats = read_and_extract(args.file, lambda doc: docria_extract(doc, lang='en'))
+
+    corenlp, docs = read_and_extract(args.file, lambda doc: get_core_nlp(doc, lang='en'))
+    train, lbl_sets, gold, cats = docria_extract(corenlp, docs)
     print(cats)
 
     features = extract_features(embed, train, lbl_sets)
-    features = sorted(enumerate(features), key=lambda x: len(x[1]), reverse=True)
+    features = sorted(enumerate(features), key=lambda x: len(x[1]), reverse=False)
     gold = [gold[i] for i,_ in features]
+    features = [v for _,v in features]
+
+
     def print_dims(data):
         try:
             try:
@@ -228,21 +227,26 @@ if __name__ == '__main__':
     
     def add_feature(vec):
         new_vec = np.zeros(len(vec) + 1)
-        new_vec[1:] = vec
+        new_vec[:-1] = vec
         return new_vec
 
-    # TODO: add more list comprehensions
-    gold = [[add_feature(e) for e in s] for s in gold]
-    features = [[add_feature(w) for w in v] for _,v in features]
+    # add NOE-OUT to zeroed gold standard vectors
+    for i, sentence in enumerate(gold):
+        for j, word in enumerate(sentence):
+            if not word.any():
+                gold[i][j] = np.array([0] * (len(word) - 2) + [1, 0])
 
+    # TODO: add more list comprehensions
+    features = [[add_feature(w) for w in v] for v in features] 
     def batch(feats, gold, batch_len=32):
         f, g = feats[:batch_len], gold[:batch_len]
         del feats[:batch_len]
         del gold[:batch_len]
         # longest sentence in batch
         longest = max(map(len, f))
-        pad_f = np.array([1] + [0] * (len(f[0][0]) - 1))
-        pad_g = np.array([1] + [0] * (len(g[0][0]) - 1))
+        pad_f = np.array([0] * (len(f[0][0]) - 1) + [1])
+        # NOE-PAD
+        pad_g = np.array([0] * (len(g[0][0]) - 1) + [1])
         for i in range(len(f)):
             diff = longest - len(f[i])
             f[i].extend([pad_f] * diff)
@@ -253,22 +257,37 @@ if __name__ == '__main__':
         while len(features) > 0:
             yield batch(features, gold, batch_len=batch_len)
 
-    batch_len = 100
+    batch_len = 32
     batches = [(np.array(x), np.array(y))
                for x,y in batch_generator(features, gold, batch_len=batch_len)]
-    batches, test = batches[:-1], batches[-1:]
+    test = batches[50:53]
+    batches = batches[:50] + batches[53:]
 
-    if Path('model').exists():
-        model = load_model('model')
+
+    name = 'model.h5'
+    if Path(name).exists():
+        model = load_model(name)
     else:
         model = build_model()
 
         for i,b in enumerate(batches, 1):
             print('\nBatch', i,'\n-----------')
             x, y = b
-            model.fit(x, y, epochs=1, validation_split=0.1, verbose=2)
+            model.fit(x, y, epochs=3, validation_split=0.1, verbose=2, shuffle=False, batch_size=32)
 
-        model.save('model')
+        model.save(name)
 
-    for f,g in test:
-        print(model.predict(f))
+    for feat,gold in test:
+        correct, total = 0, 0
+        pred = model.predict(feat)
+        for p,g in zip(pred,gold):
+            for w1,w2 in zip(p,g):
+                w1 = np.array([int(x) for x in w1 == max(w1)])
+                c1 = from_one_hot(w1, cats)
+                c2 = from_one_hot(w2, cats)
+                #print(c1, c2)
+                if c2 != ('NOE', 'OUT') or c1 != ('NOE', 'OUT'):
+                    total += 1
+                    if c1 == c2:
+                        correct += 1
+        print(100 * correct / total, '% correct')

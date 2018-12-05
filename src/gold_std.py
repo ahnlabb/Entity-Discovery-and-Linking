@@ -1,6 +1,6 @@
 from pathlib import Path
 from keras.utils import to_categorical
-from utils import trans_mut_map
+from utils import trans_mut_map, inverted
 from docria.storage import DocumentIO
 from argparse import ArgumentParser
 from itertools import product
@@ -11,6 +11,15 @@ def one_hot(index, categories):
     to_cat = lambda x: to_categorical(x, num_classes=n_cls)
     for k in index:
         trans_mut_map(index[k], categories, to_cat)
+
+def from_one_hot(vector, categories):
+    assert len(vector) == len(categories)
+    invind = inverted(categories)
+    for i,v in enumerate(vector):
+        if v == 1:
+            return invind[i]
+    raise ValueError("Zero vector")
+
 
 def json_compatible(index):
     def make_dict(span, entity):
@@ -55,8 +64,9 @@ def gold_std_idx(docria):
                 doc_index[span] = (node.fld.type, node.fld.label)
         index[doc.props['docid']] = doc_index
     # TODO: ensure ordering is consistent between function calls
-    categories = {pair: index for index, pair in enumerate(product(types, labels))}
+    categories = {pair: index for index, pair in enumerate(product(sorted(types), sorted(labels)))}
     categories[('NOE','OUT')] = len(categories)
+    categories[('NOE','PAD')] = len(categories)
     return index, categories
 
 def gold2vec(docria):
