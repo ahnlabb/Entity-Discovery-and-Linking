@@ -3,6 +3,7 @@ dependencies:
     - tensorflow
     - keras
     - flask
+    - jupyter
     - pip:
         - texsoup
         - docria

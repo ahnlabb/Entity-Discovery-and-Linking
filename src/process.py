@@ -27,8 +27,18 @@ def load_glove(path):
             embed[row[0]] = np.asarray(row[1:], dtype='float32')
         return embed
 
+def get_core_nlp(docs, lang):
+    def call_api(doc):
+        text = str(doc.texts['main'])
+        return langforia(text, lang).split('\n')
+    api_data = []
+    for i,doc in enumerate(docs,1):
+        print("Document %d/%d" % (i,len(docs)))
+        api_data.append(call_api(doc))
+    return api_data, docs
 
-def docria_extract(docs, lang='en'):
+
+def docria_extract(core_nlp, docs):
     train, gold = [], []
     lbl_sets = defaultdict(set)
 
@@ -40,10 +50,8 @@ def docria_extract(docs, lang='en'):
         docid = doc.props['docid']
         return gold_std[docid].get(span, none)
 
-    for i, doc in enumerate(docs):
-        if i % 10 == 0:
-            print(i)
-        spans = core_nlp_features(doc, train, lbl_sets, lang=lang)
+    for cnlp, doc in zip(core_nlp, docs):
+        spans = core_nlp_features(cnlp, train, lbl_sets)
         entities = [[get_entity(doc, span) for span in sentence] for sentence in spans]
         gold.extend(entities)
 
@@ -70,14 +78,12 @@ def build_sequences(train, embed):
     xy_sequences = tuple(zip(*(map2(build_sequence, tup, indices) for tup in data)))
     return map(pad_sequences, xy_sequences)
 
-def core_nlp_features(doc, train, lbl_sets, lang='en'):
+def core_nlp_features(corenlp, train, lbl_sets):
     spans = []
 
     def add(features, name):
         lbl_sets[name].add(features[name])
 
-    text = str(doc.texts['main'])
-    corenlp = iter(langforia(text, lang).split('\n'))
     head = next(corenlp).split('\t')[1:]
     sentences = [[]]
     spans = [[]]
@@ -125,8 +131,7 @@ def extract_features(embed, train, lbl_sets):
 
 def model():
     model = Sequential()
-    model.add(Embedding(108, 50, input_shape=(414,), mask_zero=True))
-    model.add(Bidirectional(LSTM(25, return_sequences=True)))
+    model.add(Bidirectional(LSTM(25, return_sequences=True), input_shape=(None,None)))
     model.add(Dense(13, activation='softmax'))
     model.compile(loss='categorical_crossentropy', optimizer='nadam', metrics=['accuracy'])
     return model
@@ -149,7 +154,9 @@ if __name__ == '__main__':
     def read_and_extract(path, fun):
         with DocumentIO.read(path) as doc:
             return fun(list(doc))
-    train, lbl_sets, gold = read_and_extract(args.file, lambda doc: docria_extract(doc, lang='en'))
+
+    docs = read_and_extract(args.file, lambda doc: get_core_nlp(doc, lang='en'))
+    train, lbl_sets, gold = docria_extract(*docs)
 
     from keras.preprocessing.sequence import pad_sequences
     from keras.utils import to_categorical
