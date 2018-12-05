@@ -12,8 +12,8 @@ import numpy as np
 
 from keras.preprocessing.sequence import pad_sequences
 from keras.utils import to_categorical
-from keras.layers import Bidirectional, LSTM, Dense, Activation, Embedding, Flatten
-from keras.models import Sequential
+from keras.layers import Bidirectional, LSTM, Dense, Activation, Embedding, Flatten, Dropout
+from keras.models import Sequential, load_model
 
 
 def get_args():
@@ -52,7 +52,7 @@ def docria_extract(docs, lang='en'):
         entities = [[get_entity(doc, span) for span in sentence] for sentence in spans]
         gold.extend(entities)
 
-    return train, lbl_sets, gold
+    return train, lbl_sets, gold, cats
 
 def build_indices(train, embed):
     wordset = set([features['form'] for sentence in train for features in sentence])
@@ -135,7 +135,8 @@ def extract_features(embed, train, lbl_sets):
 
 def build_model():
     model = Sequential()
-    model.add(Bidirectional(LSTM(25, return_sequences=True, input_shape=(None,))))
+    model.add(Bidirectional(LSTM(25, return_sequences=True), input_shape=(None,108)))
+    model.add(Dropout(0.5))
     model.add(Dense(13, activation='softmax'))
     model.compile(loss='categorical_crossentropy', optimizer='nadam', metrics=['accuracy'])
     return model
@@ -208,7 +209,8 @@ if __name__ == '__main__':
     def read_and_extract(path, fun):
         with DocumentIO.read(path) as doc:
             return fun(list(doc))
-    train, lbl_sets, gold = read_and_extract(args.file, lambda doc: docria_extract(doc, lang='en'))
+    train, lbl_sets, gold, cats = read_and_extract(args.file, lambda doc: docria_extract(doc, lang='en'))
+    print(cats)
 
     features = extract_features(embed, train, lbl_sets)
     features = sorted(enumerate(features), key=lambda x: len(x[1]), reverse=True)
@@ -233,7 +235,7 @@ if __name__ == '__main__':
     gold = [[add_feature(e) for e in s] for s in gold]
     features = [[add_feature(w) for w in v] for _,v in features]
 
-    def batch(feats, gold, batch_len=100):
+    def batch(feats, gold, batch_len=32):
         f, g = feats[:batch_len], gold[:batch_len]
         del feats[:batch_len]
         del gold[:batch_len]
@@ -241,23 +243,32 @@ if __name__ == '__main__':
         longest = max(map(len, f))
         pad_f = np.array([1] + [0] * (len(f[0][0]) - 1))
         pad_g = np.array([1] + [0] * (len(g[0][0]) - 1))
-        for i in range(batch_len):
+        for i in range(len(f)):
             diff = longest - len(f[i])
             f[i].extend([pad_f] * diff)
             g[i].extend([pad_g] * diff)
         return f, g
 
-    x,y = batch(features, gold, batch_len=len(features))
+    def batch_generator(features, gold, batch_len=32):
+        while len(features) > 0:
+            yield batch(features, gold, batch_len=batch_len)
 
-    # data sets
-    cutoff = 1 * len(x) // 10
-    x_train = np.array(x[:cutoff])
-    y_train = np.array(y[:cutoff])
-    x_test = np.array(x[cutoff:])
-    y_test = np.array(y[cutoff:])
-    
-    print_dims(x_train)
-    print_dims(y_train)
+    batch_len = 100
+    batches = [(np.array(x), np.array(y))
+               for x,y in batch_generator(features, gold, batch_len=batch_len)]
+    batches, test = batches[:-1], batches[-1:]
 
-    model = model()
-    model.fit(x_train, y_train, batch_size=100, epochs=1)
+    if Path('model').exists():
+        model = load_model('model')
+    else:
+        model = build_model()
+
+        for i,b in enumerate(batches, 1):
+            print('\nBatch', i,'\n-----------')
+            x, y = b
+            model.fit(x, y, epochs=1, validation_split=0.1, verbose=2)
+
+        model.save('model')
+
+    for f,g in test:
+        print(model.predict(f))

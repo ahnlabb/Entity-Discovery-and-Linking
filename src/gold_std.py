@@ -56,6 +56,7 @@ def gold_std_idx(docria):
         index[doc.props['docid']] = doc_index
     # TODO: ensure ordering is consistent between function calls
     categories = {pair: index for index, pair in enumerate(product(types, labels))}
+    categories[('NOE','OUT')] = len(categories)
     return index, categories
 
 def gold2vec(docria):
