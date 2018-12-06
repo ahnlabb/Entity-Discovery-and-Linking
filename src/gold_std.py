@@ -32,6 +32,7 @@ def gold_std_idx(docria):
     index = {}
     for doc in docria:
         doc_index = {}
+        keys = {}
         longest = None
         for node in doc.layers['tac/entity/gold']:
             labels.add(node.fld.label)
@@ -40,11 +41,12 @@ def gold_std_idx(docria):
             # ignore xml-only entities
             if entity:
                 span = (entity.start, entity.stop)
+                
                 # TODO: simplify logic if possible
                 if longest:
                     # there is a greater span with same start
                     if span[0] == longest[0] and span[1] > longest[1]:
-                        del doc_index[longest]
+                        del keys[longest]
                         longest = span
                     # we are either inside or after the current span
                     if span[0] > longest[0]:
@@ -61,7 +63,30 @@ def gold_std_idx(docria):
                             longest = span
                 else:
                     longest = span
-                doc_index[span] = (node.fld.type, node.fld.label)
+                
+                keys[span] = node
+                
+        for key, node in keys.items():
+            def word_spans(key, node):
+                begin, end = key
+                span_index = {}
+                words = str(node.fld.text.text)[begin:end].split()
+                i = begin
+                for k, word in enumerate(words):
+                    tag = 'I'
+                    if k == 0:
+                        tag = 'B'
+                        if len(words) == 1:
+                            tag = 'S'
+                    span_index[(i, i + len(word))] = (tag, (node.fld.type, node.fld.label))
+                    i += len(word) + 1
+                return span_index
+            print(key, end=': ')
+            for s,e in word_spans(key, node).items():
+                print(s, end=' ')
+                doc_index[s] = e
+            print()
+                                 
         index[doc.props['docid']] = doc_index
     # TODO: ensure ordering is consistent between function calls
     categories = {pair: index for index, pair in enumerate(product(sorted(types), sorted(labels)))}
@@ -93,7 +118,8 @@ def get_doc_index(docria, gold_std):
 if __name__ == '__main__':
     args = get_args()
     if args.file:
-        with list(DocumentIO.read(args.file)) as docria:
-            gold_std, _ = gold_std_idx(docria)
-            index = get_doc_index(docria, gold_std)
-            print(index)
+        with DocumentIO.read(args.file) as docria:
+            gold_std, cats = gold_std_idx(docria)
+            for i,doc in gold_std.items():
+                for span, entity in doc.items():
+                    print(span, entity)
