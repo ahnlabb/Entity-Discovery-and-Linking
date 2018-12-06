@@ -81,11 +81,9 @@ def gold_std_idx(docria):
                     span_index[(i, i + len(word))] = (tag, (node.fld.type, node.fld.label))
                     i += len(word) + 1
                 return span_index
-            print(key, end=': ')
+            
             for s,e in word_spans(key, node).items():
-                print(s, end=' ')
                 doc_index[s] = e
-            print()
                                  
         index[doc.props['docid']] = doc_index
     # TODO: ensure ordering is consistent between function calls
