@@ -72,13 +72,15 @@ def gold_std_idx(docria):
                 span_index = {}
                 words = str(node.fld.text.text)[begin:end].split()
                 i = begin
-                for k, word in enumerate(words):
+                for k, word in enumerate(words, 1):
                     tag = 'I'
-                    if k == 0:
+                    if k == 1:
                         tag = 'B'
-                        if len(words) == 1:
-                            tag = 'S'
-                    span_index[(i, i + len(word))] = (tag, (node.fld.type, node.fld.label))
+                    if len(words) == 1:
+                        tag = 'S'
+                    elif k == len(words):
+                        tag = 'E'
+                    span_index[(i, i + len(word))] = (tag, node.fld.type, node.fld.label)
                     i += len(word) + 1
                 return span_index
             
@@ -87,9 +89,10 @@ def gold_std_idx(docria):
                                  
         index[doc.props['docid']] = doc_index
     # TODO: ensure ordering is consistent between function calls
-    categories = {pair: index for index, pair in enumerate(product(sorted(types), sorted(labels)))}
-    categories[('NOE','OUT')] = len(categories)
-    categories[('NOE','PAD')] = len(categories)
+    tags = {'B', 'E', 'I', 'S'}
+    categories = {pair: index for index, pair in enumerate(product(sorted(tags), sorted(types), sorted(labels)))}
+    categories[('O','NOE','OUT')] = len(categories)
+    categories[('O','NOE','PAD')] = len(categories)
     return index, categories
 
 def gold2vec(docria):
