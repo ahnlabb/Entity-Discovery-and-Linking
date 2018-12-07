@@ -92,6 +92,7 @@ def build_sequences(train, embed):
     xy_sequences = tuple(zip(*(map2(build_sequence, tup, indices) for tup in data)))
     return map(pad_sequences, xy_sequences)
 
+
 def core_nlp_features(corenlp, lbl_sets):
     corenlp = iter(corenlp)
     spans = []
@@ -103,14 +104,20 @@ def core_nlp_features(corenlp, lbl_sets):
     head = next(corenlp).split('\t')[1:]
     sentences = [[]]
     spans = [[]]
+    inside = ''
     for row in corenlp:
         if row:
             cols = row.split('\t')
             features = dict(zip(head, cols[1:]))
-            if 'ne' not in features:
+            if 'ne' in features:
+                inside, features['ne'] = normalize_ne(inside, features['ne'])
+            else:
                 features['ne'] = '_'
+            features['capital'] = features['form'][0].isupper()
+            features['form'] = features['form'].lower()
             add(features, 'pos')
             add(features, 'ne')
+            add(features, 'capital')
             sentences[-1].append(features)
             spans[-1].append((int(features['start']), int(features['end'])))
         else:
@@ -120,6 +127,7 @@ def core_nlp_features(corenlp, lbl_sets):
         sentences.pop(-1)
         spans.pop(-1)
     return sentences, spans
+
 
 def create_mappings(embed, lbl_sets):
     mappings = {key: dict(zip(lbls, count(0))) for key, lbls in lbl_sets.items()}
@@ -154,13 +162,31 @@ def extract_features(mappings, train, padding=False):
         yield [concat(word) for word in zip(*sentence)]
 
 
-def build_model():
+def build_model(feat_len=171):
     model = Sequential()
-    model.add(Bidirectional(LSTM(32, return_sequences=True, stateful=False), input_shape=(None, 158)))
-    #model.add(Dropout(0.2))
+    model.add(Bidirectional(LSTM(32, return_sequences=True, stateful=False), input_shape=(None, feat_len)))
+    model.add(Dropout(0.2))
     model.add(Dense(50, activation='softmax'))
     model.compile(loss='categorical_crossentropy', optimizer='nadam', metrics=['accuracy'])
     return model
+
+
+def normalize_ne(inside, ne):
+    if inside:
+        if ne == ')':
+            ne = 'E-' + inside
+            inside = ''
+        else:
+            ne = 'I-' + inside
+    elif ne[-1] == ')':
+        ne = 'S-' + ne[1:-1]
+        inside = ''
+    else:
+        inside = ne[1:]
+        ne = 'B-' + inside
+
+    return inside, ne
+
 
 def corenlp_parse(text, lang='en'):
     result = langforia(text, lang).split('\n')
@@ -174,20 +200,8 @@ def corenlp_parse(text, lang='en'):
             cols = row.split('\t')
             features = dict(zip(head, cols[1:]))
             if 'ne' in features:
-                ne = features['ne']
-                if inside:
-                    if ne == ')':
-                        ne = 'E-' + inside
-                        inside = ''
-                    else:
-                        ne = 'I-' + inside
-                elif ne[-1] == ')':
-                    ne = 'S-' + ne[1:-1]
-                    inside = ''
-                else:
-                    inside = ne[1:]
-                    ne = 'B-' + inside
-                features['ne'] = ne
+                inside, features['ne'] = normalize_ne(inside, features['ne'])
+
             sentences[-1].append(features)
             spans[-1].append((features['start'], features['end']))
         else:
@@ -220,7 +234,7 @@ def predict(model, mappings, cats, text, padding=False):
     pred = [[interpret_prediction(p, cats) for p in y] for y in Y]
     return format_predictions(text, pred, sentences)
 
-             
+
 def format_predictions(input_text, predictions, sentences):
     pred_dict = {'text': input_text, 'entities': []}
     for sent, pred in zip(sentences, predictions):
@@ -267,9 +281,9 @@ if __name__ == '__main__':
 
     features = extract_features(mappings, train, padding=True)
     features = sorted(enumerate(features), key=lambda x: len(x[1]), reverse=False)
-    gold = [gold[i] for i,_ in features]
-    span_index = [span_index[i] for i,_ in features]
-    features = [v for _,v in features]
+    gold = [gold[i] for i, _ in features]
+    span_index = [span_index[i] for i, _ in features]
+    features = [v for _, v in features]
 
 
     def print_dims(data):
@@ -282,7 +296,6 @@ if __name__ == '__main__':
         except:
             print()
             return
-    
 
     # add NOE-OUT to zeroed gold standard vectors
     for i, sentence in enumerate(gold):
@@ -293,13 +306,12 @@ if __name__ == '__main__':
     def batch_generator(features, gold, batch_len=32):
         while len(features) > 0:
             yield batch(features, batch_len=batch_len), batch(gold, batch_len=batch_len)
-    
+
     batch_len = 100
     batches = [(np.array(x), np.array(y))
-               for x,y in batch_generator(features, gold, batch_len=batch_len)]
+               for x, y in batch_generator(features, gold, batch_len=batch_len)]
     batches = batches[:50] + batches[53:]
     test = batches[50:53]
-
 
     name = 'model.h5'
     if Path(name).exists():
@@ -308,22 +320,22 @@ if __name__ == '__main__':
         f_len = batches[0][0].shape[-1]
         model = build_model(feat_len=f_len)
 
-        for i,b in enumerate(batches, 1):
-            print('\nBatch', i,'\n-----------')
+        for i, b in enumerate(batches, 1):
+            print('\nBatch', i, '\n-----------')
             x, y = b
             model.fit(x, y, epochs=10, validation_split=0.1, verbose=2, batch_size=100)
 
         model.save(name)
-    
+
     text = "My friend, have you heard of the passing of George Bush Senior?"
     predictions = predict(model, mappings, cats, text, padding=True)
     print(predictions)
 
     correct, total, correct_ent, total_ent = 0, 0, 0, 0
-    for feat,gold in test:
+    for feat, gold in test:
         pred = model.predict(feat, verbose=0)
-        for p,g in zip(pred,gold):
-            for w1,w2 in zip(p,g):
+        for p, g in zip(pred, gold):
+            for w1, w2 in zip(p, g):
                 w1 = np.array([int(x) for x in w1 == max(w1)])
                 c1 = from_one_hot(w1, cats)
                 c2 = from_one_hot(w2, cats)
