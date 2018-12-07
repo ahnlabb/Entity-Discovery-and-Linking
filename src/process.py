@@ -127,7 +127,7 @@ def create_mappings(embed, lbl_sets):
     return mappings
 
 
-def extract_features(mappings, train):
+def extract_features(mappings, train, padding=True):
     labels = {}
     for key, mapping in mappings.items():
         labels[key] = []
@@ -145,8 +145,13 @@ def extract_features(mappings, train):
             continue
         labels[key] = [to_categorical(vals, num_classes=len(lbls.keys())) for vals in labels[key]]
 
+    def concat(word):
+        if padding:
+            word = word + (np.zeros(1),)
+        return np.concatenate(word)
+    
     for sentence in zip(*labels.values()):
-        yield [np.concatenate(word) for word in zip(*sentence)]
+        yield [concat(word) for word in zip(*sentence)]
 
 
 def build_model():
@@ -225,11 +230,26 @@ def batch(data, batch_len=32):
 def predict(model, mappings, cats, text):
     lbl_sets = defaultdict(set)
     sentences, spans = core_nlp_features(langforia(text, 'en').split('\n'), lbl_sets)
-    features = [[add_feature(w) for w in f] for f in extract_features(mappings, sentences)]
+    #features = [[add_feature(w) for w in f] for f in extract_features(mappings, sentences)]
+    features = list(extract_features(mappings, sentences))
     x = np.array((batch(features, batch_len=len(features))))
     Y = model.predict(x)
-    return {'text': text, 'entities': [{'start': int(word['start']), 'stop': int(word['end']), 'class': str('-'.join(map(str, interpret_prediction(p, cats))))} for sentence, pred in zip(sentences, Y) for word, p in zip(sentence, pred)]}
+    pred = [[interpret_prediction(p, cats) for p in y] for y in Y]
+    return format_predictions(text, pred, sentences)
 
+             
+def format_predictions(input_text, predictions, sentences):
+    pred_dict = {'text': input_text, 'entities': []}
+    for sent, pred in zip(sentences, predictions):
+        for word, class_tuple in zip(sent, pred):
+            entity_dict = {'start': int(word['start']),
+                           'stop':  int(word['end']),
+                           'class': class_to_str(class_tuple)}
+            pred_dict['entities'].append(entity_dict)
+    return pred_dict
+
+def class_to_str(class_tuple):
+    return '-'.join(class_tuple)
 
 # This is very stupid
 def add_feature(vec):
@@ -293,9 +313,6 @@ if __name__ == '__main__':
             if not word.any():
                 gold[i][j] = np.array([0] * (len(word) - 2) + [1, 0])
 
-    # TODO: add more list comprehensions
-    features = [[add_feature(w) for w in v] for v in features] 
-
     def batch_generator(features, gold, batch_len=32):
         while len(features) > 0:
             yield batch(features, batch_len=batch_len), batch(gold, batch_len=batch_len)
@@ -322,10 +339,7 @@ if __name__ == '__main__':
     
     text = "My friend, have you heard of the passing of George Bush Senior?"
     predictions = predict(model, mappings, cats, text)
-    for p in predictions:
-        for word in p:
-            print(word)
-    
+    print(predictions)
 
     correct, total, correct_ent, total_ent = 0, 0, 0, 0
     for feat,gold in test:
