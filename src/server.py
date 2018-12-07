@@ -41,7 +41,7 @@ def doc_index():
 def make_prediction():
     text = request.get_json()
     with graph.as_default():
-        pred = predict(model, mappings, cats, text)
+        pred = predict(model, mappings, cats, text, padding=True)
     return jsonify(pred)
 
 

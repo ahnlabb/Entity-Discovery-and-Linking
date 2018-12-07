@@ -127,7 +127,7 @@ def create_mappings(embed, lbl_sets):
     return mappings
 
 
-def extract_features(mappings, train, padding=True):
+def extract_features(mappings, train, padding=False):
     labels = {}
     for key, mapping in mappings.items():
         labels[key] = []
@@ -198,22 +198,6 @@ def corenlp_parse(text, lang='en'):
         spans.pop(-1)
     return sentences, spans
 
-    
-def _batch(feats, gold, batch_len=32):
-    f, g = feats[:batch_len], gold[:batch_len]
-    del feats[:batch_len]
-    del gold[:batch_len]
-    # longest sentence in batch
-    longest = max(map(len, f))
-    pad_f = np.array([0] * (len(f[0][0]) - 1) + [1])
-    # NOE-PAD
-    pad_g = np.array([0] * (len(g[0][0]) - 1) + [1])
-    for i in range(len(f)):
-        diff = longest - len(f[i])
-        f[i].extend([pad_f] * diff)
-        g[i].extend([pad_g] * diff)
-    return f, g
-
 
 def batch(data, batch_len=32):
     f = data[:batch_len]
@@ -227,11 +211,10 @@ def batch(data, batch_len=32):
     return f
 
 
-def predict(model, mappings, cats, text):
+def predict(model, mappings, cats, text, padding=False):
     lbl_sets = defaultdict(set)
     sentences, spans = core_nlp_features(langforia(text, 'en').split('\n'), lbl_sets)
-    #features = [[add_feature(w) for w in f] for f in extract_features(mappings, sentences)]
-    features = list(extract_features(mappings, sentences))
+    features = list(extract_features(mappings, sentences, padding=padding))
     x = np.array((batch(features, batch_len=len(features))))
     Y = model.predict(x)
     pred = [[interpret_prediction(p, cats) for p in y] for y in Y]
@@ -250,12 +233,6 @@ def format_predictions(input_text, predictions, sentences):
 
 def class_to_str(class_tuple):
     return '-'.join(class_tuple)
-
-# This is very stupid
-def add_feature(vec):
-    new_vec = np.zeros(len(vec) + 1)
-    new_vec[:-1] = vec
-    return new_vec
 
 
 def interpret_prediction(y, cats):
@@ -288,7 +265,7 @@ if __name__ == '__main__':
         mappings = create_mappings(embed, lbl_sets)
         dump(mappings, open(mapfile, 'w+b'))
 
-    features = extract_features(mappings, train)
+    features = extract_features(mappings, train, padding=True)
     features = sorted(enumerate(features), key=lambda x: len(x[1]), reverse=False)
     gold = [gold[i] for i,_ in features]
     span_index = [span_index[i] for i,_ in features]
@@ -328,7 +305,8 @@ if __name__ == '__main__':
     if Path(name).exists():
         model = load_model(name)
     else:
-        model = build_model()
+        f_len = batches[0][0].shape[-1]
+        model = build_model(feat_len=f_len)
 
         for i,b in enumerate(batches, 1):
             print('\nBatch', i,'\n-----------')
@@ -338,7 +316,7 @@ if __name__ == '__main__':
         model.save(name)
     
     text = "My friend, have you heard of the passing of George Bush Senior?"
-    predictions = predict(model, mappings, cats, text)
+    predictions = predict(model, mappings, cats, text, padding=True)
     print(predictions)
 
     correct, total, correct_ent, total_ent = 0, 0, 0, 0
