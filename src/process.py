@@ -5,6 +5,7 @@ from collections import defaultdict
 from itertools import count, product
 from pickle import load, dump
 from random import shuffle
+import time
 from docria.storage import DocumentIO
 from utils import pickled, langforia, inverted, build_sequence, map2
 from gold_std import gold_std_idx, one_hot, from_one_hot
@@ -16,7 +17,6 @@ from keras.utils import to_categorical
 from keras.layers import Bidirectional, LSTM, Dense, Activation, Embedding, Flatten, Dropout
 from keras.models import Sequential, load_model
 
-import tensorflow as tf
 import keras as ks
 
 
@@ -32,6 +32,7 @@ def read_and_extract(path, fun):
     with DocumentIO.read(path) as doc:
         return fun(list(doc))
 
+
 @pickled
 def load_glove(path):
     with path.open('r') as f:
@@ -41,14 +42,20 @@ def load_glove(path):
             embed[row[0]] = np.asarray(row[1:], dtype='float32')
         return embed
 
+
 def get_core_nlp(docs, lang):
     def call_api(doc):
         text = str(doc.texts['main'])
         return langforia(text, lang).split('\n')
     api_data = []
-    for i,doc in enumerate(docs,1):
-        print("Document %d/%d" % (i,len(docs)))
+    start = time.perf_counter()
+    for i, doc in enumerate(docs, 1):
+        print("Document %d/%d " % (i, len(docs)), end='', flush=True)
         api_data.append(call_api(doc))
+        time_left = int((time.perf_counter() - start) / i * (len(docs) - i))
+        print(f' ETA: {time_left // 60} min {time_left % 60} s    ', end='\r', flush=True)
+    time_tot = int(time.perf_counter() - start)
+    print(f'Done: {len(docs)} documents in {time_tot // 60} min {time_tot % 60} s')
     return api_data, docs
 
 
@@ -90,7 +97,8 @@ def core_nlp_features(corenlp, lbl_sets):
     spans = []
 
     def add(features, name):
-        lbl_sets[name].add(features[name])
+        feat = features[name]
+        lbl_sets[name].add(feat)
 
     head = next(corenlp).split('\t')[1:]
     sentences = [[]]
@@ -99,6 +107,8 @@ def core_nlp_features(corenlp, lbl_sets):
         if row:
             cols = row.split('\t')
             features = dict(zip(head, cols[1:]))
+            if 'ne' not in features:
+                features['ne'] = '_'
             add(features, 'pos')
             add(features, 'ne')
             sentences[-1].append(features)
@@ -130,15 +140,18 @@ def extract_features(mappings, train):
                     label = np.zeros(len(next(iter(mapping.values()))))
                 labels[key][-1].append(label)
 
-    for key, lbls in lbl_sets.items():
-        labels[key] = [to_categorical(vals, num_classes=len(lbls)) for vals in labels[key]]
+    for key, lbls in mappings.items():
+        if key == 'form':
+            continue
+        labels[key] = [to_categorical(vals, num_classes=len(lbls.keys())) for vals in labels[key]]
 
-    return [[np.concatenate(word) for word in zip(*sentence)] for sentence in zip(*labels.values())]
+    for sentence in zip(*labels.values()):
+        yield [np.concatenate(word) for word in zip(*sentence)]
 
 
 def build_model():
     model = Sequential()
-    model.add(Bidirectional(LSTM(32, return_sequences=True, stateful=False), input_shape=(None,108)))
+    model.add(Bidirectional(LSTM(32, return_sequences=True, stateful=False), input_shape=(None, 158)))
     #model.add(Dropout(0.2))
     model.add(Dense(50, activation='softmax'))
     model.compile(loss='categorical_crossentropy', optimizer='nadam', metrics=['accuracy'])
@@ -180,18 +193,6 @@ def corenlp_parse(text, lang='en'):
         spans.pop(-1)
     return sentences, spans
 
-def make_prediction(saved, text):
-    def conll_to_word(sentence):
-        return [word['form'] for word in sentence]
-
-    with saved.open('r+b') as f:
-        model = load(f)
-    model, word_index, out_index = saved
-    word_inv = inverted(word_index)
-    print(text)
-    features, spans = corenlp_parse(text)
-    x = pad_sequences([build_sequence(conll_to_word(sentence), word_inv, 1) for sentence in features])
-    print(model.predict(x))
     
 def _batch(feats, gold, batch_len=32):
     f, g = feats[:batch_len], gold[:batch_len]
@@ -208,6 +209,7 @@ def _batch(feats, gold, batch_len=32):
         g[i].extend([pad_g] * diff)
     return f, g
 
+
 def batch(data, batch_len=32):
     f = data[:batch_len]
     del data[:batch_len]
@@ -218,14 +220,16 @@ def batch(data, batch_len=32):
         diff = longest - len(f[i])
         f[i].extend([pad_f] * diff)
     return f
-    
+
+
 def predict(model, mappings, cats, text):
-    sentences, spans = core_nlp_features(langforia(text, 'en').split('\n'), defaultdict(set))
+    lbl_sets = defaultdict(set)
+    sentences, spans = core_nlp_features(langforia(text, 'en').split('\n'), lbl_sets)
     features = [[add_feature(w) for w in f] for f in extract_features(mappings, sentences)]
     x = np.array((batch(features, batch_len=len(features))))
     Y = model.predict(x)
-    return ([[word['form'] for word in sentence] for sentence in sentences],
-           [[interpret_prediction(p, cats) for p in y] for y in Y])
+    return {'text': text, 'entities': [{'start': int(word['start']), 'stop': int(word['end']), 'class': str('-'.join(map(str, interpret_prediction(p, cats))))} for sentence, pred in zip(sentences, Y) for word, p in zip(sentence, pred)]}
+
 
 # This is very stupid
 def add_feature(vec):
@@ -233,9 +237,11 @@ def add_feature(vec):
     new_vec[:-1] = vec
     return new_vec
 
+
 def interpret_prediction(y, cats):
     one_hot = np.array([int(x) for x in y == max(y)])
     return from_one_hot(one_hot, cats)
+
 
 if __name__ == '__main__':
     args = get_args()
@@ -251,6 +257,9 @@ if __name__ == '__main__':
     train, lbl_sets, gold, cats, span_index = docria_extract(corenlp, docs)
     embed = load_glove(args.glove)
     print(cats)
+
+    with open('./cats.pickle', 'w+b') as f:
+        dump(cats, f)
 
     mapfile = Path('./mappings.pickle')
     if mapfile.exists():

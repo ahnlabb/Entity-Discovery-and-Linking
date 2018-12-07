@@ -1,9 +1,12 @@
+from pickle import load
+from keras.models import load_model
 from flask import Flask, render_template, jsonify, request
 from utils import langforia
 from pathlib import Path
 from gold_std import get_doc_index, gold_std_idx
-from process import make_prediction
+from process import predict
 from docria.storage import DocumentIO
+import tensorflow as tf
 
 app = Flask(__name__)
 
@@ -35,7 +38,16 @@ def doc_index():
 
 
 @app.route('/predict', methods=['POST'])
-def predict():
-    path = Path('./model.pickle')
-    pred = make_prediction(path, request.get_json())
+def make_prediction():
+    text = request.get_json()
+    with graph.as_default():
+        pred = predict(model, mappings, cats, text)
     return jsonify(pred)
+
+
+model = load_model('./model.h5')
+with open('./cats.pickle', 'r+b') as f:
+    cats = load(f)
+with open('./mappings.pickle', 'r+b') as f:
+    mappings = load(f)
+graph = tf.get_default_graph()
