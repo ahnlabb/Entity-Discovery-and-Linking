@@ -8,7 +8,7 @@ from random import shuffle
 import time
 from docria.storage import DocumentIO
 from utils import pickled, langforia, inverted, build_sequence, map2
-from gold_std import gold_std_idx, one_hot, from_one_hot
+from gold_std import gold_std_idx, one_hot, from_one_hot, entity_to_dict
 import requests
 import numpy as np
 
@@ -64,10 +64,11 @@ def docria_extract(core_nlp, docs):
     lbl_sets = defaultdict(set)
 
     gold_std, cats = gold_std_idx(docs)
-    one_hot(gold_std, cats)
+    # mutate cats, return old cats
+    numeric_cats = one_hot(gold_std, cats)
 
     def get_entity(doc, span):
-        none = np.zeros(len(cats))
+        none = cats[('O', 'NOE', 'OUT')]
         docid = doc.props['docid']
         return gold_std[docid].get(span, none)
 
@@ -78,7 +79,7 @@ def docria_extract(core_nlp, docs):
         gold.extend(entities)
         train.extend(sentences)
 
-    return train, lbl_sets, gold, cats, span_index
+    return train, lbl_sets, gold, numeric_cats, span_index
 
 def build_indices(train, embed):
     wordset = set([features['form'] for sentence in train for features in sentence])
@@ -135,23 +136,26 @@ def create_mappings(embed, lbl_sets):
     return mappings
 
 
-def extract_features(mappings, train, padding=False):
+def extract_features(mappings, sentences, padding=False):
     labels = {}
-    for key, mapping in mappings.items():
-        labels[key] = []
-        for sentence in train:
-            labels[key].append([])
+    for feat_name, mapping in mappings.items():
+        labels[feat_name] = []
+        for sentence in sentences:
+            label_list = []
             for features in sentence:
-                try:
-                    label = mapping[features[key]]
-                except KeyError:
-                    label = np.zeros(len(next(iter(mapping.values()))))
-                labels[key][-1].append(label)
+                feature = features[feat_name]
+                if feature in mapping:
+                    label = mapping[feature]
+                else:
+                    mapping_len = len(next(iter(mapping.values()))) 
+                    label = np.zeros(mapping_len)
+                label_list.append(label)
+            labels[feat_name].append(label_list)
 
-    for key, lbls in mappings.items():
-        if key == 'form':
+    for feat, lbls in mappings.items():
+        if feat == 'form':
             continue
-        labels[key] = [to_categorical(vals, num_classes=len(lbls.keys())) for vals in labels[key]]
+        labels[feat] = [to_categorical(vals, num_classes=len(lbls)) for vals in labels[feat]]
 
     def concat(word):
         if padding:
@@ -162,7 +166,7 @@ def extract_features(mappings, train, padding=False):
         yield [concat(word) for word in zip(*sentence)]
 
 
-def build_model(feat_len=171):
+def build_model(feat_len=171, class_len=50):
     model = Sequential()
     model.add(Bidirectional(LSTM(32, return_sequences=True, stateful=False), input_shape=(None, feat_len)))
     model.add(Dropout(0.2))
@@ -212,7 +216,6 @@ def corenlp_parse(text, lang='en'):
         spans.pop(-1)
     return sentences, spans
 
-
 def batch(data, batch_len=32):
     f = data[:batch_len]
     del data[:batch_len]
@@ -222,14 +225,23 @@ def batch(data, batch_len=32):
     for i in range(len(f)):
         diff = longest - len(f[i])
         f[i].extend([pad_f] * diff)
-    return f
+    return np.array(f)
+
+def batch_generator(features, batch_len=32):
+    while len(features) > 0:
+        yield batch(features, batch_len=batch_len)
+        
+def training_batch_generator(inp, out, batch_len=32):
+    for f, g in zip(batch_generator(inp, batch_len=batch_len),
+                    batch_generator(out, batch_len=batch_len)):
+        yield f, g
 
 
 def predict(model, mappings, cats, text, padding=False):
     lbl_sets = defaultdict(set)
     sentences, spans = core_nlp_features(langforia(text, 'en').split('\n'), lbl_sets)
     features = list(extract_features(mappings, sentences, padding=padding))
-    x = np.array((batch(features, batch_len=len(features))))
+    x = list(batch_generator(features))
     Y = model.predict(x)
     pred = [[interpret_prediction(p, cats) for p in y] for y in Y]
     return format_predictions(text, pred, sentences)
@@ -239,9 +251,7 @@ def format_predictions(input_text, predictions, sentences):
     pred_dict = {'text': input_text, 'entities': []}
     for sent, pred in zip(sentences, predictions):
         for word, class_tuple in zip(sent, pred):
-            entity_dict = {'start': int(word['start']),
-                           'stop':  int(word['end']),
-                           'class': class_to_str(class_tuple)}
+            entity_dict = entity_to_dict(word['start'], word['end'], class_tuple)
             pred_dict['entities'].append(entity_dict)
     return pred_dict
 
@@ -267,7 +277,6 @@ if __name__ == '__main__':
     corenlp, docs = read_and_extract(args.file, lambda doc: get_core_nlp(doc, lang='en'))
     train, lbl_sets, gold, cats, span_index = docria_extract(corenlp, docs)
     embed = load_glove(args.glove)
-    print(cats)
 
     with open('./cats.pickle', 'w+b') as f:
         dump(cats, f)
@@ -285,31 +294,8 @@ if __name__ == '__main__':
     span_index = [span_index[i] for i, _ in features]
     features = [v for _, v in features]
 
-
-    def print_dims(data):
-        try:
-            try:
-                print(type(data), str(data.shape), end=' ')
-            except:
-                print(type(data), '(' + str(len(data)) + ')', end=' ')
-            print_dims(data[0])
-        except:
-            print()
-            return
-
-    # add NOE-OUT to zeroed gold standard vectors
-    for i, sentence in enumerate(gold):
-        for j, word in enumerate(sentence):
-            if not word.any():
-                gold[i][j] = np.array([0] * (len(word) - 2) + [1, 0])
-
-    def batch_generator(features, gold, batch_len=32):
-        while len(features) > 0:
-            yield batch(features, batch_len=batch_len), batch(gold, batch_len=batch_len)
-
     batch_len = 100
-    batches = [(np.array(x), np.array(y))
-               for x, y in batch_generator(features, gold, batch_len=batch_len)]
+    batches = [(x, y) for x, y in training_batch_generator(features, gold, batch_len=batch_len)]
     batches = batches[:50] + batches[53:]
     test = batches[50:53]
 
@@ -318,19 +304,19 @@ if __name__ == '__main__':
         model = load_model(name)
     else:
         f_len = batches[0][0].shape[-1]
-        model = build_model(feat_len=f_len)
+        model = build_model(feat_len=f_len, class_len=len(cats))
 
         for i, b in enumerate(batches, 1):
             print('\nBatch', i, '\n-----------')
             x, y = b
-            model.fit(x, y, epochs=10, validation_split=0.1, verbose=2, batch_size=100)
+            model.fit(x, y, epochs=10, validation_split=0.1, verbose=2, batch_size=batch_len)
 
         model.save(name)
 
     text = "My friend, have you heard of the passing of George Bush Senior?"
     predictions = predict(model, mappings, cats, text, padding=True)
     print(predictions)
-
+   
     correct, total, correct_ent, total_ent = 0, 0, 0, 0
     for feat, gold in test:
         pred = model.predict(feat, verbose=0)

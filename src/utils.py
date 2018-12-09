@@ -16,16 +16,17 @@ def build_sequence(l, invind, default=None):
 def map2(fun, x, y):
     return fun(x[0], y[0]), fun(x[1], y[1])
 
-def to_categorical(y, num_classes=None, dtype='float32'):
-    """DOES NOT WORK !!!"""
-    if not num_classes:
-        num_classes = len(set(y))
-    if type(dtype) is str:
-        dtype = np.sctypeDict[dtype]
-    array = np.zeros((len(y), num_classes), dtype=dtype)
-    for i,k in enumerate(y):
-        array[i][k-1] = 1
-    return array
+def print_dims(data):
+    """powerful debugging solution"""
+    try:
+        try:
+            print(type(data), str(data.shape), end=' ')
+        except:
+            print(type(data), '(' + str(len(data)) + ')', end=' ')
+        print_dims(data[0])
+    except:
+        print()
+        return
 
 def trans_mut_map(ab, bc, f=lambda x: x):
     for k in ab:

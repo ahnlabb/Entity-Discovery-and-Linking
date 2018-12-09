@@ -8,9 +8,14 @@ from itertools import product
 
 def one_hot(index, categories):
     n_cls = len(categories)
-    to_cat = lambda x: to_categorical(x, num_classes=n_cls)
+    def to_cat(x):
+        return to_categorical(x, num_classes=n_cls)
     for k in index:
         trans_mut_map(index[k], categories, to_cat)
+    old_cats = dict(categories)
+    for key, val in categories.items():
+        categories[key] = to_cat(val)
+    return old_cats
 
 def from_one_hot(vector, categories):
     assert len(vector) == len(categories)
@@ -19,13 +24,12 @@ def from_one_hot(vector, categories):
         if v == 1:
             return invind[i]
     raise ValueError("Zero vector")
-
+    
+def entity_to_dict(start, stop, entity):
+    return {'start': start, 'stop': stop, 'class': '-'.join(entity)}
 
 def json_compatible(index):
-    def make_dict(span, entity):
-        return {'start': span[0], 'stop': span[1],
-                'class': '-'.join(entity)}
-    return [make_dict(s,e) for s,e in index.items()]
+    return [entity_to_dict(s[0], s[1], e) for s,e in index.items()]
 
 def gold_std_idx(docria):
     labels, types = set(), set()
@@ -41,7 +45,6 @@ def gold_std_idx(docria):
             # ignore xml-only entities
             if entity:
                 span = (entity.start, entity.stop)
-                
                 # TODO: simplify logic if possible
                 if longest:
                     # there is a greater span with same start
@@ -88,11 +91,15 @@ def gold_std_idx(docria):
                 doc_index[s] = e
                                  
         index[doc.props['docid']] = doc_index
-    # TODO: ensure ordering is consistent between function calls
+        
     tags = {'B', 'E', 'I', 'S'}
-    categories = {pair: index for index, pair in enumerate(product(sorted(tags), sorted(types), sorted(labels)))}
-    categories[('O','NOE','OUT')] = len(categories)
-    categories[('O','NOE','PAD')] = len(categories)
+    categories = {pair: index for index, pair
+                  in enumerate(product(sorted(tags), sorted(types), sorted(labels)))}
+    
+    outside, padding = ('O','NOE','OUT'), ('O','NOE','PAD')
+    categories[outside] = len(categories)
+    categories[padding] = len(categories)
+    
     return index, categories
 
 def gold2vec(docria):
