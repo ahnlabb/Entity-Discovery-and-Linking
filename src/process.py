@@ -2,14 +2,12 @@
 from pathlib import Path
 from argparse import ArgumentParser
 from collections import defaultdict
-from itertools import count, product
+from itertools import count
 from pickle import load, dump
-from random import shuffle
 import time
 from docria.storage import DocumentIO
 from utils import pickled, langforia, inverted, build_sequence, map2, flatten_once
-from gold_std import *
-import requests
+from gold_std import entity_to_dict, from_one_hot, one_hot, gold_std_idx, to_neleval
 import numpy as np
 
 from keras.preprocessing.sequence import pad_sequences
@@ -26,10 +24,12 @@ def get_args():
     parser.add_argument('--refit', action='store_true')
     return parser.parse_args()
 
+
 @pickled
 def read_and_extract(path, fun):
     with DocumentIO.read(path) as doc:
         return fun(list(doc))
+
 
 @pickled
 def load_glove(path):
@@ -39,6 +39,7 @@ def load_glove(path):
         for row in rows:
             embed[row[0]] = np.asarray(row[1:], dtype='float32')
         return embed
+
 
 def get_core_nlp(docs, lang):
     def call_api(doc):
@@ -54,6 +55,7 @@ def get_core_nlp(docs, lang):
     time_tot = int(time.perf_counter() - start)
     print(f'Done: {len(docs)} documents in {time_tot // 60} min {time_tot % 60} s')
     return api_data, docs
+
 
 def docria_extract(core_nlp, docs):
     train, gold, span_index = [], [], []
@@ -77,8 +79,10 @@ def docria_extract(core_nlp, docs):
 
     return train, lbl_sets, gold, numeric_cats, span_index, gold_std.keys()
 
+
 def corpus_extract(path):
     pass
+
 
 def build_indices(train, embed):
     wordset = set([features['form'] for sentence in train for features in sentence])
@@ -86,11 +90,13 @@ def build_indices(train, embed):
     word_ind = dict(enumerate(wordset, 2))
     return word_ind
 
+
 def build_sequences(train, embed):
     indices = list(map(inverted, build_indices(train, embed)))
     data = 0
     xy_sequences = tuple(zip(*(map2(build_sequence, tup, indices) for tup in data)))
     return map(pad_sequences, xy_sequences)
+
 
 def core_nlp_features(corenlp, lbl_sets):
     corenlp = iter(corenlp)
@@ -127,10 +133,12 @@ def core_nlp_features(corenlp, lbl_sets):
         spans.pop(-1)
     return sentences, spans
 
+
 def create_mappings(embed, lbl_sets):
     mappings = {key: dict(zip(lbls, count(0))) for key, lbls in lbl_sets.items()}
     mappings['form'] = embed
     return mappings
+
 
 def update_mappings(mappings, lbl_sets):
     maxes = {feat: max(mapping.values()) for feat, mapping in mappings.items() if feat != 'form'}
@@ -139,6 +147,7 @@ def update_mappings(mappings, lbl_sets):
             if lbl not in mappings[key]:
                 maxes[key] += 1
                 mappings[key][lbl] = maxes[key]
+
 
 def extract_features(mappings, sentences, padding=False):
     labels = {}
@@ -151,7 +160,7 @@ def extract_features(mappings, sentences, padding=False):
                 if feature in mapping:
                     label = mapping[feature]
                 else:
-                    mapping_len = len(next(iter(mapping.values()))) 
+                    mapping_len = len(next(iter(mapping.values())))
                     label = np.zeros(mapping_len)
                 label_list.append(label)
             labels[feat_name].append(label_list)
@@ -165,9 +174,10 @@ def extract_features(mappings, sentences, padding=False):
         if padding:
             word = word + (np.zeros(1),)
         return np.concatenate(word)
-    
+
     for sentence in zip(*labels.values()):
         yield [concat(word) for word in zip(*sentence)]
+
 
 def build_model(feat_len=171, class_len=50):
     model = Sequential()
@@ -176,6 +186,7 @@ def build_model(feat_len=171, class_len=50):
     model.add(Dense(class_len, activation='softmax'))
     model.compile(loss='categorical_crossentropy', optimizer='nadam', metrics=['accuracy'])
     return model
+
 
 def normalize_ne(inside, ne):
     if inside:
@@ -192,6 +203,7 @@ def normalize_ne(inside, ne):
         ne = 'B-' + inside
 
     return inside, ne
+
 
 def corenlp_parse(text, lang='en'):
     result = langforia(text, lang).split('\n')
@@ -217,6 +229,7 @@ def corenlp_parse(text, lang='en'):
         spans.pop(-1)
     return sentences, spans
 
+
 def batch(data, batch_len=32):
     f = data[:batch_len]
     del data[:batch_len]
@@ -228,14 +241,17 @@ def batch(data, batch_len=32):
         f[i].extend([pad_f] * diff)
     return np.array(f)
 
+
 def batch_generator(features, batch_len=32):
     while len(features) > 0:
         yield batch(features, batch_len=batch_len)
-        
+
+
 def training_batch_generator(inp, out, batch_len=32):
     for f, g in zip(batch_generator(inp, batch_len=batch_len),
                     batch_generator(out, batch_len=batch_len)):
         yield f, g
+
 
 def predict(model, mappings, cats, text, padding=False):
     lbl_sets = defaultdict(set)
@@ -255,16 +271,19 @@ def format_predictions(input_text, predictions, sentences):
             pred_dict['entities'].append(entity_dict)
     return pred_dict
 
+
 def interpret_prediction(y, cats):
     one_hot = np.array([int(x) for x in y == max(y)])
     return from_one_hot(one_hot, cats)
+
 
 def same_order(parent, *children, key=lambda x: len(x[1])):
     children = list(children)
     parent = sorted(enumerate(parent), key=key)
     for i, c in enumerate(children):
-        children[i] = [c[j] for j,_ in parent]
+        children[i] = [c[j] for j, _ in parent]
     return tuple([[v for _, v in parent]] + children)
+
 
 def test(xy):
     correct, total, correct_ent, total_ent = 0, 0, 0, 0
@@ -284,11 +303,13 @@ def test(xy):
                         correct_ent += 1
     print(100 * correct / total, '% correct total')
     print(100 * correct_ent / total_ent, '% correct entities')
-    
+
+
 if __name__ == '__main__':
     args = get_args()
     for arg in vars(args).values():
-        if arg == args.model: continue
+        if arg == args.model:
+            continue
         try:
             assert(arg.exists())
         except AssertionError:
@@ -312,7 +333,7 @@ if __name__ == '__main__':
 
     features = extract_features(mappings, train, padding=True)
     features, gold, span_index = same_order(features, gold, span_index)
-    
+
     batch_len = 100
     batches = list(training_batch_generator(features, gold, batch_len=batch_len))
 
@@ -332,10 +353,9 @@ if __name__ == '__main__':
             model.fit(x, y, epochs=10, validation_split=0.1, verbose=2, batch_size=batch_len)
 
         model.save(name)
-        
-    for feat,_ in batches[:1]:
+
+    for feat, _ in batches[:1]:
         pred = model.predict(feat, verbose=1)
         print(pred)
         print(to_neleval(pred, span_index, doc_index, cats))
         print()
-    
