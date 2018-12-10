@@ -7,8 +7,8 @@ from pickle import load, dump
 from random import shuffle
 import time
 from docria.storage import DocumentIO
-from utils import pickled, langforia, inverted, build_sequence, map2
-from gold_std import gold_std_idx, one_hot, from_one_hot, entity_to_dict
+from utils import pickled, langforia, inverted, build_sequence, map2, flatten_once
+from gold_std import *
 import requests
 import numpy as np
 
@@ -75,7 +75,7 @@ def docria_extract(core_nlp, docs):
         gold.extend(entities)
         train.extend(sentences)
 
-    return train, lbl_sets, gold, numeric_cats, span_index
+    return train, lbl_sets, gold, numeric_cats, span_index, gold_std.keys()
 
 def corpus_extract(path):
     pass
@@ -284,7 +284,7 @@ def test(xy):
                         correct_ent += 1
     print(100 * correct / total, '% correct total')
     print(100 * correct_ent / total_ent, '% correct entities')
-
+    
 if __name__ == '__main__':
     args = get_args()
     for arg in vars(args).values():
@@ -297,7 +297,7 @@ if __name__ == '__main__':
             pass
 
     corenlp, docs = read_and_extract(args.file, lambda doc: get_core_nlp(doc, lang='en'))
-    train, lbl_sets, gold, cats, span_index = docria_extract(corenlp, docs)
+    train, lbl_sets, gold, cats, span_index, doc_index = docria_extract(corenlp, docs)
     embed = load_glove(args.glove)
 
     mapfile = Path('./%s.mappings.pickle' % args.model)
@@ -309,16 +309,10 @@ if __name__ == '__main__':
     else:
         mappings = create_mappings(embed, lbl_sets)
         dump(mappings, open(mapfile, 'w+b'))
-    
-    for n,m in mappings.items():
-        if n == 'form':
-            continue
-        print(n, m)
-    print()
 
     features = extract_features(mappings, train, padding=True)
     features, gold, span_index = same_order(features, gold, span_index)
-
+    
     batch_len = 100
     batches = list(training_batch_generator(features, gold, batch_len=batch_len))
 
@@ -338,8 +332,10 @@ if __name__ == '__main__':
             model.fit(x, y, epochs=10, validation_split=0.1, verbose=2, batch_size=batch_len)
 
         model.save(name)
-
-    text = "My friend, have you heard of the passing of George Bush Senior?"
-    predictions = predict(model, mappings, cats, text, padding=True)
-    print(predictions)
-   
+        
+    for feat,_ in batches[:1]:
+        pred = model.predict(feat, verbose=1)
+        print(pred)
+        print(to_neleval(pred, span_index, doc_index, cats))
+        print()
+    

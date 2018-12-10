@@ -1,9 +1,12 @@
 from pathlib import Path
 from pickle import load, dump
+from functools import reduce
 import requests
 import numpy as np
 
 
+def flatten_once(iterable):
+    return list(reduce(lambda a,b: a+b, iterable))
 
 def inverted(a):
     return {v:k for k,v in a.items()}

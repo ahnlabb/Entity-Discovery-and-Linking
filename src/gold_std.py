@@ -1,9 +1,10 @@
 from pathlib import Path
 from keras.utils import to_categorical
-from utils import trans_mut_map, inverted
+from utils import trans_mut_map, inverted, flatten_once
 from docria.storage import DocumentIO
 from argparse import ArgumentParser
 from itertools import product
+from process import interpret_prediction
 
 
 def one_hot(index, categories):
@@ -101,6 +102,14 @@ def gold_std_idx(docria):
     categories[padding] = len(categories)
     
     return index, categories
+
+def to_neleval(output, span_index, doc_index, cats):
+    rows = []
+    for cls,span,docid in zip(*map(flatten_once, (output, span_index)), doc_index):
+        start, stop = str(span[0]), str(span[1] + 1)
+        row = docid + '\t' + start + '\t' + stop + '\t' + '1.0' + '\t' + interpret_prediction(cls, cats)[2]
+        rows.append(row)
+    return '\n'.join(rows)
 
 def gold2vec(docria):
     def wrapper():
