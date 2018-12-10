@@ -9,3 +9,4 @@ dependencies:
         - docria
         - requests
         - regex
+        - neleval

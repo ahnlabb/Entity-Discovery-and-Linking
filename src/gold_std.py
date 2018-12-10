@@ -107,16 +107,21 @@ def gold_std_idx(docria):
     
     return index, categories
 
-def to_neleval(output, span_index, doc_index, cats, include_outside=False):
+def to_neleval(classes, span_index, doc_index, cats, iteration, include_outside=False):
     rows = []
-    for cls,span,docid in zip(*map(flatten_once, (output, span_index, doc_index))):
+    k = 0
+    for cls,span,docid in zip(*map(flatten_once, (classes, span_index, doc_index))):
         cls = interpret_prediction(cls, cats)
         if cls[0] == 'O' and not include_outside:
             continue
         start, stop = str(span[0]), str(span[1] + 1)
-        row = docid + '\t' + start + '\t' + stop + '\t' + '1.0' + '\t' + cls[2]
+        entity_id = 'NIL_' + str(iteration * len(classes) + k)
+        row = docid + '\t' + start + '\t' + stop + '\t' + entity_id + '\t' + '1.0' + '\t' + cls[2]
         rows.append(row)
-    return '\n'.join(rows)
+        k += 1
+    if rows:
+        return '\n'.join(rows) + '\n'
+    return ''
 
 def gold2vec(docria):
     def wrapper():

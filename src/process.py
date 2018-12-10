@@ -365,13 +365,14 @@ if __name__ == '__main__':
 
         model.save(name)
     
-    if args.test:    
-        for feat, span_ind, doc_ind in batches:
-            pred = model.predict(feat, verbose=0)
-            print(to_neleval(pred, span_ind, doc_ind, cats), end='')
-    elif args.gold:
-        for gold, span_ind, doc_ind in batches:
-            print(to_neleval(gold, span_ind, doc_ind, cats), end='')
+    if args.test or args.gold:
+        neleval_out = ''
+        i = 0
+        for data, span_ind, doc_ind in batches:
+            if args.test:
+                data = model.predict(data, verbose=0)
+            neleval_out += to_neleval(data, span_ind, doc_ind, cats, i)
+            i += 1
+        print(neleval_out, end='')
     else:
         test(batches)
-        
