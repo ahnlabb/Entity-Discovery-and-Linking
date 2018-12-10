@@ -25,11 +25,13 @@ def print_dims(data):
         try:
             print(type(data), str(data.shape), end=' ')
         except:
+            if type(data) is str:
+                print(type(data), end=' ')
+                raise Error
             print(type(data), '(' + str(len(data)) + ')', end=' ')
         print_dims(data[0])
     except:
         print()
-        return
 
 def trans_mut_map(ab, bc, f=lambda x: x):
     for k in ab:

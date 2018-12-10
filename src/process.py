@@ -6,8 +6,8 @@ from itertools import count
 from pickle import load, dump
 import time
 from docria.storage import DocumentIO
-from utils import pickled, langforia, inverted, build_sequence, map2, flatten_once
-from gold_std import entity_to_dict, from_one_hot, one_hot, gold_std_idx, to_neleval
+from utils import pickled, langforia, inverted, build_sequence, map2, flatten_once, print_dims
+from gold_std import entity_to_dict, from_one_hot, one_hot, gold_std_idx, to_neleval, interpret_prediction
 import numpy as np
 
 from keras.preprocessing.sequence import pad_sequences
@@ -22,6 +22,8 @@ def get_args():
     parser.add_argument('glove', type=Path)
     parser.add_argument('model', type=str)
     parser.add_argument('--refit', action='store_true')
+    parser.add_argument('--test', action='store_true')
+    parser.add_argument('--gold', action='store_true')
     return parser.parse_args()
 
 
@@ -58,7 +60,7 @@ def get_core_nlp(docs, lang):
 
 
 def docria_extract(core_nlp, docs):
-    train, gold, span_index = [], [], []
+    train, gold, span_index, doc_index = [], [], [], []
     lbl_sets = defaultdict(set)
 
     gold_std, cats = gold_std_idx(docs)
@@ -73,11 +75,13 @@ def docria_extract(core_nlp, docs):
     for cnlp, doc in zip(core_nlp, docs):
         sentences, spans = core_nlp_features(cnlp, lbl_sets)
         entities = [[get_entity(doc, span) for span in sentence] for sentence in spans]
+        current_doc = [[doc.props['docid'] for span in sentence] for sentence in spans]
+        doc_index.extend(current_doc)
         span_index.extend(spans)
         gold.extend(entities)
         train.extend(sentences)
-
-    return train, lbl_sets, gold, numeric_cats, span_index, gold_std.keys()
+    
+    return train, lbl_sets, gold, numeric_cats, span_index, doc_index
 
 
 def corpus_extract(path):
@@ -247,10 +251,9 @@ def batch_generator(features, batch_len=32):
         yield batch(features, batch_len=batch_len)
 
 
-def training_batch_generator(inp, out, batch_len=32):
-    for f, g in zip(batch_generator(inp, batch_len=batch_len),
-                    batch_generator(out, batch_len=batch_len)):
-        yield f, g
+def zipped_batch_generator(*lists, batch_len=32):
+    for z in zip(*[batch_generator(L, batch_len=batch_len) for L in lists]):
+        yield z
 
 
 def predict(model, mappings, cats, text, padding=False):
@@ -332,10 +335,18 @@ if __name__ == '__main__':
         dump(mappings, open(mapfile, 'w+b'))
 
     features = extract_features(mappings, train, padding=True)
-    features, gold, span_index = same_order(features, gold, span_index)
+    features, gold, span_index, doc_index = same_order(features, gold, span_index, doc_index)
 
-    batch_len = 100
-    batches = list(training_batch_generator(features, gold, batch_len=batch_len))
+    if args.test:
+        batch_len = 1
+        lists = (features, span_index, doc_index)
+    elif args.gold:
+        batch_len = 1
+        lists = (gold, span_index, doc_index)
+    else:
+        batch_len = 100
+        lists = (features, gold)
+    batches = list(zipped_batch_generator(*lists, batch_len=batch_len))
 
     fit = args.refit
     name = args.model
@@ -353,9 +364,14 @@ if __name__ == '__main__':
             model.fit(x, y, epochs=10, validation_split=0.1, verbose=2, batch_size=batch_len)
 
         model.save(name)
-
-    for feat, _ in batches[:1]:
-        pred = model.predict(feat, verbose=1)
-        print(pred)
-        print(to_neleval(pred, span_index, doc_index, cats))
-        print()
+    
+    if args.test:    
+        for feat, span_ind, doc_ind in batches:
+            pred = model.predict(feat, verbose=0)
+            print(to_neleval(pred, span_ind, doc_ind, cats), end='')
+    elif args.gold:
+        for gold, span_ind, doc_ind in batches:
+            print(to_neleval(gold, span_ind, doc_ind, cats), end='')
+    else:
+        test(batches)
+        

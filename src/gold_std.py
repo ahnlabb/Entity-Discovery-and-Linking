@@ -4,7 +4,7 @@ from utils import trans_mut_map, inverted, flatten_once
 from docria.storage import DocumentIO
 from argparse import ArgumentParser
 from itertools import product
-from process import interpret_prediction
+import numpy as np
 
 
 def one_hot(index, categories):
@@ -26,6 +26,10 @@ def from_one_hot(vector, categories):
             return invind[i]
     raise ValueError("Zero vector")
     
+def interpret_prediction(y, cats):
+    one_hot = np.array([int(x) for x in y == max(y)])
+    return from_one_hot(one_hot, cats)
+
 def entity_to_dict(start, stop, entity):
     return {'start': start, 'stop': stop, 'class': '-'.join(entity)}
 
@@ -103,11 +107,14 @@ def gold_std_idx(docria):
     
     return index, categories
 
-def to_neleval(output, span_index, doc_index, cats):
+def to_neleval(output, span_index, doc_index, cats, include_outside=False):
     rows = []
-    for cls,span,docid in zip(*map(flatten_once, (output, span_index)), doc_index):
+    for cls,span,docid in zip(*map(flatten_once, (output, span_index, doc_index))):
+        cls = interpret_prediction(cls, cats)
+        if cls[0] == 'O' and not include_outside:
+            continue
         start, stop = str(span[0]), str(span[1] + 1)
-        row = docid + '\t' + start + '\t' + stop + '\t' + '1.0' + '\t' + interpret_prediction(cls, cats)[2]
+        row = docid + '\t' + start + '\t' + stop + '\t' + '1.0' + '\t' + cls[2]
         rows.append(row)
     return '\n'.join(rows)
 
