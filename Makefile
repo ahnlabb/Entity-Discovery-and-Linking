@@ -1,5 +1,9 @@
 .PHONY: paper site serve process
 
+ifneq ($(CONDA_DEFAULT_ENV),nlp-project)
+$(error Not in conda environment)
+endif
+
 site: src/static/elm_debug.js src/static/elm.js src/server.py src/templates/debug.html
 
 src/static/elm.min.js: src/static/elm.js
