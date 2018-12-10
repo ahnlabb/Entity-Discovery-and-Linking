@@ -4,7 +4,7 @@ import Browser
 import Http
 import Url.Builder as Url
 import Dict
-import Element exposing (Element, el, text, row, column, alignRight, fill, width, height, rgb255, spacing, centerY, padding, none, px, spacing)
+import Element exposing (Element, el, text, row, column, alignRight, fill, width, height, rgb255, spacing, centerX, centerY, alignTop, padding, none, px, spacing)
 import Element.Input as Input
 import Element.Background as Background
 import Element.Border as Border
@@ -42,6 +42,7 @@ type Model
 type alias Page =
     { docs : Dict.Dict String Document
     , selection : Maybe String
+    , reduceTags : Bool
     , prediction : Maybe Document
     }
 
@@ -71,6 +72,7 @@ init _ =
 type Msg
     = NewDocuments (Result Http.Error (Dict.Dict String Document))
     | NewPrediction (Result Http.Error Document)
+    | ToggleReduce Bool
     | NewSelection String
 
 
@@ -80,7 +82,7 @@ update msg model =
         ( NewDocuments result, Loading ) ->
             case result of
                 Ok docs ->
-                    ( Done (Page docs Nothing Nothing), Cmd.none )
+                    ( Done (Page docs Nothing True Nothing), Cmd.none )
 
                 Err e ->
                     ( Error e, Cmd.none )
@@ -100,6 +102,9 @@ update msg model =
 
                 Nothing ->
                     ( Done { page | selection = Just string }, Cmd.none )
+
+        ( ToggleReduce bool, Done page ) ->
+            ( Done { page | reduceTags = bool }, Cmd.none )
 
         ( _, _ ) ->
             ( model, Cmd.none )
@@ -134,10 +139,18 @@ view model =
 
 
 body : Page -> Element Msg
-body { docs, selection, prediction } =
+body { docs, selection, prediction, reduceTags } =
     column [ width fill, spacing 30 ]
-        [ selectDoc docs
-        , resultView docs selection prediction
+        [ row [ width fill ]
+            [ selectDoc docs
+            , Input.checkbox []
+                { onChange = ToggleReduce
+                , icon = Input.defaultCheckbox
+                , checked = reduceTags
+                , label = Input.labelLeft [] (text "Reduce Tags")
+                }
+            ]
+        , resultView docs selection prediction reduceTags
         ]
 
 
@@ -163,8 +176,8 @@ getSel sel docs =
         sel |> Maybe.andThen (get docs)
 
 
-resultView : Dict.Dict String Document -> Maybe String -> Maybe Document -> Element Msg
-resultView docs selection prediction =
+resultView : Dict.Dict String Document -> Maybe String -> Maybe Document -> Bool -> Element Msg
+resultView docs selection prediction reduceTags =
     case getSel selection docs of
         Just doc ->
             let
@@ -302,66 +315,82 @@ resultView docs selection prediction =
                         )
                         [ "NAM-PER", "NAM-FAC", "NAM-LOC", "NAM-ORG", "NAM-TTL", "NAM-GPE", "NOM-PER", "NOM-FAC", "NOM-LOC", "NOM-ORG", "NOM-TTL", "NOM-GPE" ]
 
-                reduceHelper startPrev stopPrev classPrev entityList =
-                    case entityList of
-                        { start, stop, class } :: t ->
-                            let
-                                cur =
-                                    { start = start, stop = stop, class = class }
-                            in
-                                if classPrev /= (String.dropLeft 2 class) then
-                                    cur :: reduceEntities t
-                                else
-                                    case String.left 1 class of
-                                        "I" ->
-                                            reduceHelper startPrev stop class t
-
-                                        "E" ->
-                                            { start = startPrev, stop = stop, class = String.dropLeft 2 class } :: reduceEntities t
-
-                                        _ ->
-                                            { start = startPrev, stop = stopPrev, class = classPrev } :: reduceEntities (cur :: t)
-
-                        [] ->
-                            [ { start = startPrev, stop = stopPrev, class = classPrev } ]
-
-                reduceEntities entityList =
-                    case entityList of
-                        { start, stop, class } :: t ->
-                            case String.left 1 class of
-                                "B" ->
-                                    reduceHelper start stop (String.dropLeft 2 class) t
-
-                                "S" ->
-                                    { start = start, stop = stop, class = String.dropLeft 2 class } :: reduceEntities t
-
-                                "O" ->
-                                    reduceEntities t
-
-                                _ ->
-                                    { start = start, stop = stop, class = class } :: reduceEntities t
-
-                        [] ->
-                            []
-
                 viewAnnotations =
                     List.map Element.html >> Element.paragraph [ Font.family [ Font.typeface "Source Sans Pro", Font.sansSerif ] ]
 
                 viewPrediction pred =
                     case pred of
                         Just document ->
-                            annotate 0 document.text (reduceEntities document.entities) |> viewAnnotations
+                            reduceIfChecked document.entities |> annotate 0 document.text |> viewAnnotations
 
                         Nothing ->
-                            el [ width fill ] (Html.div [ class "lds-dual-ring" ] [] |> Element.html)
+                            el [ width fill, alignTop ]
+                                (column [ centerX, alignTop ]
+                                    [ Html.div [ class "lds-dual-ring" ] [] |> Element.html |> el [ centerX, padding 60 ]
+                                    , el [ Font.center, width fill ] (Element.text "Predicting labels")
+                                    ]
+                                )
+
+                reduceIfChecked entities =
+                    if reduceTags then
+                        reduceEntities doc.entities
+                    else
+                        doc.entities
             in
                 row [ width fill, spacing 50, padding 30 ]
-                    [ annotate 0 doc.text (reduceEntities doc.entities) |> viewAnnotations
+                    [ reduceIfChecked doc.entities |> annotate 0 doc.text |> viewAnnotations
                     , viewPrediction prediction
                     ]
 
         Nothing ->
             none
+
+
+reduceHelper startPrev stopPrev classPrev entityList =
+    case entityList of
+        { start, stop, class } :: t ->
+            let
+                cur =
+                    { start = start, stop = stop, class = class }
+
+                className =
+                    String.dropLeft 2 class
+            in
+                if classPrev /= className then
+                    cur :: reduceEntities t
+                else
+                    case String.left 1 class of
+                        "I" ->
+                            reduceHelper startPrev stop className t
+
+                        "E" ->
+                            { start = startPrev, stop = stop, class = className } :: reduceEntities t
+
+                        _ ->
+                            { start = startPrev, stop = stopPrev, class = classPrev } :: reduceEntities (cur :: t)
+
+        [] ->
+            [ { start = startPrev, stop = stopPrev, class = classPrev } ]
+
+
+reduceEntities entityList =
+    case entityList of
+        { start, stop, class } :: t ->
+            case String.left 1 class of
+                "B" ->
+                    reduceHelper start stop (String.dropLeft 2 class) t
+
+                "S" ->
+                    { start = start, stop = stop, class = String.dropLeft 2 class } :: reduceEntities t
+
+                "O" ->
+                    reduceEntities t
+
+                _ ->
+                    { start = start, stop = stop, class = class } :: reduceEntities t
+
+        [] ->
+            []
 
 
 errorString error =
