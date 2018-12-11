@@ -1,9 +1,35 @@
 from pathlib import Path
 from pickle import load, dump
 from functools import reduce
+from tempfile import mkstemp
+from keras.models import load_model as loadmodel
 import requests
 import numpy as np
+import os
 
+
+def save_model(filename, **kwargs):
+    for key in ['model', 'mappings', 'cats']:
+        assert key in kwargs
+    fp, fname = mkstemp()
+    kwargs['model'].save(fname)
+    with open(fname, 'r+b') as f:
+        kwargs['model'] = f.read()
+    os.close(fp)
+    with Path(filename).open('w+b') as f:
+        dump(kwargs, f)
+        
+def load_model(filename):
+    with Path(filename).open('r+b') as f:
+        model_dict = load(f)
+    for key in ['model', 'mappings', 'cats']:
+        assert key in model_dict
+    fp, fname = mkstemp()
+    with open(fname, 'w+b') as f:
+        f.write(model_dict['model'])
+    model_dict['model'] = loadmodel(fname)
+    os.close(fp)
+    return model_dict
 
 def flatten_once(iterable):
     return list(reduce(lambda a,b: a+b, iterable))

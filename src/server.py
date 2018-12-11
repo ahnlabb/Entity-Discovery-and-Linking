@@ -29,7 +29,7 @@ def debug():
 
 @app.route('/gold')
 def doc_index():
-    path = Path('./corpus/tac/en/eng.2015.eval.docria')
+    path = Path('./corpus/tac/lang/en/eng.2015.eval.docria')
     with DocumentIO.read(path) as docria:
         doc = list(docria)
         gold_std, _ = gold_std_idx(doc)
@@ -45,9 +45,9 @@ def make_prediction():
     return jsonify(pred)
 
 
-model = load_model('./model.h5')
+model = load_model('./en.h5')
 with open('./cats.pickle', 'r+b') as f:
     cats = load(f)
-with open('./mappings.pickle', 'r+b') as f:
+with open('./en.h5.mappings.pickle', 'r+b') as f:
     mappings = load(f)
 graph = tf.get_default_graph()

@@ -1,4 +1,4 @@
-module DocDebug exposing (..)
+module Main exposing (..)
 
 import Browser
 import Http

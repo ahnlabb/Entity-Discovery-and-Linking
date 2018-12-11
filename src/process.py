@@ -6,14 +6,14 @@ from itertools import count
 from pickle import load, dump
 import time
 from docria.storage import DocumentIO
-from utils import pickled, langforia, inverted, build_sequence, map2, flatten_once, print_dims
+from utils import pickled, langforia, inverted, build_sequence, map2, flatten_once, print_dims, save_model, load_model
 from gold_std import entity_to_dict, from_one_hot, one_hot, gold_std_idx, to_neleval, interpret_prediction
 import numpy as np
 
 from keras.preprocessing.sequence import pad_sequences
 from keras.utils import to_categorical
 from keras.layers import Bidirectional, LSTM, Dense, Activation, Embedding, Flatten, Dropout
-from keras.models import Sequential, load_model
+from keras.models import Sequential
 
 
 def get_args():
@@ -186,7 +186,7 @@ def extract_features(mappings, sentences, padding=False):
 def build_model(feat_len=171, class_len=50):
     model = Sequential()
     model.add(Bidirectional(LSTM(32, return_sequences=True), input_shape=(None, feat_len)))
-    model.add(Dropout(0.2))
+    #model.add(Dropout(0.2))
     model.add(Dense(class_len, activation='softmax'))
     model.compile(loss='categorical_crossentropy', optimizer='nadam', metrics=['accuracy'])
     return model
@@ -260,7 +260,7 @@ def predict(model, mappings, cats, text, padding=False):
     lbl_sets = defaultdict(set)
     sentences, spans = core_nlp_features(langforia(text, 'en').split('\n'), lbl_sets)
     features = list(extract_features(mappings, sentences, padding=padding))
-    x = list(batch_generator(features))
+    x = list(batch_generator(features, batch_len=len(features)))
     Y = model.predict(x)
     pred = [[interpret_prediction(p, cats) for p in y] for y in Y]
     return format_predictions(text, pred, sentences)
@@ -323,17 +323,12 @@ if __name__ == '__main__':
     corenlp, docs = read_and_extract(args.file, lambda doc: get_core_nlp(doc, lang='en'))
     train, lbl_sets, gold, cats, span_index, doc_index = docria_extract(corenlp, docs)
     embed = load_glove(args.glove)
-
-    mapfile = Path('./%s.mappings.pickle' % args.model)
-    if mapfile.exists():
-        mappings = load(open(mapfile, 'r+b'))
-        if args.refit:
-            update_mappings(mappings, lbl_sets)
-            dump(mappings, open(mapfile, 'w+b'))
-    else:
-        mappings = create_mappings(embed, lbl_sets)
-        dump(mappings, open(mapfile, 'w+b'))
-
+    
+    model_dict = load_model(args.model)
+    model = model_dict['model']
+    mappings = model_dict['mappings']
+    cats = model_dict['cats']
+        
     features = extract_features(mappings, train, padding=True)
     features, gold, span_index, doc_index = same_order(features, gold, span_index, doc_index)
 
@@ -361,16 +356,16 @@ if __name__ == '__main__':
         for i, b in enumerate(batches, 1):
             print('\nBatch', i, '\n-----------')
             x, y = b
-            model.fit(x, y, epochs=10, validation_split=0.1, verbose=2, batch_size=batch_len)
+            model.fit(x, y, epochs=10, validation_split=0.25, verbose=2, batch_size=batch_len)
 
-        model.save(name)
+        save_model(name, model=model, mappings=mappings, cats=cats)
     
     if args.test or args.gold:
         neleval_out = ''
         i = 0
         for data, span_ind, doc_ind in batches:
             if args.test:
-                data = model.predict(data, verbose=0)
+                data = model.predict(data, verbose=1)
             neleval_out += to_neleval(data, span_ind, doc_ind, cats, i)
             i += 1
         print(neleval_out, end='')

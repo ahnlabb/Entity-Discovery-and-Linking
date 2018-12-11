@@ -31,7 +31,7 @@ def interpret_prediction(y, cats):
     return from_one_hot(one_hot, cats)
 
 def entity_to_dict(start, stop, entity):
-    return {'start': start, 'stop': stop, 'class': '-'.join(entity)}
+    return {'start': int(start), 'stop': int(stop), 'class': '-'.join(entity)}
 
 def json_compatible(index):
     return [entity_to_dict(s[0], s[1], e) for s,e in index.items()]
