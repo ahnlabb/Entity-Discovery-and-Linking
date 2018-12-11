@@ -13,9 +13,9 @@ src/static/elm.js: src/Main.elm
 	cd src && \
 		elm make Main.elm --optimize --output=static/elm.js
 
-src/static/elm_debug.js: src/Debug.elm
+src/static/elm_debug.js: src/DocDebug.elm
 	cd src && \
-		elm make Debug.elm --optimize --output=static/elm_debug.js
+		elm make DocDebug.elm --optimize --output=static/elm_debug.js
 
 serve: site
 	FLASK_APP=src/server.py python3 -m flask run
