@@ -1,8 +1,10 @@
 name: nlp-project
 dependencies:
-    - tensorflow
+    - tensorflow-gpu
     - keras
     - flask
+    - ipykernel
+    - jupyter
     - pip:
         - texsoup
         - docria
