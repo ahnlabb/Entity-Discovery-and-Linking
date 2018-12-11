@@ -2,7 +2,7 @@ from pathlib import Path
 from pickle import load, dump
 from functools import reduce
 from tempfile import mkstemp
-from keras.models import load_model as loadmodel
+from keras.models import load_model as keras_load
 import requests
 import numpy as np
 import os
@@ -27,7 +27,7 @@ def load_model(filename):
     fp, fname = mkstemp()
     with open(fname, 'w+b') as f:
         f.write(model_dict['model'])
-    model_dict['model'] = loadmodel(fname)
+    model_dict['model'] = keras_load(fname)
     os.close(fp)
     return model_dict
 

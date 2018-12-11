@@ -8,6 +8,7 @@ import time
 from docria.storage import DocumentIO
 from utils import pickled, langforia, inverted, build_sequence, map2, flatten_once, print_dims, save_model, load_model
 from gold_std import entity_to_dict, from_one_hot, one_hot, gold_std_idx, to_neleval, interpret_prediction
+from structs import ModelJar
 import numpy as np
 
 from keras.preprocessing.sequence import pad_sequences
@@ -20,7 +21,7 @@ def get_args():
     parser = ArgumentParser()
     parser.add_argument('file', type=Path)
     parser.add_argument('glove', type=Path)
-    parser.add_argument('model', type=str)
+    parser.add_argument('model', type=Path)
     parser.add_argument('--refit', action='store_true')
     parser.add_argument('--test', action='store_true')
     parser.add_argument('--gold', action='store_true')
@@ -82,10 +83,6 @@ def docria_extract(core_nlp, docs):
         train.extend(sentences)
     
     return train, lbl_sets, gold, numeric_cats, span_index, doc_index
-
-
-def corpus_extract(path):
-    pass
 
 
 def build_indices(train, embed):
@@ -237,9 +234,9 @@ def corenlp_parse(text, lang='en'):
 def batch(data, batch_len=32):
     f = data[:batch_len]
     del data[:batch_len]
-    # longest sentence in batch
     longest = max(map(len, f))
-    pad_f = np.array([0] * (len(f[0][0]) - 1) + [1])
+    feat_len = len(f[0][0])
+    pad_f = np.array([0] * (feat_len - 1) + [1])
     for i in range(len(f)):
         diff = longest - len(f[i])
         f[i].extend([pad_f] * diff)
@@ -252,7 +249,7 @@ def batch_generator(features, batch_len=32):
 
 
 def zipped_batch_generator(*lists, batch_len=32):
-    for z in zip(*[batch_generator(L, batch_len=batch_len) for L in lists]):
+    for z in zip(*[batch_generator(lst, batch_len=batch_len) for lst in lists]):
         yield z
 
 
@@ -289,6 +286,7 @@ def same_order(parent, *children, key=lambda x: len(x[1])):
 
 
 def test(xy):
+    """rudimentary prediction test"""
     correct, total, correct_ent, total_ent = 0, 0, 0, 0
     for feat, gold in xy:
         pred = model.predict(feat, verbose=0)
@@ -324,10 +322,15 @@ if __name__ == '__main__':
     train, lbl_sets, gold, cats, span_index, doc_index = docria_extract(corenlp, docs)
     embed = load_glove(args.glove)
     
-    model_dict = load_model(args.model)
-    model = model_dict['model']
-    mappings = model_dict['mappings']
-    cats = model_dict['cats']
+    jar = None
+    if args.model.exists():
+        jar = ModelJar.load(args.model)
+        if args.refit:
+            update_mappings(jar.mappings, lbl_sets)
+        mappings = jar.mappings
+        cats = jar.cats
+    else:
+        mappings = create_mappings(embed, lbl_sets)
         
     features = extract_features(mappings, train, padding=True)
     features, gold, span_index, doc_index = same_order(features, gold, span_index, doc_index)
@@ -344,21 +347,21 @@ if __name__ == '__main__':
     batches = list(zipped_batch_generator(*lists, batch_len=batch_len))
 
     fit = args.refit
-    name = args.model
-    if Path(name).exists():
-        model = load_model(name)
-    else:
+    if not args.model.exists():
         fit = True
         f_len = batches[0][0].shape[-1]
         model = build_model(feat_len=f_len, class_len=len(cats))
+        jar = ModelJar(model, mappings, cats)
+    else:
+        model = jar.model
 
     if fit:
         for i, b in enumerate(batches, 1):
             print('\nBatch', i, '\n-----------')
             x, y = b
             model.fit(x, y, epochs=10, validation_split=0.25, verbose=2, batch_size=batch_len)
-
-        save_model(name, model=model, mappings=mappings, cats=cats)
+        
+        jar.save(args.model)
     
     if args.test or args.gold:
         neleval_out = ''
