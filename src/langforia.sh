@@ -1,0 +1,2 @@
+#!/bin/bash
+curl "http://vilde.cs.lth.se:9000/$1/corenlp_3.8.0/api/tsv" -H 'Origin: http://vilde.cs.lth.se:9000' -H 'Accept-Encoding: gzip, deflate' -H 'Accept-Language: en-US,en;q=0.9,sv;q=0.8' -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36' -H 'Content-Type: text/plain; charset=UTF-8' -H 'Accept: */*' -H 'Referer: http://vilde.cs.lth.se:9000/' -H 'X-Requested-With: XMLHttpRequest' -H 'Connection: keep-alive' --data-binary "$2" --compressed
