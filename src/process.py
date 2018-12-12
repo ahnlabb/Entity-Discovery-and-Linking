@@ -4,12 +4,13 @@ from argparse import ArgumentParser
 from collections import defaultdict
 from itertools import count
 from pickle import load, dump
-import time
 from docria.storage import DocumentIO
 from utils import pickled, langforia, inverted, build_sequence, map2, flatten_once, print_dims, save_model, load_model
 from gold_std import entity_to_dict, from_one_hot, one_hot, gold_std_idx, to_neleval, interpret_prediction
 from structs import ModelJar
 import numpy as np
+import time
+import sys
 
 from keras.preprocessing.sequence import pad_sequences
 from keras.utils import to_categorical
@@ -22,6 +23,7 @@ def get_args():
     parser.add_argument('file', type=Path)
     parser.add_argument('glove', type=Path)
     parser.add_argument('model', type=Path)
+    parser.add_argument('lang', type=str)
     parser.add_argument('--refit', action='store_true')
     parser.add_argument('--test', action='store_true')
     parser.add_argument('--gold', action='store_true')
@@ -51,22 +53,25 @@ def get_core_nlp(docs, lang):
     api_data = []
     start = time.perf_counter()
     for i, doc in enumerate(docs, 1):
-        print("Document %d/%d " % (i, len(docs)), end='', flush=True)
+        print("Document %d/%d " % (i, len(docs)), end='', flush=True, file=sys.stderr)
         api_data.append(call_api(doc))
         time_left = int((time.perf_counter() - start) / i * (len(docs) - i))
-        print(f' ETA: {time_left // 60} min {time_left % 60} s    ', end='\r', flush=True)
+        print(f' ETA: {time_left // 60} min {time_left % 60} s    ', end='\r', flush=True, file=sys.stderr)
     time_tot = int(time.perf_counter() - start)
-    print(f'Done: {len(docs)} documents in {time_tot // 60} min {time_tot % 60} s')
+    print(f'Done: {len(docs)} documents in {time_tot // 60} min {time_tot % 60} s', file=sys.stderr)
     return api_data, docs
 
 
-def docria_extract(core_nlp, docs):
+def docria_extract(core_nlp, docs, saved_cats=None):
     train, gold, span_index, doc_index = [], [], [], []
     lbl_sets = defaultdict(set)
 
     gold_std, cats = gold_std_idx(docs)
+    if saved_cats:
+        cats = saved_cats
     # mutate cats, return old cats
     numeric_cats = one_hot(gold_std, cats)
+    numeric_cats
 
     def get_entity(doc, span):
         none = cats[('O', 'NOE', 'OUT')]
@@ -136,8 +141,10 @@ def core_nlp_features(corenlp, lbl_sets):
 
 
 def create_mappings(embed, lbl_sets):
-    mappings = {key: dict(zip(lbls, count(0))) for key, lbls in lbl_sets.items()}
-    mappings['form'] = embed
+    mappings = {key: dict(zip(lbls, count(1))) for key, lbls in lbl_sets.items()}
+    for key in mappings:
+        mappings[key]['OOV'] = 0
+    #mappings['form'] = embed
     return mappings
 
 
@@ -161,8 +168,12 @@ def extract_features(mappings, sentences, padding=False):
                 if feature in mapping:
                     label = mapping[feature]
                 else:
-                    mapping_len = len(next(iter(mapping.values())))
-                    label = np.zeros(mapping_len)
+                    # Out of vocabulary
+                    if feat_name == 'form':
+                        mapping_len = len(next(iter(mapping.values())))
+                        label = np.zeros(mapping_len)
+                    else:
+                        label = 0
                 label_list.append(label)
             labels[feat_name].append(label_list)
 
@@ -183,7 +194,6 @@ def extract_features(mappings, sentences, padding=False):
 def build_model(feat_len=171, class_len=50):
     model = Sequential()
     model.add(Bidirectional(LSTM(32, return_sequences=True), input_shape=(None, feat_len)))
-    #model.add(Dropout(0.2))
     model.add(Dense(class_len, activation='softmax'))
     model.compile(loss='categorical_crossentropy', optimizer='nadam', metrics=['accuracy'])
     return model
@@ -317,21 +327,21 @@ if __name__ == '__main__':
             raise FileNotFoundError(arg)
         except AttributeError:
             pass
-
-    corenlp, docs = read_and_extract(args.file, lambda doc: get_core_nlp(doc, lang='en'))
-    train, lbl_sets, gold, cats, span_index, doc_index = docria_extract(corenlp, docs)
+        
     embed = load_glove(args.glove)
-    
+    corenlp, docs = read_and_extract(args.file, lambda doc: get_core_nlp(doc, lang=args.lang))
+        
     jar = None
     if args.model.exists():
         jar = ModelJar.load(args.model)
+        train, lbl_sets, gold, cats, span_index, doc_index = docria_extract(corenlp, docs, saved_cats=jar.cats)
         if args.refit:
             update_mappings(jar.mappings, lbl_sets)
         mappings = jar.mappings
-        cats = jar.cats
     else:
+        train, lbl_sets, gold, cats, span_index, doc_index = docria_extract(corenlp, docs)
         mappings = create_mappings(embed, lbl_sets)
-        
+
     features = extract_features(mappings, train, padding=True)
     features, gold, span_index, doc_index = same_order(features, gold, span_index, doc_index)
 
@@ -351,24 +361,27 @@ if __name__ == '__main__':
         fit = True
         f_len = batches[0][0].shape[-1]
         model = build_model(feat_len=f_len, class_len=len(cats))
-        jar = ModelJar(model, mappings, cats)
+        jar = ModelJar(model, mappings, cats, path=args.model)
     else:
         model = jar.model
 
     if fit:
         for i, b in enumerate(batches, 1):
             print('\nBatch', i, '\n-----------')
-            x, y = b
-            model.fit(x, y, epochs=10, validation_split=0.25, verbose=2, batch_size=batch_len)
+            if args.gold or args.test:
+                x, y, _ = b
+            else:
+                x, y = b
+            model.fit(x, y, epochs=10, validation_split=0.25, verbose=2, batch_size=batch_len, shuffle=True)
         
-        jar.save(args.model)
+        jar.save()
     
     if args.test or args.gold:
         neleval_out = ''
         i = 0
         for data, span_ind, doc_ind in batches:
             if args.test:
-                data = model.predict(data, verbose=1)
+                data = model.predict(data, verbose=0)
             neleval_out += to_neleval(data, span_ind, doc_ind, cats, i)
             i += 1
         print(neleval_out, end='')

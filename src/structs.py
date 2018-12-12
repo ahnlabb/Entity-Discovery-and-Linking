@@ -6,12 +6,18 @@ import os
 
 
 class ModelJar:
-    def __init__(self, model, mappings, cats):
+    def __init__(self, model, mappings, cats, path: Path = None):
         self.model = model
         self.mappings = mappings
         self.cats = cats
+        self.path = path
         
-    def save(self, filename: Path):
+    def save(self, filename: Path = None):
+        if filename is None:
+            if self.path is None:
+                raise ValueError('Model needs to have a file name')
+            filename = self.path
+            
         if not self.mappings:
             print('Saving model without mappings...')
         if not self.cats:
@@ -27,10 +33,14 @@ class ModelJar:
             dump(self, f)
             
     @staticmethod
-    def load(filename: Path):
+    def load(filename: Path = None):
+        if filename is None:
+            if self.path is None:
+                raise ValueError('Model needs to have a file name')
+            filename = self.path
+            
         with Path(filename).open('r+b') as f:
             jar = load(f)
-        print(jar)
             
         fp, fname = mkstemp()
         with open(fname, 'w+b') as f:
