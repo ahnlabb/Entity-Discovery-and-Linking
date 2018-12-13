@@ -48,6 +48,7 @@ def load_glove(path):
 
 def get_core_nlp(docs, lang):
     def call_api(doc):
+        
         text = str(doc.texts['main'])
         return langforia(text, lang).split('\n')
     api_data = []
@@ -62,28 +63,58 @@ def get_core_nlp(docs, lang):
     return api_data, docs
 
 
+def txt2xml(doc):
+    start_index, end_index = {}, {}
+    for node in doc.layers['tac/segments']:
+        text = node.fld.text
+        if text:
+            i, x = text.start, node.fld.xml.start
+            for word in str(text).split():
+                y = x + len(word)
+                start_index[i] = x, y
+                next_x, next_y = i + len(word) + 1, y + 1
+                end_index[next_x - 1] = x, y
+                i, x = next_x, next_y
+    for s, e in zip(start_index, end_index):
+        print(s, e)
+    return start_index, end_index
+
+
 def docria_extract(core_nlp, docs, saved_cats=None):
     train, gold, span_index, doc_index = [], [], [], []
     lbl_sets = defaultdict(set)
 
-    gold_std, cats = gold_std_idx(docs)
+    gold_std, cats, spandex = gold_std_idx(docs)
     if saved_cats:
         cats = saved_cats
     # mutate cats, return old cats
     numeric_cats = one_hot(gold_std, cats)
-    numeric_cats
 
     def get_entity(doc, span):
         none = cats[('O', 'NOE', 'OUT')]
         docid = doc.props['docid']
         return gold_std[docid].get(span, none)
-
+    
+    def backup_ind(*indices):
+        def lookup(span):
+            s, e = span
+            for b in indices:
+                if s in b:
+                    return b[s]
+                if e in b:
+                    return b[e]
+                if span in b:
+                    return b[span]
+            raise KeyError('Span %s not found' % str(span))
+        return lookup
+    
     for cnlp, doc in zip(core_nlp, docs):
+        lookup = backup_ind(*txt2xml(doc), spandex[doc.props['docid']])
         sentences, spans = core_nlp_features(cnlp, lbl_sets)
-        entities = [[get_entity(doc, span) for span in sentence] for sentence in spans]
-        current_doc = [[doc.props['docid'] for span in sentence] for sentence in spans]
+        entities = [[get_entity(doc, lookup(s)) for s in sentence] for sentence in spans]
+        current_doc = [[doc.props['docid'] for _ in sentence] for sentence in spans]
         doc_index.extend(current_doc)
-        span_index.extend(spans)
+        span_index.extend([[lookup(s) for s in sentence] for sentence in spans])
         gold.extend(entities)
         train.extend(sentences)
     
@@ -144,7 +175,7 @@ def create_mappings(embed, lbl_sets):
     mappings = {key: dict(zip(lbls, count(1))) for key, lbls in lbl_sets.items()}
     for key in mappings:
         mappings[key]['OOV'] = 0
-    #mappings['form'] = embed
+    mappings['form'] = embed
     return mappings
 
 
@@ -316,6 +347,9 @@ def test(xy):
     print(100 * correct_ent / total_ent, '% correct entities')
 
 
+def predict_to_layer(docs, corenlp, mappings, ):
+    corenlp, docs = read_and_extract(args.file, lambda doc: get_core_nlp(doc, lang=args.lang))
+
 if __name__ == '__main__':
     args = get_args()
     for arg in vars(args).values():
@@ -343,7 +377,7 @@ if __name__ == '__main__':
         mappings = create_mappings(embed, lbl_sets)
 
     features = extract_features(mappings, train, padding=True)
-    features, gold, span_index, doc_index = same_order(features, gold, span_index, doc_index)
+    features, gold, doc_index, span_index = same_order(features, gold, doc_index, span_index)
 
     if args.test:
         batch_len = 1
