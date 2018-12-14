@@ -70,11 +70,11 @@ def txt2xml(doc):
         if text:
             i, j = text.start, text.stop
             x, y = node.fld.xml.start, node.fld.xml.stop
-            indices = enumerate(repeat([(x,y)]), i)
+            indices = enumerate([(x,y)]*(j-i), i)
             for txt, xml in indices:
                 index[txt] = xml
-    for s, e in zip(start_index, end_index):
-        print(s, e)
+    #for s, e in index.items():
+    #    print(s, e)
     return index
         
 
@@ -94,27 +94,7 @@ def docria_extract(core_nlp, docs, saved_cats=None):
         docid = doc.props['docid']
         return gold_std[docid].get(span, none)
     
-    def backup_ind(*indices):
-        def lookup(span):
-            s, e = span
-            for b in indices:
-                if s in b:
-                    return b[s]
-                if e in b:
-                    return b[e]
-                if span in b:
-                    return b[span]
-            raise KeyError('Span %s not found' % str(span))
-        return lookup
-    
-    def lookup(index, span):
-        if index[span[0]] == index[span[1]]:
-            return index[span[0]]
-        raise ValueError("Span %s does not exist" % str(span))
-    
     for cnlp, doc in zip(core_nlp, docs):
-        #lookup = backup_ind(*txt2xml(doc), spandex[doc.props['docid']])
-        index = txt2xml(doc)
         sentences, spans = core_nlp_features(cnlp, lbl_sets)
         entities = [[get_entity(doc, lookup(index, s)) for s in sentence] for sentence in spans]
         current_doc = [[doc.props['docid'] for _ in sentence] for sentence in spans]
@@ -299,30 +279,6 @@ def zipped_batch_generator(*lists, batch_len=32):
         yield z
 
 
-def predict(model, mappings, cats, text, padding=False):
-    lbl_sets = defaultdict(set)
-    sentences, spans = core_nlp_features(langforia(text, 'en').split('\n'), lbl_sets)
-    features = list(extract_features(mappings, sentences, padding=padding))
-    x = list(batch_generator(features, batch_len=len(features)))
-    Y = model.predict(x)
-    pred = [[interpret_prediction(p, cats) for p in y] for y in Y]
-    return format_predictions(text, pred, sentences)
-
-
-def format_predictions(input_text, predictions, sentences):
-    pred_dict = {'text': input_text, 'entities': []}
-    for sent, pred in zip(sentences, predictions):
-        for word, class_tuple in zip(sent, pred):
-            entity_dict = entity_to_dict(word['start'], word['end'], class_tuple)
-            pred_dict['entities'].append(entity_dict)
-    return pred_dict
-
-
-def interpret_prediction(y, cats):
-    one_hot = np.array([int(x) for x in y == max(y)])
-    return from_one_hot(one_hot, cats)
-
-
 def same_order(parent, *children, key=lambda x: len(x[1])):
     children = list(children)
     parent = sorted(enumerate(parent), key=key)
@@ -352,8 +308,40 @@ def test(xy):
     print(100 * correct_ent / total_ent, '% correct entities')
 
 
-def predict_to_layer(docs, corenlp, mappings, ):
-    corenlp, docs = read_and_extract(args.file, lambda doc: get_core_nlp(doc, lang=args.lang))
+def predict_to_layer(docs, corenlp, mappings):
+    lbl_sets = defaultdict(set)
+    for doc in docs:
+        sentences, spans = core_nlp_features(corenlp, lbl_sets)
+        features = extract_features(mappings, sentences, padding=True)
+        
+        entities = doc.add_layer('tac/entity', text=T.span('main'), xml=T.span('xml'))
+        entities.add(text=main[0:100])
+        span_translate(doc, 'tac/segments', ('xml', 'text'), 'tac/entity', ('text', 'xml')) 
+
+
+def predict(model, mappings, cats, text, padding=False):
+    lbl_sets = defaultdict(set)
+    sentences, spans = core_nlp_features(langforia(text, 'en').split('\n'), lbl_sets)
+    features = list(extract_features(mappings, sentences, padding=padding))
+    x = list(batch_generator(features, batch_len=len(features)))
+    Y = model.predict(x)
+    pred = [[interpret_prediction(p, cats) for p in y] for y in Y]
+    return format_predictions(text, pred, sentences)
+
+
+def format_predictions(input_text, predictions, sentences):
+    pred_dict = {'text': input_text, 'entities': []}
+    for sent, pred in zip(sentences, predictions):
+        for word, class_tuple in zip(sent, pred):
+            entity_dict = entity_to_dict(word['start'], word['end'], class_tuple)
+            pred_dict['entities'].append(entity_dict)
+    return pred_dict
+
+
+def interpret_prediction(y, cats):
+    one_hot = np.array([int(x) for x in y == max(y)])
+    return from_one_hot(one_hot, cats)
+
 
 if __name__ == '__main__':
     args = get_args()
@@ -381,8 +369,9 @@ if __name__ == '__main__':
         train, lbl_sets, gold, cats, span_index, doc_index = docria_extract(corenlp, docs)
         mappings = create_mappings(embed, lbl_sets)
 
-    features = extract_features(mappings, train, padding=True)
-    features, gold, doc_index, span_index = same_order(features, gold, doc_index, span_index)
+    features = list(extract_features(mappings, train, padding=True))
+    #features, gold, doc_index, span_index = same_order(features, gold, doc_index, span_index)
+    doc_index, features, gold, span_index = same_order(doc_index, features, gold, span_index, key=None)
 
     if args.test:
         batch_len = 1
