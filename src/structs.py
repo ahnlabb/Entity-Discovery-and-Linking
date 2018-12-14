@@ -1,4 +1,5 @@
 from keras.models import Sequential, load_model
+from keras.utils.generic_utils import get_custom_objects
 from pathlib import Path
 from pickle import load, dump
 from tempfile import mkstemp
@@ -33,7 +34,7 @@ class ModelJar:
             dump(self, f)
             
     @staticmethod
-    def load(filename: Path = None):
+    def load(filename: Path = None, custom_init=None):
         if filename is None:
             if self.path is None:
                 raise ValueError('Model needs to have a file name')
@@ -42,6 +43,8 @@ class ModelJar:
         with Path(filename).open('r+b') as f:
             jar = load(f)
             
+        if custom_init:
+            get_custom_objects().update({"initializer": custom_init(jar)})
         fp, fname = mkstemp()
         with open(fname, 'w+b') as f:
             f.write(jar.model)

@@ -37,6 +37,15 @@ def doc_index():
         return jsonify(index)
 
 
+def get_docria(fname):
+    with DocumentIO.read('corpus/en/' + fname) as doc_reader:
+        return list(doc_reader)
+
+@app.route('/browse/<docriafile>')
+def show_docria(docriafile):
+    return jsonify([doc.props for doc in get_docria(docriafile)])
+
+
 @app.route('/predict', methods=['POST'])
 def make_prediction():
     text = request.get_json()
@@ -45,9 +54,9 @@ def make_prediction():
     return jsonify(pred)
 
 
-model = load_model('./en.h5')
-with open('./cats.pickle', 'r+b') as f:
-    cats = load(f)
-with open('./en.h5.mappings.pickle', 'r+b') as f:
-    mappings = load(f)
-graph = tf.get_default_graph()
+#model = load_model('./en.h5')
+#with open('./cats.pickle', 'r+b') as f:
+#    cats = load(f)
+#with open('./en.h5.mappings.pickle', 'r+b') as f:
+#    mappings = load(f)
+#graph = tf.get_default_graph()

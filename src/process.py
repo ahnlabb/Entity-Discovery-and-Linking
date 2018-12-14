@@ -406,7 +406,7 @@ if __name__ == '__main__':
 
     jar = None
     if args.model.exists():
-        jar = ModelJar.load(args.model)
+        jar = ModelJar.load(args.model, lambda jar: emb_mat_init(embed, jar.mappings['form']))
         train, lbl_sets, gold, cats, span_index, doc_index = docria_extract(corenlp, docs, saved_cats=jar.cats)
         mappings = jar.mappings
     else:
