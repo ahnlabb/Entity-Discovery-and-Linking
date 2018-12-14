@@ -4,6 +4,7 @@ from argparse import ArgumentParser
 from collections import defaultdict
 from itertools import count
 from pickle import load, dump
+import base64
 from docria.storage import DocumentIO
 from utils import pickled, langforia, inverted, build_sequence, map2, flatten_once, print_dims, save_model, load_model
 from gold_std import entity_to_dict, from_one_hot, one_hot, gold_std_idx, to_neleval, interpret_prediction
@@ -71,7 +72,6 @@ def docria_extract(core_nlp, docs, saved_cats=None):
         cats = saved_cats
     # mutate cats, return old cats
     numeric_cats = one_hot(gold_std, cats)
-    numeric_cats
 
     def get_entity(doc, span):
         none = cats[('O', 'NOE', 'OUT')]
@@ -263,6 +263,20 @@ def zipped_batch_generator(*lists, batch_len=32):
         yield z
 
 
+def get_links(entity_lst, wiki_dir, wkd2fb):
+    with wkd2fb.open('r+b') as f:
+        fbmap = load(f)
+    wikimap = {}
+    for path in wiki_dir.glob('part-*'):
+        with path.open('r') as f:
+            for line in f:
+                split = line.rfind(',')
+                wkd = int(line[split+1:])
+                wikimap[line[:split]] = fbmap.get(wkd, 'wkd'+str(base64.b64encode(str(wkd).encode('ascii'))))
+    return [wikimap[ent] for ent in entity_lst]
+
+
+
 def predict(model, mappings, cats, text, padding=False):
     lbl_sets = defaultdict(set)
     sentences, spans = core_nlp_features(langforia(text, 'en').split('\n'), lbl_sets)
@@ -295,7 +309,7 @@ def same_order(parent, *children, key=lambda x: len(x[1])):
     return tuple([[v for _, v in parent]] + children)
 
 
-def test(xy):
+def test(model, xy):
     """rudimentary prediction test"""
     correct, total, correct_ent, total_ent = 0, 0, 0, 0
     for feat, gold in xy:
@@ -317,6 +331,7 @@ def test(xy):
 
 
 if __name__ == '__main__':
+    print(get_links(['George Bush', 'Israel', 'Hillary'], Path('scala/wiki_mappings/'), Path('scala/wkd2fb.pkl')))
     args = get_args()
     for arg in vars(args).values():
         if arg == args.model:
