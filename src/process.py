@@ -2,7 +2,7 @@
 from pathlib import Path
 from argparse import ArgumentParser
 from collections import defaultdict
-from itertools import count
+from itertools import count, repeat
 from pickle import load, dump
 from docria.storage import DocumentIO
 from utils import pickled, langforia, inverted, build_sequence, map2, flatten_once, print_dims, save_model, load_model
@@ -64,20 +64,19 @@ def get_core_nlp(docs, lang):
 
 
 def txt2xml(doc):
-    start_index, end_index = {}, {}
+    index = {}
     for node in doc.layers['tac/segments']:
         text = node.fld.text
         if text:
-            i, x = text.start, node.fld.xml.start
-            for word in str(text).split():
-                y = x + len(word)
-                start_index[i] = x, y
-                next_x, next_y = i + len(word) + 1, y + 1
-                end_index[next_x - 1] = x, y
-                i, x = next_x, next_y
+            i, j = text.start, text.stop
+            x, y = node.fld.xml.start, node.fld.xml.stop
+            indices = enumerate(repeat([(x,y)]), i)
+            for txt, xml in indices:
+                index[txt] = xml
     for s, e in zip(start_index, end_index):
         print(s, e)
-    return start_index, end_index
+    return index
+        
 
 
 def docria_extract(core_nlp, docs, saved_cats=None):
@@ -108,13 +107,19 @@ def docria_extract(core_nlp, docs, saved_cats=None):
             raise KeyError('Span %s not found' % str(span))
         return lookup
     
+    def lookup(index, span):
+        if index[span[0]] == index[span[1]]:
+            return index[span[0]]
+        raise ValueError("Span %s does not exist" % str(span))
+    
     for cnlp, doc in zip(core_nlp, docs):
-        lookup = backup_ind(*txt2xml(doc), spandex[doc.props['docid']])
+        #lookup = backup_ind(*txt2xml(doc), spandex[doc.props['docid']])
+        index = txt2xml(doc)
         sentences, spans = core_nlp_features(cnlp, lbl_sets)
-        entities = [[get_entity(doc, lookup(s)) for s in sentence] for sentence in spans]
+        entities = [[get_entity(doc, lookup(index, s)) for s in sentence] for sentence in spans]
         current_doc = [[doc.props['docid'] for _ in sentence] for sentence in spans]
         doc_index.extend(current_doc)
-        span_index.extend([[lookup(s) for s in sentence] for sentence in spans])
+        span_index.extend([[lookup(index, s) for s in sentence] for sentence in spans])
         gold.extend(entities)
         train.extend(sentences)
     
