@@ -364,7 +364,7 @@ def interpret_prediction(y, cats):
 def to_categories(data, key, inv, default=None, categorical=True):
     fields = (mapget(key, sentence) for sentence in data)
     cat_seq = [build_sequence(f, inv, default=default) for f in fields]
-    padded = pad_sequences(cat_seq)
+    padded = pad_sequences(cat_seq, maxlen=500)
     if categorical:
         return to_categorical(padded)
     return padded
@@ -416,10 +416,10 @@ if __name__ == '__main__':
     x_word = to_categories(train, 'form', mappings['form'], default=1, categorical=False)
     x_pos = to_categories(train, 'pos', mappings['pos'])
     x_ne = to_categories(train, 'ne', mappings['ne'])
-    y = pad_sequences(gold)
+    y = pad_sequences(gold, maxlen=500)
 
     if not args.model.exists():
-        model = make_model(x_word.shape[1], [x_word, x_pos, x_ne], y, embed, mappings['form'], len(mappings['pos']), len(mappings['ne']), len(cats), embed_len, epochs=10)
+        model = make_model(x_word.shape[1], [x_word, x_pos, x_ne], y, embed, mappings['form'], len(mappings['pos']), len(mappings['ne']), len(cats), embed_len, epochs=1)
         jar = ModelJar(model, mappings, cats, path=args.model)
     else:
         model = jar.model
@@ -432,6 +432,6 @@ if __name__ == '__main__':
         x_word_test = to_categories(test, 'form', mappings['form'], default=1, categorical=False)
         x_pos_test = to_categories(test, 'pos', mappings['pos'])
         x_ne_test = to_categories(test, 'ne', mappings['ne'])
-        y_test = pad_sequences(gold)
+        y_test = pad_sequences(gold, maxlen=500)
         pred = model.predict([x_word_test, x_pos_test, x_ne_test])
         simple_eval(pred, gold_test, inverted(cats))

@@ -44,7 +44,7 @@ class ModelJar:
             jar = load(f)
             
         if custom_init:
-            get_custom_objects().update({"initializer": custom_init(jar)})
+            get_custom_objects().update({"initializer": lambda: custom_init(jar)})
         fp, fname = mkstemp()
         with open(fname, 'w+b') as f:
             f.write(jar.model)
