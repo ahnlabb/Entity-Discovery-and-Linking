@@ -2,7 +2,7 @@
 from pathlib import Path
 from argparse import ArgumentParser
 from collections import defaultdict
-from itertools import count
+from itertools import count, repeat
 from pickle import load, dump
 import base64
 from docria.storage import DocumentIO
@@ -49,6 +49,7 @@ def load_glove(path):
 
 def get_core_nlp(docs, lang):
     def call_api(doc):
+        
         text = str(doc.texts['main'])
         return langforia(text, lang).split('\n')
     api_data = []
@@ -63,11 +64,27 @@ def get_core_nlp(docs, lang):
     return api_data, docs
 
 
+def txt2xml(doc):
+    index = {}
+    for node in doc.layers['tac/segments']:
+        text = node.fld.text
+        if text:
+            i, j = text.start, text.stop
+            x, y = node.fld.xml.start, node.fld.xml.stop
+            indices = enumerate([(x,y)]*(j-i), i)
+            for txt, xml in indices:
+                index[txt] = xml
+    #for s, e in index.items():
+    #    print(s, e)
+    return index
+        
+
+
 def docria_extract(core_nlp, docs, saved_cats=None):
     train, gold, span_index, doc_index = [], [], [], []
     lbl_sets = defaultdict(set)
 
-    gold_std, cats = gold_std_idx(docs)
+    gold_std, cats, spandex = gold_std_idx(docs)
     if saved_cats:
         cats = saved_cats
     # mutate cats, return old cats
@@ -77,13 +94,13 @@ def docria_extract(core_nlp, docs, saved_cats=None):
         none = cats[('O', 'NOE', 'OUT')]
         docid = doc.props['docid']
         return gold_std[docid].get(span, none)
-
+    
     for cnlp, doc in zip(core_nlp, docs):
         sentences, spans = core_nlp_features(cnlp, lbl_sets)
-        entities = [[get_entity(doc, span) for span in sentence] for sentence in spans]
-        current_doc = [[doc.props['docid'] for span in sentence] for sentence in spans]
+        entities = [[get_entity(doc, lookup(index, s)) for s in sentence] for sentence in spans]
+        current_doc = [[doc.props['docid'] for _ in sentence] for sentence in spans]
         doc_index.extend(current_doc)
-        span_index.extend(spans)
+        span_index.extend([[lookup(index, s) for s in sentence] for sentence in spans])
         gold.extend(entities)
         train.extend(sentences)
     
@@ -144,7 +161,7 @@ def create_mappings(embed, lbl_sets):
     mappings = {key: dict(zip(lbls, count(1))) for key, lbls in lbl_sets.items()}
     for key in mappings:
         mappings[key]['OOV'] = 0
-    #mappings['form'] = embed
+    mappings['form'] = embed
     return mappings
 
 
@@ -276,31 +293,6 @@ def get_links(entity_lst, wiki_dir, wkd2fb):
     return [wikimap[ent] for ent in entity_lst]
 
 
-
-def predict(model, mappings, cats, text, padding=False):
-    lbl_sets = defaultdict(set)
-    sentences, spans = core_nlp_features(langforia(text, 'en').split('\n'), lbl_sets)
-    features = list(extract_features(mappings, sentences, padding=padding))
-    x = list(batch_generator(features, batch_len=len(features)))
-    Y = model.predict(x)
-    pred = [[interpret_prediction(p, cats) for p in y] for y in Y]
-    return format_predictions(text, pred, sentences)
-
-
-def format_predictions(input_text, predictions, sentences):
-    pred_dict = {'text': input_text, 'entities': []}
-    for sent, pred in zip(sentences, predictions):
-        for word, class_tuple in zip(sent, pred):
-            entity_dict = entity_to_dict(word['start'], word['end'], class_tuple)
-            pred_dict['entities'].append(entity_dict)
-    return pred_dict
-
-
-def interpret_prediction(y, cats):
-    one_hot = np.array([int(x) for x in y == max(y)])
-    return from_one_hot(one_hot, cats)
-
-
 def same_order(parent, *children, key=lambda x: len(x[1])):
     children = list(children)
     parent = sorted(enumerate(parent), key=key)
@@ -330,6 +322,41 @@ def test(model, xy):
     print(100 * correct_ent / total_ent, '% correct entities')
 
 
+def predict_to_layer(docs, corenlp, mappings):
+    lbl_sets = defaultdict(set)
+    for doc in docs:
+        sentences, spans = core_nlp_features(corenlp, lbl_sets)
+        features = extract_features(mappings, sentences, padding=True)
+        
+        entities = doc.add_layer('tac/entity', text=T.span('main'), xml=T.span('xml'))
+        entities.add(text=main[0:100])
+        span_translate(doc, 'tac/segments', ('xml', 'text'), 'tac/entity', ('text', 'xml')) 
+
+
+def predict(model, mappings, cats, text, padding=False):
+    lbl_sets = defaultdict(set)
+    sentences, spans = core_nlp_features(langforia(text, 'en').split('\n'), lbl_sets)
+    features = list(extract_features(mappings, sentences, padding=padding))
+    x = list(batch_generator(features, batch_len=len(features)))
+    Y = model.predict(x)
+    pred = [[interpret_prediction(p, cats) for p in y] for y in Y]
+    return format_predictions(text, pred, sentences)
+
+
+def format_predictions(input_text, predictions, sentences):
+    pred_dict = {'text': input_text, 'entities': []}
+    for sent, pred in zip(sentences, predictions):
+        for word, class_tuple in zip(sent, pred):
+            entity_dict = entity_to_dict(word['start'], word['end'], class_tuple)
+            pred_dict['entities'].append(entity_dict)
+    return pred_dict
+
+
+def interpret_prediction(y, cats):
+    one_hot = np.array([int(x) for x in y == max(y)])
+    return from_one_hot(one_hot, cats)
+
+
 if __name__ == '__main__':
     print(get_links(['George Bush', 'Israel', 'Hillary'], Path('scala/wiki_mappings/'), Path('scala/wkd2fb.pkl')))
     args = get_args()
@@ -357,8 +384,9 @@ if __name__ == '__main__':
         train, lbl_sets, gold, cats, span_index, doc_index = docria_extract(corenlp, docs)
         mappings = create_mappings(embed, lbl_sets)
 
-    features = extract_features(mappings, train, padding=True)
-    features, gold, span_index, doc_index = same_order(features, gold, span_index, doc_index)
+    features = list(extract_features(mappings, train, padding=True))
+    #features, gold, doc_index, span_index = same_order(features, gold, doc_index, span_index)
+    doc_index, features, gold, span_index = same_order(doc_index, features, gold, span_index, key=None)
 
     if args.test:
         batch_len = 1
