@@ -94,3 +94,19 @@ def take_twos(iterable):
     while True:
         yield next(itr), next(itr)
 
+
+def mapget(key, seq):
+    return (collection[key] for collection in seq)
+
+
+def emb_mat_init(glove, invind):
+    def initializer(shape, dtype=None):
+        mat = np.random.random_sample(shape)
+        for k,v in glove.items():
+            mat[invind[k], :] = v
+        return mat
+    return initializer
+
+def zip_from_end(a, b):
+    shortest = min(len(a), len(b))
+    return ((a[i], b[i]) for i in range(-shortest, 0))

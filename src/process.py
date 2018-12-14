@@ -4,9 +4,10 @@ from argparse import ArgumentParser
 from collections import defaultdict
 from itertools import count, repeat
 from pickle import load, dump
+from collections import Counter
 import base64
 from docria.storage import DocumentIO
-from utils import pickled, langforia, inverted, build_sequence, map2, flatten_once, print_dims, save_model, load_model
+from utils import pickled, langforia, inverted, build_sequence, map2, flatten_once, print_dims, save_model, load_model, emb_mat_init, mapget, zip_from_end
 from gold_std import entity_to_dict, from_one_hot, one_hot, gold_std_idx, to_neleval, interpret_prediction
 from structs import ModelJar
 import numpy as np
@@ -15,8 +16,8 @@ import sys
 
 from keras.preprocessing.sequence import pad_sequences
 from keras.utils import to_categorical
-from keras.layers import Bidirectional, LSTM, Dense, Activation, Embedding, Flatten, Dropout
-from keras.models import Sequential
+from keras.layers import Bidirectional, LSTM, Dense, Activation, Embedding, Concatenate, Input
+from keras.models import Model
 
 
 def get_args():
@@ -25,8 +26,7 @@ def get_args():
     parser.add_argument('glove', type=Path)
     parser.add_argument('model', type=Path)
     parser.add_argument('lang', type=str)
-    parser.add_argument('--refit', action='store_true')
-    parser.add_argument('--test', action='store_true')
+    parser.add_argument('--predict', type=Path)
     parser.add_argument('--gold', action='store_true')
     return parser.parse_args()
 
@@ -49,7 +49,7 @@ def load_glove(path):
 
 def get_core_nlp(docs, lang):
     def call_api(doc):
-        
+
         text = str(doc.texts['main'])
         return langforia(text, lang).split('\n')
     api_data = []
@@ -77,14 +77,14 @@ def txt2xml(doc):
     #for s, e in index.items():
     #    print(s, e)
     return index
-        
+
 
 
 def docria_extract(core_nlp, docs, saved_cats=None):
     train, gold, span_index, doc_index = [], [], [], []
     lbl_sets = defaultdict(set)
 
-    gold_std, cats, spandex = gold_std_idx(docs)
+    gold_std, cats = gold_std_idx(docs)
     if saved_cats:
         cats = saved_cats
     # mutate cats, return old cats
@@ -94,31 +94,24 @@ def docria_extract(core_nlp, docs, saved_cats=None):
         none = cats[('O', 'NOE', 'OUT')]
         docid = doc.props['docid']
         return gold_std[docid].get(span, none)
-    
+
     for cnlp, doc in zip(core_nlp, docs):
         sentences, spans = core_nlp_features(cnlp, lbl_sets)
-        entities = [[get_entity(doc, lookup(index, s)) for s in sentence] for sentence in spans]
+        entities = [[get_entity(doc, s) for s in sentence] for sentence in spans]
         current_doc = [[doc.props['docid'] for _ in sentence] for sentence in spans]
         doc_index.extend(current_doc)
-        span_index.extend([[lookup(index, s) for s in sentence] for sentence in spans])
+        span_index.extend([sentence for sentence in spans])
         gold.extend(entities)
         train.extend(sentences)
-    
+
     return train, lbl_sets, gold, numeric_cats, span_index, doc_index
 
 
 def build_indices(train, embed):
     wordset = set([features['form'] for sentence in train for features in sentence])
     wordset.update(embed.keys())
-    word_ind = dict(enumerate(wordset, 2))
-    return word_ind
-
-
-def build_sequences(train, embed):
-    indices = list(map(inverted, build_indices(train, embed)))
-    data = 0
-    xy_sequences = tuple(zip(*(map2(build_sequence, tup, indices) for tup in data)))
-    return map(pad_sequences, xy_sequences)
+    word_inv = dict(zip(wordset, count(2)))
+    return word_inv
 
 
 def core_nlp_features(corenlp, lbl_sets):
@@ -157,21 +150,12 @@ def core_nlp_features(corenlp, lbl_sets):
     return sentences, spans
 
 
-def create_mappings(embed, lbl_sets):
+def create_mappings(train, embed, lbl_sets):
     mappings = {key: dict(zip(lbls, count(1))) for key, lbls in lbl_sets.items()}
     for key in mappings:
         mappings[key]['OOV'] = 0
-    mappings['form'] = embed
+    mappings['form'] = build_indices(train, embed)
     return mappings
-
-
-def update_mappings(mappings, lbl_sets):
-    maxes = {feat: max(mapping.values()) for feat, mapping in mappings.items() if feat != 'form'}
-    for key, lbls in lbl_sets.items():
-        for lbl in lbls:
-            if lbl not in mappings[key]:
-                maxes[key] += 1
-                mappings[key][lbl] = maxes[key]
 
 
 def extract_features(mappings, sentences, padding=False):
@@ -208,11 +192,31 @@ def extract_features(mappings, sentences, padding=False):
         yield [concat(word) for word in zip(*sentence)]
 
 
-def build_model(feat_len=171, class_len=50):
-    model = Sequential()
-    model.add(Bidirectional(LSTM(32, return_sequences=True), input_shape=(None, feat_len)))
-    model.add(Dense(class_len, activation='softmax'))
-    model.compile(loss='categorical_crossentropy', optimizer='nadam', metrics=['accuracy'])
+def build_model(max_len, embed, word_inv, npos, nne, nout, embed_len):
+    width = len(word_inv) + 2
+    pos = Input(shape=(max_len, npos))
+    ne = Input(shape=(max_len, nne))
+    form = Input(shape=(max_len,))
+    emb = Embedding(width,
+            embed_len,
+            embeddings_initializer=emb_mat_init(embed, word_inv),
+            mask_zero=True,
+            input_length=None)(form)
+
+    emb.trainable = True
+
+    concat = Concatenate()([emb, pos, ne])
+
+    lstm = Bidirectional(LSTM(25, return_sequences=True), input_shape=(None, width))(concat)
+    out = Dense(nout, activation='softmax')(lstm)
+    model = Model(inputs= [form, pos, ne], outputs=out)
+    model.compile(loss='categorical_crossentropy', optimizer='nadam', metrics=['acc'])
+    return model
+
+def make_model(max_len, x, y, embed, word_inv, npos, nne, nout, embed_len, epochs=3, batch_size=128):
+    model = build_model(max_len, embed, word_inv, npos, nne, nout, embed_len)
+    model.fit(x, y, epochs=epochs, batch_size=batch_size)
+    model.summary()
     return model
 
 
@@ -327,7 +331,7 @@ def predict_to_layer(docs, corenlp, mappings):
     for doc in docs:
         sentences, spans = core_nlp_features(corenlp, lbl_sets)
         features = extract_features(mappings, sentences, padding=True)
-        
+
         entities = doc.add_layer('tac/entity', text=T.span('main'), xml=T.span('xml'))
         entities.add(text=main[0:100])
         span_translate(doc, 'tac/segments', ('xml', 'text'), 'tac/entity', ('text', 'xml')) 
@@ -357,8 +361,34 @@ def interpret_prediction(y, cats):
     return from_one_hot(one_hot, cats)
 
 
+def to_categories(data, key, inv, default=None, categorical=True):
+    fields = (mapget(key, sentence) for sentence in data)
+    cat_seq = [build_sequence(f, inv, default=default) for f in fields]
+    padded = pad_sequences(cat_seq)
+    if categorical:
+        return to_categorical(padded)
+    return padded
+
+
+def simple_eval(pred, gold, out_index):
+    actual = Counter()
+    correct = Counter()
+    for p, g in zip(pred, gold):
+        for a,b in zip_from_end(p, g):
+            actual_tag = out_index[np.argmax(b)]
+            actual[actual_tag] += 1
+            if np.argmax(a) == np.argmax(b):
+                correct[actual_tag] += 1
+
+    for k in actual:
+        print('-'.join(k), correct[k]/actual[k], actual[k])
+
+    corr_sum = sum(correct[k] for k in correct if k != ('O', 'NOE', 'OUT'))
+    act_sum = sum(actual[k] for k in actual if k != ('O', 'NOE', 'OUT'))
+    print(corr_sum/act_sum)
+
+
 if __name__ == '__main__':
-    print(get_links(['George Bush', 'Israel', 'Hillary'], Path('scala/wiki_mappings/'), Path('scala/wkd2fb.pkl')))
     args = get_args()
     for arg in vars(args).values():
         if arg == args.model:
@@ -369,64 +399,39 @@ if __name__ == '__main__':
             raise FileNotFoundError(arg)
         except AttributeError:
             pass
-        
+
     embed = load_glove(args.glove)
-    corenlp, docs = read_and_extract(args.file, lambda doc: get_core_nlp(doc, lang=args.lang))
-        
+    embed_len = len(next(iter(embed.values())))
+    corenlp, docs = read_and_extract(args.file, lambda docs: get_core_nlp(docs, lang=args.lang))
+
     jar = None
     if args.model.exists():
         jar = ModelJar.load(args.model)
         train, lbl_sets, gold, cats, span_index, doc_index = docria_extract(corenlp, docs, saved_cats=jar.cats)
-        if args.refit:
-            update_mappings(jar.mappings, lbl_sets)
         mappings = jar.mappings
     else:
         train, lbl_sets, gold, cats, span_index, doc_index = docria_extract(corenlp, docs)
-        mappings = create_mappings(embed, lbl_sets)
+        mappings = create_mappings(train, embed, lbl_sets)
 
-    features = list(extract_features(mappings, train, padding=True))
-    #features, gold, doc_index, span_index = same_order(features, gold, doc_index, span_index)
-    doc_index, features, gold, span_index = same_order(doc_index, features, gold, span_index, key=None)
+    x_word = to_categories(train, 'form', mappings['form'], default=1, categorical=False)
+    x_pos = to_categories(train, 'pos', mappings['pos'])
+    x_ne = to_categories(train, 'ne', mappings['ne'])
+    y = pad_sequences(gold)
 
-    if args.test:
-        batch_len = 1
-        lists = (features, span_index, doc_index)
-    elif args.gold:
-        batch_len = 1
-        lists = (gold, span_index, doc_index)
-    else:
-        batch_len = 100
-        lists = (features, gold)
-    batches = list(zipped_batch_generator(*lists, batch_len=batch_len))
-
-    fit = args.refit
     if not args.model.exists():
-        fit = True
-        f_len = batches[0][0].shape[-1]
-        model = build_model(feat_len=f_len, class_len=len(cats))
+        model = make_model(x_word.shape[1], [x_word, x_pos, x_ne], y, embed, mappings['form'], len(mappings['pos']), len(mappings['ne']), len(cats), embed_len, epochs=10)
         jar = ModelJar(model, mappings, cats, path=args.model)
     else:
         model = jar.model
 
-    if fit:
-        for i, b in enumerate(batches, 1):
-            print('\nBatch', i, '\n-----------')
-            if args.gold or args.test:
-                x, y, _ = b
-            else:
-                x, y = b
-            model.fit(x, y, epochs=10, validation_split=0.25, verbose=2, batch_size=batch_len, shuffle=True)
-        
-        jar.save()
-    
-    if args.test or args.gold:
-        neleval_out = ''
-        i = 0
-        for data, span_ind, doc_ind in batches:
-            if args.test:
-                data = model.predict(data, verbose=0)
-            neleval_out += to_neleval(data, span_ind, doc_ind, cats, i)
-            i += 1
-        print(neleval_out, end='')
-    else:
-        test(batches)
+    jar.save()
+
+    if args.predict:
+        core_nlp_test, docs_test = read_and_extract(args.predict, lambda docs: get_core_nlp(docs, lang=args.lang))
+        test, _, gold_test, _, _, _ = docria_extract(core_nlp_test, docs_test)
+        x_word_test = to_categories(test, 'form', mappings['form'], default=1, categorical=False)
+        x_pos_test = to_categories(test, 'pos', mappings['pos'])
+        x_ne_test = to_categories(test, 'ne', mappings['ne'])
+        y_test = pad_sequences(gold)
+        pred = model.predict([x_word_test, x_pos_test, x_ne_test])
+        simple_eval(pred, gold_test, inverted(cats))
