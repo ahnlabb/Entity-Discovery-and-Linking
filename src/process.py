@@ -214,16 +214,14 @@ def build_model(max_len, embed, word_inv, npos, nne, nout, embed_len):
 
 def make_model(max_len, x, y, embed, word_inv, npos, nne, nout, embed_len, train_len, epochs=3, batch_size=64):
     model = build_model(max_len, embed, word_inv, npos, nne, nout, embed_len)
-    #steps = (train_len / batch_size)# + 1 if train_len % batch_size > 0 else 0
-    #model.fit_generator(gen, epochs=epochs, steps_per_epoch=steps, shuffle=False)
     model.fit(x, y, epochs=epochs, batch_size=batch_size)
     model.summary()
     return model
 
 def make_model_batches(max_len, gen, embed, word_inv, npos, nne, nout, embed_len, train_len, epochs=3, batch_size=64):
     model = build_model(max_len, embed, word_inv, npos, nne, nout, embed_len)
-    steps = (train_len / batch_size)# + 1 if train_len % batch_size > 0 else 0
-    model.fit_generator(gen, epochs=epochs, steps_per_epoch=steps, shuffle=False)
+    steps = (train_len / batch_size)
+    model.fit_generator(gen, epochs=epochs, steps_per_epoch=steps, shuffle=True)
     model.summary()
     return model
 
@@ -274,17 +272,19 @@ def batch_generator(train, gold, mappings, batch_len=128, **keys):
     X, Y = same_order(train, pad_sequences(gold))
     X = np.array(X)
     Y = np.array(Y)
-    maxlen = len(X[-1])
-    n_batches = len(train) // batch_len# + (len(train) % batch_len > 0)
+    n_batches = len(train) // batch_len + (len(train) % batch_len > 0)
     batches = list(range(n_batches))
     while True:
         shuffle(batches)
         for k in batches:
             s = slice(k*batch_len, (k+1)*batch_len)
             outputs = []
+            maxlen = len(X[s][-1])
             for key, args in keys.items():
                 outputs.append(to_categories(X[s], key, mappings[key], maxlen=maxlen, **args))
             yield outputs, Y[s]
+
+
 
 
 def get_links(entity_lst, wiki_dir, wkd2fb):
@@ -306,27 +306,6 @@ def same_order(parent, *children, key=lambda x: len(x[1])):
     for i, c in enumerate(children):
         children[i] = [c[j] for j, _ in parent]
     return tuple([[v for _, v in parent]] + children)
-
-
-def test(model, xy):
-    """rudimentary prediction test"""
-    correct, total, correct_ent, total_ent = 0, 0, 0, 0
-    for feat, gold in xy:
-        pred = model.predict(feat, verbose=0)
-        for p, g in zip(pred, gold):
-            for w1, w2 in zip(p, g):
-                w1 = np.array([int(x) for x in w1 == max(w1)])
-                c1 = from_one_hot(w1, cats)
-                c2 = from_one_hot(w2, cats)
-                total += 1
-                if c1 == c2:
-                    correct += 1
-                if c2 != ('O', 'NOE', 'OUT') and c2 != ('O', 'NOE', 'PAD'):
-                    total_ent += 1
-                    if c1 == c2:
-                        correct_ent += 1
-    print(100 * correct / total, '% correct total')
-    print(100 * correct_ent / total_ent, '% correct entities')
 
 
 def prediction_to_layer(pred):
@@ -418,8 +397,8 @@ if __name__ == '__main__':
         mappings = create_mappings(train, embed, lbl_sets)
 
     x_word = to_categories(train, 'form', mappings['form'], default=1, categorical=False)
-    x_pos = to_categories(train, 'pos', mappings['pos'])
-    x_ne = to_categories(train, 'ne', mappings['ne'])
+    x_pos = to_categories(train, 'pos', mappings['pos'], categorical=False)
+    x_ne = to_categories(train, 'ne', mappings['ne'], categorical=False)
     y = pad_sequences(gold)
 
     batch_len = 142
@@ -429,8 +408,8 @@ if __name__ == '__main__':
             ne={'categorical': False})
 
     if not args.model.exists():
-        #model = make_model(len(mappings['form']), [x_word, x_pos, x_ne], y, embed, mappings['form'], len(mappings['pos']), len(mappings['ne']), len(cats), embed_len, len(train), epochs=10, batch_size=batch_len)
-        model = make_model_batches(len(mappings['form']), batches, embed, mappings['form'], len(mappings['pos']), len(mappings['ne']), len(cats), embed_len, len(train), epochs=10, batch_size=batch_len)
+        #model = make_model(len(mappings['form']), [x_word, x_pos, x_ne], y, embed, mappings['form'], len(mappings['pos']), len(mappings['ne']), len(cats), embed_len, len(train), epochs=3, batch_size=batch_len)
+        model = make_model_batches(len(mappings['form']), batches, embed, mappings['form'], len(mappings['pos']), len(mappings['ne']), len(cats), embed_len, len(train), epochs=3, batch_size=batch_len)
         jar = ModelJar(model, mappings, cats, path=args.model)
     else:
         model = jar.model
