@@ -26,4 +26,4 @@ paper.pdf:
 	pdflatex paper.tex
 
 process: src/process.py
-	python3 src/process.py corpus/tac/en/eng.2015.train.docria glove/glove.6B.50d.pickle
+	python3 src/process.py corpus/tac/lang/en/eng.2015.train.pickle glove/glove.6B.100d.pickle model.en.pickle en --predict corpus/tac/lang/en/eng.2015.eval.pickle
