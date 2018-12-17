@@ -27,3 +27,9 @@ paper.pdf:
 
 process: src/process.py
 	python3 src/process.py corpus/tac/lang/en/eng.2015.train.pickle glove/glove.6B.100d.pickle model.en.pickle en --predict corpus/tac/lang/en/eng.2015.eval.pickle
+
+prepare-s3:
+	mkdir -p corpus/tac/lang/en/ glove/
+	aws s3 cp s3://nlp-project-edan70/eng.2015.train.pickle corpus/tac/lang/en/
+	aws s3 cp s3://nlp-project-edan70/eng.2015.eval.pickle corpus/tac/lang/en/
+	aws s3 cp s3://nlp-project-edan70/glove.6B.100d.pickle glove
