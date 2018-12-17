@@ -2,14 +2,15 @@
 from pathlib import Path
 from argparse import ArgumentParser
 from collections import defaultdict
-from itertools import count, repeat
-from pickle import load, dump
+from itertools import count
+from pickle import load
 from collections import Counter
 from random import shuffle
 import base64
 from docria.storage import DocumentIO
-from utils import pickled, langforia, inverted, build_sequence, map2, flatten_once, print_dims, save_model, load_model, emb_mat_init, mapget, zip_from_end
+from utils import pickled, langforia, inverted, build_sequence, emb_mat_init, mapget, zip_from_end
 from gold_std import entity_to_dict, from_one_hot, one_hot, gold_std_idx, to_neleval, interpret_prediction
+from model import make_model, make_model_batches
 from structs import ModelJar
 import numpy as np
 import time
@@ -17,8 +18,6 @@ import sys
 
 from keras.preprocessing.sequence import pad_sequences
 from keras.utils import to_categorical
-from keras.layers import Bidirectional, LSTM, Dense, Activation, Embedding, Concatenate, Input
-from keras.models import Model
 
 
 def get_args():
@@ -78,7 +77,6 @@ def txt2xml(doc):
     #for s, e in index.items():
     #    print(s, e)
     return index
-
 
 
 def docria_extract(core_nlp, docs, saved_cats=None):
@@ -189,43 +187,6 @@ def extract_features(mappings, sentences, padding=False):
         yield [concat(word) for word in zip(*sentence)]
 
 
-def build_model(max_len, embed, word_inv, npos, nne, nout, embed_len):
-    width = len(word_inv) + 2
-    pos = Input(shape=(None,), dtype='int32')
-    pos_emb = Embedding(npos, npos//2)(pos)
-    ne = Input(shape=(None,), dtype='int32')
-    ne_emb = Embedding(nne, nne//2)(ne)
-    form = Input(shape=(None,), dtype='int32')
-    emb = Embedding(width,
-            embed_len,
-            embeddings_initializer=emb_mat_init(embed, word_inv),
-            mask_zero=True,
-            input_length=None)(form)
-
-    emb.trainable = True
-
-    concat = Concatenate()([emb, pos_emb, ne_emb])
-
-    lstm = Bidirectional(LSTM(25, return_sequences=True), input_shape=(None, width))(concat)
-    out = Dense(nout, activation='softmax')(lstm)
-    model = Model(inputs=[form, pos, ne], outputs=out)
-    model.compile(loss='categorical_crossentropy', optimizer='nadam', metrics=['acc'])
-    return model
-
-def make_model(max_len, x, y, embed, word_inv, npos, nne, nout, embed_len, train_len, epochs=3, batch_size=64):
-    model = build_model(max_len, embed, word_inv, npos, nne, nout, embed_len)
-    model.fit(x, y, epochs=epochs, batch_size=batch_size)
-    model.summary()
-    return model
-
-def make_model_batches(max_len, gen, embed, word_inv, npos, nne, nout, embed_len, train_len, epochs=3, batch_size=64):
-    model = build_model(max_len, embed, word_inv, npos, nne, nout, embed_len)
-    steps = (train_len / batch_size)
-    model.fit_generator(gen, epochs=epochs, steps_per_epoch=steps, shuffle=True)
-    model.summary()
-    return model
-
-
 def normalize_ne(inside, ne):
     if inside:
         if ne == ')':
@@ -277,7 +238,7 @@ def batch_generator(train, gold, mappings, batch_len=128, **keys):
     while True:
         shuffle(batches)
         for k in batches:
-            s = slice(k*batch_len, (k+1)*batch_len)
+            s = slice(k * batch_len, (k + 1) * batch_len)
             outputs = []
             maxlen = len(X[s][-1])
             for key, args in keys.items():
@@ -338,11 +299,6 @@ def format_predictions(input_text, predictions, sentences):
     return pred_dict
 
 
-def interpret_prediction(y, cats):
-    one_hot = np.array([int(x) for x in y == max(y)])
-    return from_one_hot(one_hot, cats)
-
-
 def to_categories(data, key, inv, default=None, categorical=True, maxlen=None):
     fields = (mapget(key, sentence) for sentence in data)
     cat_seq = [build_sequence(f, inv, default=default) for f in fields]
@@ -356,7 +312,7 @@ def simple_eval(pred, gold, out_index):
     actual = Counter()
     correct = Counter()
     for p, g in zip(pred, gold):
-        for a,b in zip_from_end(p, g):
+        for a, b in zip_from_end(p, g):
             actual_tag = out_index[np.argmax(b)]
             actual[actual_tag] += 1
             if np.argmax(a) == np.argmax(b):
@@ -368,7 +324,6 @@ def simple_eval(pred, gold, out_index):
     corr_sum = sum(correct[k] for k in correct if k != ('O', 'NOE', 'OUT'))
     act_sum = sum(actual[k] for k in actual if k != ('O', 'NOE', 'OUT'))
     print(corr_sum/act_sum)
-    
 
 
 if __name__ == '__main__':
@@ -402,10 +357,12 @@ if __name__ == '__main__':
     y = pad_sequences(gold)
 
     batch_len = 142
-    batches = batch_generator(train, gold, mappings, batch_len=batch_len,
-            form={'default': 1, 'categorical': False},
-            pos={'categorical': False},
-            ne={'categorical': False})
+    batches = batch_generator(
+        train, gold, mappings, batch_len=batch_len,
+        form={'default': 1, 'categorical': False},
+        pos={'categorical': False},
+        ne={'categorical': False}
+    )
 
     if not args.model.exists():
         #model = make_model(len(mappings['form']), [x_word, x_pos, x_ne], y, embed, mappings['form'], len(mappings['pos']), len(mappings['ne']), len(cats), embed_len, len(train), epochs=3, batch_size=batch_len)
