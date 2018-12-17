@@ -191,9 +191,11 @@ def extract_features(mappings, sentences, padding=False):
 
 def build_model(max_len, embed, word_inv, npos, nne, nout, embed_len):
     width = len(word_inv) + 2
-    pos = Input(shape=(None, npos))
-    ne = Input(shape=(None, nne))
-    form = Input(shape=(None,))
+    pos = Input(shape=(None,), dtype='int32')
+    pos_emb = Embedding(npos, npos//2)(pos)
+    ne = Input(shape=(None,), dtype='int32')
+    ne_emb = Embedding(nne, nne//2)(ne)
+    form = Input(shape=(None,), dtype='int32')
     emb = Embedding(width,
             embed_len,
             embeddings_initializer=emb_mat_init(embed, word_inv),
@@ -202,7 +204,7 @@ def build_model(max_len, embed, word_inv, npos, nne, nout, embed_len):
 
     emb.trainable = True
 
-    concat = Concatenate()([emb, pos, ne])
+    concat = Concatenate()([emb, pos_emb, ne_emb])
 
     lstm = Bidirectional(LSTM(25, return_sequences=True), input_shape=(None, width))(concat)
     out = Dense(nout, activation='softmax')(lstm)
@@ -210,10 +212,18 @@ def build_model(max_len, embed, word_inv, npos, nne, nout, embed_len):
     model.compile(loss='categorical_crossentropy', optimizer='nadam', metrics=['acc'])
     return model
 
-def make_model(max_len, gen, embed, word_inv, npos, nne, nout, embed_len, train_len, epochs=3, batch_size=128):
+def make_model(max_len, x, y, embed, word_inv, npos, nne, nout, embed_len, train_len, epochs=3, batch_size=64):
     model = build_model(max_len, embed, word_inv, npos, nne, nout, embed_len)
-    steps = (train_len // batch_size) + 1 if train_len % batch_size > 0 else 0
-    model.fit_generator(gen, epochs=epochs, steps_per_epoch=steps, shuffle=True)
+    #steps = (train_len / batch_size)# + 1 if train_len % batch_size > 0 else 0
+    #model.fit_generator(gen, epochs=epochs, steps_per_epoch=steps, shuffle=False)
+    model.fit(x, y, epochs=epochs, batch_size=batch_size)
+    model.summary()
+    return model
+
+def make_model_batches(max_len, gen, embed, word_inv, npos, nne, nout, embed_len, train_len, epochs=3, batch_size=64):
+    model = build_model(max_len, embed, word_inv, npos, nne, nout, embed_len)
+    steps = (train_len / batch_size)# + 1 if train_len % batch_size > 0 else 0
+    model.fit_generator(gen, epochs=epochs, steps_per_epoch=steps, shuffle=False)
     model.summary()
     return model
 
@@ -261,20 +271,20 @@ def corenlp_parse(text, lang='en'):
 
 
 def batch_generator(train, gold, mappings, batch_len=128, **keys):
-    Y = pad_sequences(gold)
-    X = sorted(train, key=len)
-    batches = []
-    k = 0
-    while X:
-        batches.append((X[k:k+batch_len], Y[k:k+batch_len]))
-        k += batch_len
-    shuffle(batches)
-
-    for x, y in batches:
-        outputs = []
-        for key, args in keys.items():
-            outputs.append(to_categories(x, key, mappings[key], **args))
-        yield tuple(outputs), y
+    X, Y = same_order(train, pad_sequences(gold))
+    X = np.array(X)
+    Y = np.array(Y)
+    maxlen = len(X[-1])
+    n_batches = len(train) // batch_len# + (len(train) % batch_len > 0)
+    batches = list(range(n_batches))
+    while True:
+        shuffle(batches)
+        for k in batches:
+            s = slice(k*batch_len, (k+1)*batch_len)
+            outputs = []
+            for key, args in keys.items():
+                outputs.append(to_categories(X[s], key, mappings[key], maxlen=maxlen, **args))
+            yield outputs, Y[s]
 
 
 def get_links(entity_lst, wiki_dir, wkd2fb):
@@ -359,7 +369,7 @@ def to_categories(data, key, inv, default=None, categorical=True, maxlen=None):
     cat_seq = [build_sequence(f, inv, default=default) for f in fields]
     padded = pad_sequences(cat_seq, maxlen=maxlen)
     if categorical:
-        return to_categorical(padded)
+        return to_categorical(padded, num_classes=len(inv))
     return padded
 
 
@@ -407,13 +417,20 @@ if __name__ == '__main__':
         train, lbl_sets, gold, cats, _ = docria_extract(corenlp, docs)
         mappings = create_mappings(train, embed, lbl_sets)
 
-    batches = batch_generator(train, gold, mappings, batch_len=128,
+    x_word = to_categories(train, 'form', mappings['form'], default=1, categorical=False)
+    x_pos = to_categories(train, 'pos', mappings['pos'])
+    x_ne = to_categories(train, 'ne', mappings['ne'])
+    y = pad_sequences(gold)
+
+    batch_len = 142
+    batches = batch_generator(train, gold, mappings, batch_len=batch_len,
             form={'default': 1, 'categorical': False},
-            pos={},
-            ne={})
+            pos={'categorical': False},
+            ne={'categorical': False})
 
     if not args.model.exists():
-        model = make_model(len(mappings['form']), batches, embed, mappings['form'], len(mappings['pos']), len(mappings['ne']), len(cats), embed_len, len(train), epochs=10)
+        #model = make_model(len(mappings['form']), [x_word, x_pos, x_ne], y, embed, mappings['form'], len(mappings['pos']), len(mappings['ne']), len(cats), embed_len, len(train), epochs=10, batch_size=batch_len)
+        model = make_model_batches(len(mappings['form']), batches, embed, mappings['form'], len(mappings['pos']), len(mappings['ne']), len(cats), embed_len, len(train), epochs=10, batch_size=batch_len)
         jar = ModelJar(model, mappings, cats, path=args.model)
     else:
         model = jar.model
@@ -424,8 +441,8 @@ if __name__ == '__main__':
         core_nlp_test, docs_test = read_and_extract(args.predict, lambda docs: get_core_nlp(docs, lang=args.lang))
         test, _, gold_test, _, docs = docria_extract(core_nlp_test, docs_test)
         x_word_test = to_categories(test, 'form', mappings['form'], default=1, categorical=False)
-        x_pos_test = to_categories(test, 'pos', mappings['pos'])
-        x_ne_test = to_categories(test, 'ne', mappings['ne'])
+        x_pos_test = to_categories(test, 'pos', mappings['pos'], categorical=False)
+        x_ne_test = to_categories(test, 'ne', mappings['ne'], categorical=False)
         y_test = pad_sequences(gold_test)
         pred = model.predict([x_word_test, x_pos_test, x_ne_test])
         simple_eval(pred, gold_test, inverted(cats))
