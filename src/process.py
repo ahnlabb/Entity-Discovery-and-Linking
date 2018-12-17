@@ -81,14 +81,13 @@ def txt2xml(doc):
 
 
 def docria_extract(core_nlp, docs, saved_cats=None):
-    train, gold, span_index, doc_index = [], [], [], []
+    train, gold = [], []
     lbl_sets = defaultdict(set)
 
     gold_std, cats = gold_std_idx(docs)
     if saved_cats:
         cats = saved_cats
-    # mutate cats, return old cats
-    numeric_cats = one_hot(gold_std, cats)
+    num_cats = one_hot(gold_std, cats)
 
     def get_entity(doc, span):
         none = cats[('O', 'NOE', 'OUT')]
@@ -98,13 +97,10 @@ def docria_extract(core_nlp, docs, saved_cats=None):
     for cnlp, doc in zip(core_nlp, docs):
         sentences, spans = core_nlp_features(cnlp, lbl_sets)
         entities = [[get_entity(doc, s) for s in sentence] for sentence in spans]
-        current_doc = [[doc.props['docid'] for _ in sentence] for sentence in spans]
-        doc_index.extend(current_doc)
-        span_index.extend([sentence for sentence in spans])
         gold.extend(entities)
         train.extend(sentences)
 
-    return train, lbl_sets, gold, numeric_cats, span_index, doc_index
+    return train, lbl_sets, gold, num_cats, list(docs)
 
 
 def build_indices(train, embed):
@@ -194,13 +190,13 @@ def extract_features(mappings, sentences, padding=False):
 
 def build_model(max_len, embed, word_inv, npos, nne, nout, embed_len):
     width = len(word_inv) + 2
-    pos = Input(shape=(max_len, npos))
-    ne = Input(shape=(max_len, nne))
-    form = Input(shape=(max_len,))
+    pos = Input(shape=(None, npos))
+    ne = Input(shape=(None, nne))
+    form = Input(shape=(None,))
     emb = Embedding(width,
             embed_len,
             embeddings_initializer=emb_mat_init(embed, word_inv),
-            mask_zero=True,
+            mask_zero=False,
             input_length=None)(form)
 
     emb.trainable = True
@@ -209,7 +205,7 @@ def build_model(max_len, embed, word_inv, npos, nne, nout, embed_len):
 
     lstm = Bidirectional(LSTM(25, return_sequences=True), input_shape=(None, width))(concat)
     out = Dense(nout, activation='softmax')(lstm)
-    model = Model(inputs= [form, pos, ne], outputs=out)
+    model = Model(inputs=[form, pos, ne], outputs=out)
     model.compile(loss='categorical_crossentropy', optimizer='nadam', metrics=['acc'])
     return model
 
@@ -326,7 +322,7 @@ def test(model, xy):
     print(100 * correct_ent / total_ent, '% correct entities')
 
 
-def predict_to_layer(docs, corenlp, mappings):
+def prediction_to_layer(pred):
     lbl_sets = defaultdict(set)
     for doc in docs:
         sentences, spans = core_nlp_features(corenlp, lbl_sets)
@@ -361,10 +357,10 @@ def interpret_prediction(y, cats):
     return from_one_hot(one_hot, cats)
 
 
-def to_categories(data, key, inv, default=None, categorical=True):
+def to_categories(data, key, inv, default=None, categorical=True, maxlen=None):
     fields = (mapget(key, sentence) for sentence in data)
     cat_seq = [build_sequence(f, inv, default=default) for f in fields]
-    padded = pad_sequences(cat_seq, maxlen=500)
+    padded = pad_sequences(cat_seq, maxlen=maxlen)
     if categorical:
         return to_categorical(padded)
     return padded
@@ -407,16 +403,17 @@ if __name__ == '__main__':
     jar = None
     if args.model.exists():
         jar = ModelJar.load(args.model, lambda jar: emb_mat_init(embed, jar.mappings['form']))
-        train, lbl_sets, gold, cats, span_index, doc_index = docria_extract(corenlp, docs, saved_cats=jar.cats)
+        train, lbl_sets, gold, cats, _ = docria_extract(corenlp, docs, saved_cats=jar.cats)
         mappings = jar.mappings
     else:
-        train, lbl_sets, gold, cats, span_index, doc_index = docria_extract(corenlp, docs)
+        train, lbl_sets, gold, cats, _ = docria_extract(corenlp, docs)
         mappings = create_mappings(train, embed, lbl_sets)
 
+    maxlen = 414
     x_word = to_categories(train, 'form', mappings['form'], default=1, categorical=False)
     x_pos = to_categories(train, 'pos', mappings['pos'])
     x_ne = to_categories(train, 'ne', mappings['ne'])
-    y = pad_sequences(gold, maxlen=500)
+    y = pad_sequences(gold)
 
     if not args.model.exists():
         model = make_model(x_word.shape[1], [x_word, x_pos, x_ne], y, embed, mappings['form'], len(mappings['pos']), len(mappings['ne']), len(cats), embed_len, epochs=1)
@@ -428,10 +425,10 @@ if __name__ == '__main__':
 
     if args.predict:
         core_nlp_test, docs_test = read_and_extract(args.predict, lambda docs: get_core_nlp(docs, lang=args.lang))
-        test, _, gold_test, _, _, _ = docria_extract(core_nlp_test, docs_test)
+        test, _, gold_test, _, docs = docria_extract(core_nlp_test, docs_test)
         x_word_test = to_categories(test, 'form', mappings['form'], default=1, categorical=False)
         x_pos_test = to_categories(test, 'pos', mappings['pos'])
         x_ne_test = to_categories(test, 'ne', mappings['ne'])
-        y_test = pad_sequences(gold, maxlen=500)
+        y_test = pad_sequences(gold_test)
         pred = model.predict([x_word_test, x_pos_test, x_ne_test])
         simple_eval(pred, gold_test, inverted(cats))
