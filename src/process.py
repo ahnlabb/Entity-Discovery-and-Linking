@@ -5,6 +5,7 @@ from collections import defaultdict
 from itertools import count, repeat
 from pickle import load, dump
 from collections import Counter
+from random import shuffle
 import base64
 from docria.storage import DocumentIO
 from utils import pickled, langforia, inverted, build_sequence, map2, flatten_once, print_dims, save_model, load_model, emb_mat_init, mapget, zip_from_end
@@ -196,7 +197,7 @@ def build_model(max_len, embed, word_inv, npos, nne, nout, embed_len):
     emb = Embedding(width,
             embed_len,
             embeddings_initializer=emb_mat_init(embed, word_inv),
-            mask_zero=False,
+            mask_zero=True,
             input_length=None)(form)
 
     emb.trainable = True
@@ -209,9 +210,10 @@ def build_model(max_len, embed, word_inv, npos, nne, nout, embed_len):
     model.compile(loss='categorical_crossentropy', optimizer='nadam', metrics=['acc'])
     return model
 
-def make_model(max_len, x, y, embed, word_inv, npos, nne, nout, embed_len, epochs=3, batch_size=128):
+def make_model(max_len, gen, embed, word_inv, npos, nne, nout, embed_len, train_len, epochs=3, batch_size=128):
     model = build_model(max_len, embed, word_inv, npos, nne, nout, embed_len)
-    model.fit(x, y, epochs=epochs, batch_size=batch_size)
+    steps = (train_len // batch_size) + 1 if train_len % batch_size > 0 else 0
+    model.fit_generator(gen, epochs=epochs, steps_per_epoch=steps, shuffle=True)
     model.summary()
     return model
 
@@ -258,26 +260,21 @@ def corenlp_parse(text, lang='en'):
     return sentences, spans
 
 
-def batch(data, batch_len=32):
-    f = data[:batch_len]
-    del data[:batch_len]
-    longest = max(map(len, f))
-    feat_len = len(f[0][0])
-    pad_f = np.array([0] * (feat_len - 1) + [1])
-    for i in range(len(f)):
-        diff = longest - len(f[i])
-        f[i].extend([pad_f] * diff)
-    return np.array(f)
+def batch_generator(train, gold, mappings, batch_len=128, **keys):
+    Y = pad_sequences(gold)
+    X = sorted(train, key=len)
+    batches = []
+    k = 0
+    while X:
+        batches.append((X[k:k+batch_len], Y[k:k+batch_len]))
+        k += batch_len
+    shuffle(batches)
 
-
-def batch_generator(features, batch_len=32):
-    while len(features) > 0:
-        yield batch(features, batch_len=batch_len)
-
-
-def zipped_batch_generator(*lists, batch_len=32):
-    for z in zip(*[batch_generator(lst, batch_len=batch_len) for lst in lists]):
-        yield z
+    for x, y in batches:
+        outputs = []
+        for key, args in keys.items():
+            outputs.append(to_categories(x, key, mappings[key], **args))
+        yield tuple(outputs), y
 
 
 def get_links(entity_lst, wiki_dir, wkd2fb):
@@ -382,6 +379,7 @@ def simple_eval(pred, gold, out_index):
     corr_sum = sum(correct[k] for k in correct if k != ('O', 'NOE', 'OUT'))
     act_sum = sum(actual[k] for k in actual if k != ('O', 'NOE', 'OUT'))
     print(corr_sum/act_sum)
+    
 
 
 if __name__ == '__main__':
@@ -409,14 +407,13 @@ if __name__ == '__main__':
         train, lbl_sets, gold, cats, _ = docria_extract(corenlp, docs)
         mappings = create_mappings(train, embed, lbl_sets)
 
-    maxlen = 414
-    x_word = to_categories(train, 'form', mappings['form'], default=1, categorical=False)
-    x_pos = to_categories(train, 'pos', mappings['pos'])
-    x_ne = to_categories(train, 'ne', mappings['ne'])
-    y = pad_sequences(gold)
+    batches = batch_generator(train, gold, mappings, batch_len=128,
+            form={'default': 1, 'categorical': False},
+            pos={},
+            ne={})
 
     if not args.model.exists():
-        model = make_model(x_word.shape[1], [x_word, x_pos, x_ne], y, embed, mappings['form'], len(mappings['pos']), len(mappings['ne']), len(cats), embed_len, epochs=1)
+        model = make_model(len(mappings['form']), batches, embed, mappings['form'], len(mappings['pos']), len(mappings['ne']), len(cats), embed_len, len(train), epochs=10)
         jar = ModelJar(model, mappings, cats, path=args.model)
     else:
         model = jar.model
