@@ -267,7 +267,7 @@ def predict_batch_generator(test, mappings, **keys):
         yield list(field_as_category(sentences, key, mappings[key], maxlen=maxlen, **args) for key, args in keys.items())
 
 
-def predict_to_layer(model, docs, test, gold, spandex, mappings, inv_cats, **keys):
+def predict_to_layer(model, docs, test, gold, spandex, mappings, inv_cats, elmap={}, **keys):
     batches = predict_batch_generator(test, mappings, **keys)
     i = 0
     for doc, doc_spans, batch in zip(docs, spandex, batches):
@@ -278,8 +278,12 @@ def predict_to_layer(model, docs, test, gold, spandex, mappings, inv_cats, **key
         for pred, spans in zip(predictions, doc_spans):
             for p, s in zip_from_end(pred, spans):
                 _, tp, lbl = inv_cats[np.argmax(p)]
-                tgt, i = 'NIL%s' % format(i, '05d'), i + 1
-                layer.add(text=main[s], type=tp, label=lbl, target=tgt)
+                text = main[s]
+                if str(text) in elmap:
+                    tgt = elmap[str(text)]
+                else:
+                    tgt, i = 'NIL%s' % format(i, '05d'), i + 1
+                layer.add(text=text, type=tp, label=lbl, target=tgt)
         
         span_translate(doc, 'tac/segments', ('xml', 'text'), 'tac/entity', ('text', 'xml')) 
 
@@ -390,12 +394,14 @@ if __name__ == '__main__':
     else:
         model = jar.model
 
+    with args.elmapping.open('r+b') as f:
+        elmap = load(f)
 
     if args.predict:
         core_nlp_test, docs_test = read_and_extract(args.predict, lambda docs: get_core_nlp(docs, lang=args.lang))
         test, _, gold_test, _, spandex, docs = docria_extract(core_nlp_test, docs_test, per_doc=True)
         gold_test = [to_categories(g, cats) for g in gold_test]
-        predict_to_layer(model, docs, test, gold_test, spandex, mappings, inverted(cats), **keys)
+        predict_to_layer(model, docs, test, gold_test, spandex, mappings, inverted(cats), elmap=elmap, **keys)
         with open('predict.en.tsv', 'w') as f:
             f.write(docria_to_neleval(docs, 'tac/entity'))
         #x_word_test = field_as_category(test, 'form', mappings['form'], default=1, categorical=False)
