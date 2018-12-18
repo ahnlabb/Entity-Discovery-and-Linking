@@ -25,7 +25,7 @@ from keras.utils import to_categorical
 
 def get_args():
     parser = ArgumentParser()
-    parser.add_argument('file', type=Path)
+    parser.add_argument('file', type=Path, nargs='+')
     parser.add_argument('glove', type=Path)
     parser.add_argument('model', type=Path)
     parser.add_argument('lang', type=str)
@@ -350,15 +350,26 @@ if __name__ == '__main__':
 
     embed = load_glove(args.glove)
     embed_len = len(next(iter(embed.values())))
-    corenlp, docs = read_and_extract(args.file, lambda docs: get_core_nlp(docs, lang=args.lang))
 
     jar = None
     if args.model.exists():
         jar = ModelJar.load(args.model, lambda jar: emb_mat_init(embed, jar.mappings['form']))
-        train, lbl_sets, gold, cats, _, _ = docria_extract(corenlp, docs, saved_cats=jar.cats)
+        saved_cats = jar.cats
         mappings = jar.mappings
     else:
-        train, lbl_sets, gold, cats, _, _ = docria_extract(corenlp, docs)
+        saved_cats = None
+        
+    train, lbl_sets, gold, cats = [], defaultdict(set), [], {}
+    for f in args.file:
+        corenlp, docs = read_and_extract(f, lambda docs: get_core_nlp(docs, lang=args.lang))
+        t, ls, g, cs, _, _ = docria_extract(corenlp, docs, saved_cats=saved_cats)
+        train.extend(t)
+        for k in lbl_sets:
+            lbl_sets[k] |= ls[k]
+        gold.extend(g)
+        cats.update(cs)
+        
+    if not args.model.exists():
         mappings = create_mappings(train, embed, lbl_sets)
 
     #x_word = to_categories(train, 'form', mappings['form'], default=1, categorical=False)
@@ -374,19 +385,19 @@ if __name__ == '__main__':
         batch_len = 142
         batches = batch_generator(train, gold, mappings, batch_len=batch_len, **keys)
         #model = make_model([x_word, x_pos, x_ne], y, embed, mappings['form'], len(mappings['pos']), len(mappings['ne']), len(cats), embed_len, len(train), epochs=10, batch_size=batch_len)
-        model = make_model_batches(batches, embed, mappings['form'], len(mappings['pos']), len(mappings['ne']), len(cats), embed_len, len(train), epochs=1, batch_size=batch_len)
+        model = make_model_batches(batches, embed, mappings['form'], len(mappings['pos']), len(mappings['ne']), len(cats), embed_len, len(train), epochs=10, batch_size=batch_len)
         jar = ModelJar(model, mappings, cats, path=args.model)
         jar.save()
     else:
         model = jar.model
 
-    model.summary()
 
     if args.predict:
         core_nlp_test, docs_test = read_and_extract(args.predict, lambda docs: get_core_nlp(docs, lang=args.lang))
         test, _, gold_test, _, spandex, docs = docria_extract(core_nlp_test, docs_test, per_doc=True)
         predict_to_layer(model, docs, test, gold_test, spandex, mappings, inverted(cats), **keys)
-        print(docria_to_neleval(docs, 'tac/entity'))
+        with open('predict.en.tsv', 'w') as f:
+            f.write(docria_to_neleval(docs, 'tac/entity'))
         #x_word_test = to_categories(test, 'form', mappings['form'], default=1, categorical=False)
         #x_pos_test = to_categories(test, 'pos', mappings['pos'], categorical=False)
         #x_ne_test = to_categories(test, 'ne', mappings['ne'], categorical=False)
