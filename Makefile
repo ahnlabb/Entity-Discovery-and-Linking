@@ -1,4 +1,4 @@
-.PHONY: paper site serve process
+.PHONY: paper site serve process-en process-es process-zh process
 
 ifneq ($(CONDA_DEFAULT_ENV),nlp-project)
 $(error Not in conda environment)
@@ -25,11 +25,17 @@ paper: paper.pdf
 paper.pdf:
 	pdflatex paper.tex
 
-process: src/process.py
-	python3 src/process.py corpus/tac/lang/en/eng.2015.train.pickle glove/glove.6B.100d.pickle model.en.pickle en --predict corpus/tac/lang/en/eng.2015.eval.pickle
-
 prepare-s3:
 	mkdir -p corpus/tac/lang/en/ glove/
 	aws s3 cp s3://nlp-project-edan70/eng.2015.train.pickle corpus/tac/lang/en/
 	aws s3 cp s3://nlp-project-edan70/eng.2015.eval.pickle corpus/tac/lang/en/
 	aws s3 cp s3://nlp-project-edan70/glove.6B.100d.pickle glove
+
+process-es:
+	python3 src/process.py corpus/tac/lang/es/spa.2015.eval.docria corpus/tac/lang/es/spa.2015.train.docria corpus/tac/lang/es/spa.2016.eval.docria glove/tac-es-top200k.case.txt model.es.pickle es corpus/wikimap.pickle --predict corpus/tac/lang/es/spa.2017.eval.docria
+
+process-zh:
+	python3 src/process.py corpus/tac/lang/zh/cmn.2015.eval.pickle corpus/tac/lang/zh/cmn.2015.train.pickle corpus/tac/lang/zh/cmn.2016.eval.pickle glove/tac-zh.txt model.zh.pickle zh corpus/wikimap.pickle --predict corpus/tac/lang/zh/cmn.2017.eval.pickle 
+
+process-en:
+	python3 src/process.py corpus/tac/lang/en/eng.2015.eval.pickle corpus/tac/lang/en/eng.2015.train.pickle corpus/tac/lang/en/eng.2016.eval.pickle glove/glove.6B.100d.pickle model.en.pickle en corpus/wikimap.pickle --predict corpus/tac/lang/en/eng.2017.eval.pickle

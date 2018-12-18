@@ -25,12 +25,15 @@ from keras.utils import to_categorical
 
 def get_args():
     parser = ArgumentParser()
-    parser.add_argument('file', type=Path, nargs='+')
-    parser.add_argument('glove', type=Path)
-    parser.add_argument('model', type=Path)
-    parser.add_argument('lang', type=str)
-    parser.add_argument('--predict', type=Path)
-    parser.add_argument('--gold', action='store_true')
+    parser.add_argument('file', type=Path, nargs='+', help='one or more docria files to use for training')
+    parser.add_argument('glove', type=Path, help='file with embedding (tab or space separated, no header)')
+    parser.add_argument('model', type=Path,
+            help='path to where model will be saved, '
+                 'if this file already exists training will be skipped and this model will be loaded')
+    parser.add_argument('lang', type=str, choices=['en','zh','es'], help='language')
+    parser.add_argument('elmapping', type=Path, help='')
+    parser.add_argument('--predict', type=Path, help='')
+    parser.add_argument('--gold', action='store_true', help='')
     return parser.parse_args()
 
 
@@ -262,19 +265,6 @@ def predict_batch_generator(test, mappings, **keys):
     for sentences in test:
         maxlen = len(max(sentences, key=len))
         yield list(field_as_category(sentences, key, mappings[key], maxlen=maxlen, **args) for key, args in keys.items())
-
-
-def get_wikimap(wiki_dir, wkd2fb):
-    with wkd2fb.open('r+b') as f:
-        fbmap = load(f)
-    wikimap = {}
-    for path in wiki_dir.glob('part-*'):
-        with path.open('r') as f:
-            for line in f:
-                split = line.rfind(',')
-                wkd = int(line[split+1:])
-                wikimap[line[:split]] = fbmap.get(wkd, 'wkd'+str(base64.b64encode(bytes([wkd]))))
-    return wikimap
 
 
 def predict_to_layer(model, docs, test, gold, spandex, mappings, inv_cats, **keys):
