@@ -3,7 +3,7 @@ from keras.models import Model
 from utils import emb_mat_init
 
 
-def build_model(max_len, embed, word_inv, npos, nne, nout, embed_len):
+def build_model(embed, word_inv, npos, nne, nout, embed_len):
     width = len(word_inv) + 2
 
     pos = Input(shape=(None,), dtype='int32')
@@ -31,8 +31,8 @@ def build_model(max_len, embed, word_inv, npos, nne, nout, embed_len):
     return model
 
 
-def make_model(max_len, x, y, embed, word_inv, npos, nne, nout, embed_len, train_len, epochs=3, batch_size=64):
-    model = build_model(max_len, embed, word_inv, npos, nne, nout, embed_len)
+def make_model(x, y, embed, word_inv, npos, nne, nout, embed_len, train_len, epochs=3, batch_size=64):
+    model = build_model(embed, word_inv, npos, nne, nout, embed_len)
     # steps = (train_len / batch_size)# + 1 if train_len % batch_size > 0 else 0
     # model.fit_generator(gen, epochs=epochs, steps_per_epoch=steps, shuffle=False)
     model.fit(x, y, epochs=epochs, batch_size=batch_size)
@@ -40,9 +40,9 @@ def make_model(max_len, x, y, embed, word_inv, npos, nne, nout, embed_len, train
     return model
 
 
-def make_model_batches(max_len, gen, embed, word_inv, npos, nne, nout, embed_len, train_len, epochs=3, batch_size=64):
-    model = build_model(max_len, embed, word_inv, npos, nne, nout, embed_len)
+def make_model_batches(gen, embed, word_inv, npos, nne, nout, embed_len, train_len, epochs=3, batch_size=64):
+    model = build_model(embed, word_inv, npos, nne, nout, embed_len)
     steps = (train_len / batch_size)  # + 1 if train_len % batch_size > 0 else 0
-    model.fit_generator(gen, epochs=epochs, steps_per_epoch=steps, shuffle=False)
+    model.fit_generator(gen, epochs=epochs, steps_per_epoch=steps, shuffle=True)
     model.summary()
     return model

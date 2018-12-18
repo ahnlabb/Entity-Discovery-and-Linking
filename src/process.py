@@ -8,10 +8,13 @@ from collections import Counter
 from random import shuffle
 import base64
 from docria.storage import DocumentIO
-from utils import pickled, langforia, inverted, build_sequence, emb_mat_init, mapget, zip_from_end
+from docria.algorithm import span_translate
+from docria import T
+from utils import pickled, langforia, inverted, build_sequence, emb_mat_init, mapget, zip_from_end, print_dims
 from gold_std import entity_to_dict, from_one_hot, one_hot, gold_std_idx, to_neleval, interpret_prediction
 from model import make_model, make_model_batches
 from structs import ModelJar
+from print_neleval import docria_to_neleval
 import numpy as np
 import time
 import sys
@@ -49,7 +52,6 @@ def load_glove(path):
 
 def get_core_nlp(docs, lang):
     def call_api(doc):
-
         text = str(doc.texts['main'])
         return langforia(text, lang).split('\n')
     api_data = []
@@ -79,8 +81,8 @@ def txt2xml(doc):
     return index
 
 
-def docria_extract(core_nlp, docs, saved_cats=None):
-    train, gold = [], []
+def docria_extract(core_nlp, docs, saved_cats=None, per_doc=False):
+    train, gold, spandex = [], [], []
     lbl_sets = defaultdict(set)
 
     gold_std, cats = gold_std_idx(docs)
@@ -88,18 +90,24 @@ def docria_extract(core_nlp, docs, saved_cats=None):
         cats = saved_cats
     num_cats = one_hot(gold_std, cats)
 
-    def get_entity(doc, span):
+    def get_entity(docid, span):
         none = cats[('O', 'NOE', 'OUT')]
-        docid = doc.props['docid']
         return gold_std[docid].get(span, none)
 
     for cnlp, doc in zip(core_nlp, docs):
+        docid = doc.props['docid']
         sentences, spans = core_nlp_features(cnlp, lbl_sets)
-        entities = [[get_entity(doc, s) for s in sentence] for sentence in spans]
-        gold.extend(entities)
-        train.extend(sentences)
+        entities = [[get_entity(docid, s) for s in sentence] for sentence in spans]
+        if per_doc:
+            gold.append(entities)
+            train.append(sentences)
+            spandex.append(spans)
+        else:
+            gold.extend(entities)
+            train.extend(sentences)
+            spandex.extend(spans)
 
-    return train, lbl_sets, gold, num_cats, list(docs)
+    return train, lbl_sets, gold, num_cats, spandex, list(docs)
 
 
 def build_indices(train, embed):
@@ -230,9 +238,7 @@ def corenlp_parse(text, lang='en'):
 
 
 def batch_generator(train, gold, mappings, batch_len=128, **keys):
-    X, Y = same_order(train, pad_sequences(gold))
-    X = np.array(X)
-    Y = np.array(Y)
+    xy = sorted(zip(train, gold), key=lambda x: len(x[0]))
     n_batches = len(train) // batch_len + (len(train) % batch_len > 0)
     batches = list(range(n_batches))
     while True:
@@ -240,15 +246,21 @@ def batch_generator(train, gold, mappings, batch_len=128, **keys):
         for k in batches:
             s = slice(k * batch_len, (k + 1) * batch_len)
             outputs = []
-            maxlen = len(X[s][-1])
+            maxlen = len(xy[s][-1][0])
+            shuffle(xy[s])
+            x, y = zip(*xy[s])
             for key, args in keys.items():
-                outputs.append(to_categories(X[s], key, mappings[key], maxlen=maxlen, **args))
-            yield outputs, Y[s]
+                outputs.append(to_categories(x, key, mappings[key], maxlen=maxlen, **args))
+            yield outputs, pad_sequences(y)
+
+            
+def predict_batch_generator(test, mappings, **keys):
+    for sentences in test:
+        maxlen = len(max(sentences, key=len))
+        yield list(to_categories(sentences, key, mappings[key], maxlen=maxlen, **args) for key, args in keys.items())
 
 
-
-
-def get_links(entity_lst, wiki_dir, wkd2fb):
+def get_wikimap(wiki_dir, wkd2fb):
     with wkd2fb.open('r+b') as f:
         fbmap = load(f)
     wikimap = {}
@@ -258,25 +270,23 @@ def get_links(entity_lst, wiki_dir, wkd2fb):
                 split = line.rfind(',')
                 wkd = int(line[split+1:])
                 wikimap[line[:split]] = fbmap.get(wkd, 'wkd'+str(base64.b64encode(str(wkd).encode('ascii'))))
-    return [wikimap[ent] for ent in entity_lst]
+    return wikimap
 
 
-def same_order(parent, *children, key=lambda x: len(x[1])):
-    children = list(children)
-    parent = sorted(enumerate(parent), key=key)
-    for i, c in enumerate(children):
-        children[i] = [c[j] for j, _ in parent]
-    return tuple([[v for _, v in parent]] + children)
-
-
-def prediction_to_layer(pred):
-    lbl_sets = defaultdict(set)
-    for doc in docs:
-        sentences, spans = core_nlp_features(corenlp, lbl_sets)
-        features = extract_features(mappings, sentences, padding=True)
-
-        entities = doc.add_layer('tac/entity', text=T.span('main'), xml=T.span('xml'))
-        entities.add(text=main[0:100])
+def predict_to_layer(model, docs, test, gold, spandex, mappings, inv_cats, **keys):
+    batches = predict_batch_generator(test, mappings, **keys)
+    i = 0
+    for doc, doc_spans, batch in zip(docs, spandex, batches):
+        layer = doc.add_layer('tac/entity', text=T.span('main'), xml=T.span('xml')) 
+        main = doc.text['main']
+        predictions = model.predict_on_batch(batch)
+        
+        for pred, spans in zip(predictions, doc_spans):
+            for p, s in zip_from_end(pred, spans):
+                _, tp, lbl = inv_cats[np.argmax(p)]
+                tgt, i = 'NIL%s' % format(i, '05d'), i + 1
+                layer.add(text=main[s], type=tp, label=lbl, target=tgt)
+        
         span_translate(doc, 'tac/segments', ('xml', 'text'), 'tac/entity', ('text', 'xml')) 
 
 
@@ -345,40 +355,41 @@ if __name__ == '__main__':
     jar = None
     if args.model.exists():
         jar = ModelJar.load(args.model, lambda jar: emb_mat_init(embed, jar.mappings['form']))
-        train, lbl_sets, gold, cats, _ = docria_extract(corenlp, docs, saved_cats=jar.cats)
+        train, lbl_sets, gold, cats, _, _ = docria_extract(corenlp, docs, saved_cats=jar.cats)
         mappings = jar.mappings
     else:
-        train, lbl_sets, gold, cats, _ = docria_extract(corenlp, docs)
+        train, lbl_sets, gold, cats, _, _ = docria_extract(corenlp, docs)
         mappings = create_mappings(train, embed, lbl_sets)
 
-    x_word = to_categories(train, 'form', mappings['form'], default=1, categorical=False)
-    x_pos = to_categories(train, 'pos', mappings['pos'], categorical=False)
-    x_ne = to_categories(train, 'ne', mappings['ne'], categorical=False)
-    y = pad_sequences(gold)
+    #x_word = to_categories(train, 'form', mappings['form'], default=1, categorical=False)
+    #x_pos = to_categories(train, 'pos', mappings['pos'], categorical=False)
+    #x_ne = to_categories(train, 'ne', mappings['ne'], categorical=False)
+    #y = pad_sequences(gold)
 
-    batch_len = 142
-    batches = batch_generator(
-        train, gold, mappings, batch_len=batch_len,
-        form={'default': 1, 'categorical': False},
-        pos={'categorical': False},
-        ne={'categorical': False}
-    )
+    keys = {'form': {'default': 1, 'categorical': False},
+            'pos': {'categorical': False},
+            'ne': {'categorical': False},}
 
     if not args.model.exists():
-        #model = make_model(len(mappings['form']), [x_word, x_pos, x_ne], y, embed, mappings['form'], len(mappings['pos']), len(mappings['ne']), len(cats), embed_len, len(train), epochs=3, batch_size=batch_len)
-        model = make_model_batches(len(mappings['form']), batches, embed, mappings['form'], len(mappings['pos']), len(mappings['ne']), len(cats), embed_len, len(train), epochs=3, batch_size=batch_len)
+        batch_len = 142
+        batches = batch_generator(train, gold, mappings, batch_len=batch_len, **keys)
+        #model = make_model([x_word, x_pos, x_ne], y, embed, mappings['form'], len(mappings['pos']), len(mappings['ne']), len(cats), embed_len, len(train), epochs=10, batch_size=batch_len)
+        model = make_model_batches(batches, embed, mappings['form'], len(mappings['pos']), len(mappings['ne']), len(cats), embed_len, len(train), epochs=1, batch_size=batch_len)
         jar = ModelJar(model, mappings, cats, path=args.model)
+        jar.save()
     else:
         model = jar.model
 
-    jar.save()
+    model.summary()
 
     if args.predict:
         core_nlp_test, docs_test = read_and_extract(args.predict, lambda docs: get_core_nlp(docs, lang=args.lang))
-        test, _, gold_test, _, docs = docria_extract(core_nlp_test, docs_test)
-        x_word_test = to_categories(test, 'form', mappings['form'], default=1, categorical=False)
-        x_pos_test = to_categories(test, 'pos', mappings['pos'], categorical=False)
-        x_ne_test = to_categories(test, 'ne', mappings['ne'], categorical=False)
-        y_test = pad_sequences(gold_test)
-        pred = model.predict([x_word_test, x_pos_test, x_ne_test])
-        simple_eval(pred, gold_test, inverted(cats))
+        test, _, gold_test, _, spandex, docs = docria_extract(core_nlp_test, docs_test, per_doc=True)
+        predict_to_layer(model, docs, test, gold_test, spandex, mappings, inverted(cats), **keys)
+        print(docria_to_neleval(docs, 'tac/entity'))
+        #x_word_test = to_categories(test, 'form', mappings['form'], default=1, categorical=False)
+        #x_pos_test = to_categories(test, 'pos', mappings['pos'], categorical=False)
+        #x_ne_test = to_categories(test, 'ne', mappings['ne'], categorical=False)
+        #y_test = pad_sequences(gold_test)
+        #pred = model.predict([x_word_test, x_pos_test, x_ne_test])
+        #simple_eval(pred, gold_test, inverted(cats))
