@@ -1,11 +1,11 @@
-from pickle import load
-from keras.models import load_model
 from flask import Flask, render_template, jsonify, request
 from utils import langforia
 from pathlib import Path
 from gold_std import get_doc_index, gold_std_idx
 from process import predict
 from docria.storage import DocumentIO
+from structs import ModelJar
+from utils import emb_mat_init
 import tensorflow as tf
 
 app = Flask(__name__)
@@ -37,9 +37,19 @@ def doc_index():
         return jsonify(index)
 
 
+@app.route('/models')
+def get_models():
+    for name in models:
+        if not models[name]:
+            jar = ModelJar.load(name, lambda jar: emb_mat_init({}, jar.mappings['form']))
+            models[name] = jar
+    return jsonify(list(models.keys()))
+
+
 def get_docria(fname):
     with DocumentIO.read('corpus/en/' + fname) as doc_reader:
         return list(doc_reader)
+
 
 @app.route('/browse/<docriafile>')
 def show_docria(docriafile):
@@ -48,15 +58,12 @@ def show_docria(docriafile):
 
 @app.route('/predict', methods=['POST'])
 def make_prediction():
+    model_name = request.args.get('model', default='model.en.pickle')
     text = request.get_json()
     with graph.as_default():
-        pred = predict(model, mappings, cats, text, padding=True)
+        pred = predict(models[model_name], text)
     return jsonify(pred)
 
 
-#model = load_model('./en.h5')
-#with open('./cats.pickle', 'r+b') as f:
-#    cats = load(f)
-#with open('./en.h5.mappings.pickle', 'r+b') as f:
-#    mappings = load(f)
-#graph = tf.get_default_graph()
+models = {"model.en.pickle": None}
+graph = tf.get_default_graph()

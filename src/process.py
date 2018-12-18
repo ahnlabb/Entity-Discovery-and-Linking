@@ -253,7 +253,7 @@ def batch_generator(train, gold, mappings, batch_len=128, **keys):
                 outputs.append(to_categories(x, key, mappings[key], maxlen=maxlen, **args))
             yield outputs, pad_sequences(y)
 
-            
+
 def predict_batch_generator(test, mappings, **keys):
     for sentences in test:
         maxlen = len(max(sentences, key=len))
@@ -269,7 +269,7 @@ def get_wikimap(wiki_dir, wkd2fb):
             for line in f:
                 split = line.rfind(',')
                 wkd = int(line[split+1:])
-                wikimap[line[:split]] = fbmap.get(wkd, 'wkd'+str(base64.b64encode(str(wkd).encode('ascii'))))
+                wikimap[line[:split]] = fbmap.get(wkd, 'wkd'+str(base64.b64encode(bytes([wkd]))))
     return wikimap
 
 
@@ -364,7 +364,7 @@ if __name__ == '__main__':
         corenlp, docs = read_and_extract(f, lambda docs: get_core_nlp(docs, lang=args.lang))
         t, ls, g, cs, _, _ = docria_extract(corenlp, docs, saved_cats=saved_cats)
         train.extend(t)
-        for k in lbl_sets:
+        for k in ls:
             lbl_sets[k] |= ls[k]
         gold.extend(g)
         cats.update(cs)
