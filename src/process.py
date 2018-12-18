@@ -88,10 +88,9 @@ def docria_extract(core_nlp, docs, saved_cats=None, per_doc=False):
     gold_std, cats = gold_std_idx(docs)
     if saved_cats:
         cats = saved_cats
-    num_cats = one_hot(gold_std, cats)
 
     def get_entity(docid, span):
-        none = cats[('O', 'NOE', 'OUT')]
+        none = ('O', 'NOE', 'OUT')
         return gold_std[docid].get(span, none)
 
     for cnlp, doc in zip(core_nlp, docs):
@@ -107,7 +106,7 @@ def docria_extract(core_nlp, docs, saved_cats=None, per_doc=False):
             train.extend(sentences)
             spandex.extend(spans)
 
-    return train, lbl_sets, gold, num_cats, spandex, list(docs)
+    return train, lbl_sets, gold, cats, spandex, list(docs)
 
 
 def build_indices(train, embed):
@@ -205,7 +204,7 @@ def normalize_ne(inside, ne):
     elif ne[-1] == ')':
         ne = 'S-' + ne[1:-1]
         inside = ''
-    else:
+    elif len(ne) > 1:
         inside = ne[1:]
         ne = 'B-' + inside
 
@@ -237,6 +236,11 @@ def corenlp_parse(text, lang='en'):
     return sentences, spans
 
 
+def debug_log(x, fun=lambda x: x):
+    print(fun(x))
+    return x
+
+
 def batch_generator(train, gold, mappings, batch_len=128, **keys):
     xy = sorted(zip(train, gold), key=lambda x: len(x[0]))
     n_batches = len(train) // batch_len + (len(train) % batch_len > 0)
@@ -250,14 +254,14 @@ def batch_generator(train, gold, mappings, batch_len=128, **keys):
             shuffle(xy[s])
             x, y = zip(*xy[s])
             for key, args in keys.items():
-                outputs.append(to_categories(x, key, mappings[key], maxlen=maxlen, **args))
-            yield outputs, pad_sequences(y)
+                outputs.append(field_as_category(x, key, mappings[key], maxlen=maxlen, **args))
+            yield outputs, pad_sequences(y, maxlen=maxlen)
 
 
 def predict_batch_generator(test, mappings, **keys):
     for sentences in test:
         maxlen = len(max(sentences, key=len))
-        yield list(to_categories(sentences, key, mappings[key], maxlen=maxlen, **args) for key, args in keys.items())
+        yield list(field_as_category(sentences, key, mappings[key], maxlen=maxlen, **args) for key, args in keys.items())
 
 
 def get_wikimap(wiki_dir, wkd2fb):
@@ -309,9 +313,13 @@ def format_predictions(input_text, predictions, sentences):
     return pred_dict
 
 
-def to_categories(data, key, inv, default=None, categorical=True, maxlen=None):
+def field_as_category(data, key, inv, default=None, categorical=True, maxlen=None):
     fields = (mapget(key, sentence) for sentence in data)
-    cat_seq = [build_sequence(f, inv, default=default) for f in fields]
+    return to_categories(fields, inv, default=default, categorical=categorical, maxlen=maxlen)
+
+
+def to_categories(data, inv, default=None, categorical=True, maxlen=None):
+    cat_seq = [build_sequence(d, inv, default=default) for d in data]
     padded = pad_sequences(cat_seq, maxlen=maxlen)
     if categorical:
         return to_categorical(padded, num_classes=len(inv))
@@ -368,13 +376,14 @@ if __name__ == '__main__':
             lbl_sets[k] |= ls[k]
         gold.extend(g)
         cats.update(cs)
+    gold = to_categories(gold, cats)
         
     if not args.model.exists():
         mappings = create_mappings(train, embed, lbl_sets)
 
-    #x_word = to_categories(train, 'form', mappings['form'], default=1, categorical=False)
-    #x_pos = to_categories(train, 'pos', mappings['pos'], categorical=False)
-    #x_ne = to_categories(train, 'ne', mappings['ne'], categorical=False)
+    #x_word = field_as_category(train, 'form', mappings['form'], default=1, categorical=False)
+    #x_pos = field_as_category(train, 'pos', mappings['pos'], categorical=False)
+    #x_ne = field_as_category(train, 'ne', mappings['ne'], categorical=False)
     #y = pad_sequences(gold)
 
     keys = {'form': {'default': 1, 'categorical': False},
@@ -382,7 +391,7 @@ if __name__ == '__main__':
             'ne': {'categorical': False},}
 
     if not args.model.exists():
-        batch_len = 142
+        batch_len = 128
         batches = batch_generator(train, gold, mappings, batch_len=batch_len, **keys)
         #model = make_model([x_word, x_pos, x_ne], y, embed, mappings['form'], len(mappings['pos']), len(mappings['ne']), len(cats), embed_len, len(train), epochs=10, batch_size=batch_len)
         model = make_model_batches(batches, embed, mappings['form'], len(mappings['pos']), len(mappings['ne']), len(cats), embed_len, len(train), epochs=10, batch_size=batch_len)
@@ -395,12 +404,13 @@ if __name__ == '__main__':
     if args.predict:
         core_nlp_test, docs_test = read_and_extract(args.predict, lambda docs: get_core_nlp(docs, lang=args.lang))
         test, _, gold_test, _, spandex, docs = docria_extract(core_nlp_test, docs_test, per_doc=True)
+        gold_test = [to_categories(g, cats) for g in gold_test]
         predict_to_layer(model, docs, test, gold_test, spandex, mappings, inverted(cats), **keys)
         with open('predict.en.tsv', 'w') as f:
             f.write(docria_to_neleval(docs, 'tac/entity'))
-        #x_word_test = to_categories(test, 'form', mappings['form'], default=1, categorical=False)
-        #x_pos_test = to_categories(test, 'pos', mappings['pos'], categorical=False)
-        #x_ne_test = to_categories(test, 'ne', mappings['ne'], categorical=False)
+        #x_word_test = field_as_category(test, 'form', mappings['form'], default=1, categorical=False)
+        #x_pos_test = field_as_category(test, 'pos', mappings['pos'], categorical=False)
+        #x_ne_test = field_as_category(test, 'ne', mappings['ne'], categorical=False)
         #y_test = pad_sequences(gold_test)
         #pred = model.predict([x_word_test, x_pos_test, x_ne_test])
         #simple_eval(pred, gold_test, inverted(cats))

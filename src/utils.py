@@ -40,7 +40,11 @@ def inverted(a):
 def build_sequence(l, invind, default=None):
     if default:
         return [invind.get(w, default) for w in l]
-    return [invind[w] for w in l]
+    try:
+        return [invind[w] for w in l]
+    except KeyError:
+        print(invind.keys())
+        raise ValueError(str(invind.keys()))
 
 def map2(fun, x, y):
     return fun(x[0], y[0]), fun(x[1], y[1])
