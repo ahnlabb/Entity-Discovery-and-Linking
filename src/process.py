@@ -304,28 +304,39 @@ def predict_to_layer(model, docs, test, spandex, mappings, inv_cats, keys, elmap
         
         for pred, spans in zip(predictions, doc_spans):
             ents = []
+            def get_next(itr):
+                    p, s = next(itr)
+                    start, stop = s
+                    i = np.argmax(p)
+                    confidence = p[i]
+                    tag, tp, lbl = inv_cats[i]
+                    cls = (tp, lbl)
+                    return start, stop, tag, cls, confidence
+
             itr = zip_from_end(pred, spans)
             try:
                 while True:
-                    p, s = next(itr)
-                    start, stop = s
-                    tag, tp, lbl = inv_cats[np.argmax(p)]
-                    cls = (tp, lbl)
+                    start, stop, tag, cls, confidence = get_next(itr)
                     if tag == 'B':
                         cont = True
                         while cont:
-                            p, s = next(itr)
-                            newtag, newtp, newlbl = inv_cats[np.argmax(p)]
-                            if tag == 'B':
-                                start, stop = s
-                                cls = (newtp, newlbl)
+                            newstart, newstop, newtag, newcls, newconfidence = get_next(itr)
+                            if newtag == 'B':
+                                start, stop = newstart, newstop
+                                cls = newcls
                                 continue
-                            if (newtp, newlbl) == cls:
-                                if tag == 'E':
-                                    ents.append(start, s[1], cls)
-                                if tag == 'I':
-                                    stop = s[1]
+                            if newcls == cls:
+                                if newtag == 'E':
+                                    ents.append((start, newstop, cls))
+                                elif newtag == 'I':
+                                    stop = newstop
+                                else:
+                                    print(tag, newtag, cls)
                             else:
+                                if newtag == 'O' and confidence > newconfidence:
+                                    ents.append((start, stop, cls))
+                                else:
+                                    print(tag, newtag, cls, newcls, main[(start, newstop)])
                                 cont = False
                     elif tag == 'S':
                         ents.append((start, stop, cls))
@@ -334,10 +345,13 @@ def predict_to_layer(model, docs, test, spandex, mappings, inv_cats, keys, elmap
             except StopIteration:
                 pass
 
+            ents = sorted(ents, key=lambda x: x[0])
             for start, stop, (tp, lbl) in ents:
                 text = main[(start, stop)]
                 if str(text) in elmap:
                     tgt = elmap[str(text)]
+                elif str(text).lower() in elmap:
+                    tgt = elmap[str(text).lower()]
                 else:
                     tgt, i = 'NIL%s' % format(i, '05d'), i + 1
                 layer.add(text=text, type=tp, label=lbl, target=tgt)
