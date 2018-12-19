@@ -1,6 +1,7 @@
 from keras.models import Sequential, load_model
 from keras.utils.generic_utils import get_custom_objects
 from pathlib import Path
+from keras_contrib.layers import CRF
 from pickle import load, dump
 from tempfile import mkstemp
 import os
@@ -44,7 +45,8 @@ class ModelJar:
             jar = load(f)
             
         if custom_init:
-            get_custom_objects().update({"initializer": lambda: custom_init(jar)})
+            get_custom_objects().update({"initializer": lambda: custom_init(jar),
+                                        "CRF": CRF(50)})
         fp, fname = mkstemp()
         with open(fname, 'w+b') as f:
             f.write(jar.model)

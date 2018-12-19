@@ -1,5 +1,6 @@
-from keras.layers import Bidirectional, LSTM, Dense, Embedding, Concatenate, Input
+from keras.layers import Bidirectional, LSTM, Dense, Embedding, Concatenate, Input, TimeDistributed
 from keras.models import Model
+from keras_contrib.layers import CRF
 from utils import emb_mat_init
 
 
@@ -25,9 +26,10 @@ def build_model(embed, word_inv, npos, nne, nout, embed_len):
     concat = Concatenate()([emb, pos_emb, ne_emb])
 
     lstm = Bidirectional(LSTM(25, return_sequences=True), input_shape=(None, width))(concat)
-    out = Dense(nout, activation='softmax')(lstm)
-    model = Model(inputs=[form, pos, ne], outputs=out)
-    model.compile(loss='categorical_crossentropy', optimizer='nadam', metrics=['acc'])
+    dense = TimeDistributed(Dense(nout, activation='softmax'))(lstm)
+    crf = CRF(nout)(dense)
+    model = Model(inputs=[form, pos, ne], outputs=crf)
+    model.compile(loss=crf.loss_function, optimizer='nadam', metrics=['acc', crf.accuracy])
     return model
 
 

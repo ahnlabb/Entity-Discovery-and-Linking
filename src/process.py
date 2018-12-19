@@ -21,6 +21,7 @@ import sys
 
 from keras.preprocessing.sequence import pad_sequences
 from keras.utils import to_categorical
+from keras_contrib.layers import CRF
 
 
 def get_args():
@@ -30,10 +31,9 @@ def get_args():
     parser.add_argument('model', type=Path,
             help='path to where model will be saved, '
                  'if this file already exists training will be skipped and this model will be loaded')
-    parser.add_argument('lang', type=str, choices=['en','zh','es'], help='language')
-    parser.add_argument('elmapping', type=Path, help='')
-    parser.add_argument('--predict', type=Path, help='')
-    parser.add_argument('--gold', action='store_true', help='')
+    parser.add_argument('lang', type=str, choices=['en','zh','es'], help='model language')
+    parser.add_argument('elmapping', type=Path, help='mapping file for entity linking')
+    parser.add_argument('--predict', type=Path, help='docria file to use for prediction')
     return parser.parse_args()
 
 
@@ -402,7 +402,7 @@ if __name__ == '__main__':
         test, _, gold_test, _, spandex, docs = docria_extract(core_nlp_test, docs_test, per_doc=True)
         gold_test = [to_categories(g, cats) for g in gold_test]
         predict_to_layer(model, docs, test, gold_test, spandex, mappings, inverted(cats), elmap=elmap, **keys)
-        with open('predict.en.tsv', 'w') as f:
+        with open('predict.%s.tsv' % args.lang, 'w') as f:
             f.write(docria_to_neleval(docs, 'tac/entity'))
         #x_word_test = field_as_category(test, 'form', mappings['form'], default=1, categorical=False)
         #x_pos_test = field_as_category(test, 'pos', mappings['pos'], categorical=False)
