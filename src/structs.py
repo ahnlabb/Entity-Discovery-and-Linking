@@ -1,7 +1,7 @@
 from keras.models import Sequential, load_model
 from keras.utils.generic_utils import get_custom_objects
 from pathlib import Path
-from keras.layers import Bidirectional, LSTM, Dense, Embedding, Concatenate, Input, TimeDistributed, Add
+from keras.layers import Bidirectional, LSTM, Dense, Embedding, Concatenate, Input, TimeDistributed, Add, Dropout
 from keras.models import Model
 from keras_contrib.layers import CRF
 from utils import emb_mat_init
@@ -24,6 +24,8 @@ class ModelJar:
         ne = Input(shape=(None,), dtype='int32')
         ne_emb = Embedding(nne, nne // 2)(ne)
 
+        capital = Input(shape=(None, 3))
+
         form = Input(shape=(None,), dtype='int32')
 
         emb = Embedding(width,
@@ -34,16 +36,17 @@ class ModelJar:
 
         emb.trainable = True
 
-        concat = Concatenate()([emb, pos_emb, ne_emb])
+        concat = Concatenate()([emb, pos_emb, ne_emb, capital])
+        drop = Dropout(0.25)(concat)
 
-        lstm1 = Bidirectional(LSTM(25, return_sequences=True), input_shape=(None, width))(concat)
+        lstm1 = Bidirectional(LSTM(100, return_sequences=True), input_shape=(None, width))(drop)
         skip = Concatenate()([concat, lstm1])
-        lstm2 = Bidirectional(LSTM(25, return_sequences=True), input_shape=(None, width))(skip)
+        lstm2 = Bidirectional(LSTM(100, return_sequences=True), input_shape=(None, width))(skip)
         dense = TimeDistributed(Dense(nout, activation='softmax'))(lstm2)
         # crf = CRF(nout, learn_mode='join', activation='softmax')
         # out = crf(dense)
         out = dense
-        model = Model(inputs=[form, pos, ne], outputs=out)
+        model = Model(inputs=[form, pos, ne, capital], outputs=out)
         # model.compile(loss=crf.loss_function, optimizer='nadam', metrics=[crf.accuracy])
         model.compile(loss='categorical_crossentropy', optimizer='nadam', metrics=['acc'])
         #model.summary()

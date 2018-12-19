@@ -117,6 +117,14 @@ def build_indices(train, embed):
     word_inv = dict(zip(wordset, count(2)))
     return word_inv
 
+def normalize_form(form):
+    form = form.lower()
+    if form.isdecimal():
+        return '0'
+    if '://' in form:
+        return '{URL}'
+    return form
+
 
 def core_nlp_features(corenlp, lbl_sets):
     corenlp = iter(corenlp)
@@ -139,7 +147,7 @@ def core_nlp_features(corenlp, lbl_sets):
             else:
                 features['ne'] = '_'
             features['capital'] = features['form'][0].isupper()
-            features['form'] = features['form'].lower()
+            features['form'] = normalize_form(features['form'])
             add(features, 'pos')
             add(features, 'ne')
             add(features, 'capital')
@@ -243,7 +251,7 @@ def debug_log(x, fun=lambda x: x):
     return x
 
 
-def batch_generator(train, gold, mappings, batch_len=128, **keys):
+def batch_generator(train, gold, mappings, keys, batch_len=128):
     xy = sorted(zip(train, gold), key=lambda x: len(x[0]))
     n_batches = len(train) // batch_len + (len(train) % batch_len > 0)
     batches = list(range(n_batches))
@@ -255,19 +263,19 @@ def batch_generator(train, gold, mappings, batch_len=128, **keys):
             maxlen = len(xy[s][-1][0])
             shuffle(xy[s])
             x, y = zip(*xy[s])
-            for key, args in keys.items():
+            for key, args in keys:
                 outputs.append(field_as_category(x, key, mappings[key], maxlen=maxlen, **args))
             yield outputs, pad_sequences(y, maxlen=maxlen)
 
 
-def predict_batch_generator(test, mappings, **keys):
+def predict_batch_generator(test, mappings, keys):
     for sentences in test:
         maxlen = len(max(sentences, key=len))
-        yield list(field_as_category(sentences, key, mappings[key], maxlen=maxlen, **args) for key, args in keys.items())
+        yield list(field_as_category(sentences, key, mappings[key], maxlen=maxlen, **args) for key, args in keys)
 
 
-def predict_to_layer(model, docs, test, gold, spandex, mappings, inv_cats, elmap={}, **keys):
-    batches = predict_batch_generator(test, mappings, **keys)
+def predict_to_layer(model, docs, test, spandex, mappings, inv_cats, keys, elmap={}):
+    batches = predict_batch_generator(test, mappings, keys)
     i = 0
     for doc, doc_spans, batch in zip(docs, spandex, batches):
         layer = doc.add_layer('tac/entity', text=T.span('main'), xml=T.span('xml')) 
@@ -315,7 +323,11 @@ def to_categories(data, inv, default=None, categorical=True, maxlen=None):
     cat_seq = [build_sequence(d, inv, default=default) for d in data]
     padded = pad_sequences(cat_seq, maxlen=maxlen)
     if categorical:
-        return to_categorical(padded, num_classes=len(inv))
+        categorical = to_categorical(padded, num_classes=len(inv))
+        if categorical.ndim == 2:
+            a, b = categorical.shape
+            categorical = np.reshape(categorical, (a, 1, b))
+        return categorical
     return padded
 
 
@@ -351,10 +363,13 @@ if __name__ == '__main__':
 
     embed = load_glove(args.glove)
 
-    keys = {'form': {'default': 1, 'categorical': False},
-            'pos': {'categorical': False},
-            'ne': {'categorical': False},}
+    keys = [('form', {'default': 1, 'categorical': False}),
+            ('pos', {'categorical': False}),
+            ('ne', {'categorical': False}),
+            ('capital', {})
+            ]
 
+    filter_short = lambda seq: filter(lambda x: len(x) > 1, seq)
     if args.model.exists():
         jar = ModelJar.load(args.model)
         saved_cats = jar.cats
@@ -376,7 +391,7 @@ if __name__ == '__main__':
         mappings = create_mappings(train, embed, lbl_sets)
 
         batch_len = 64
-        batches = batch_generator(train, gold, mappings, batch_len=batch_len, **keys)
+        batches = batch_generator(train, gold, mappings, keys, batch_len=batch_len)
         embed_len = len(next(iter(embed.values())))
         jar = ModelJar(embed, mappings, cats, embed_len)
         jar.train_batches(batches, len(train), epochs=5, batch_size=batch_len)
@@ -389,8 +404,8 @@ if __name__ == '__main__':
     if args.predict:
         core_nlp_test, docs_test = read_and_extract(args.predict, lambda docs: get_core_nlp(docs, lang=args.lang))
         test, _, gold_test, _, spandex, docs = docria_extract(core_nlp_test, docs_test, per_doc=True)
-        gold_test = [to_categories(g, cats) for g in gold_test]
-        predict_to_layer(jar.model, docs, test, gold_test, spandex, mappings, inverted(cats), elmap=elmap, **keys)
+        #gold_test = [to_categories(g, jar.cats) for g in gold_test]
+        predict_to_layer(jar.model, docs, test, spandex, mappings, inverted(jar.cats), keys, elmap=elmap)
         with open('predict.%s.tsv' % args.lang, 'w') as f:
             f.write(docria_to_neleval(docs, 'tac/entity'))
 
