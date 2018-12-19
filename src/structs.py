@@ -24,7 +24,7 @@ class ModelJar:
         ne = Input(shape=(None,), dtype='int32')
         ne_emb = Embedding(nne, nne // 2)(ne)
 
-        capital = Input(shape=(None, 3))
+        capital = Input(shape=(None, 2))
 
         form = Input(shape=(None,), dtype='int32')
 

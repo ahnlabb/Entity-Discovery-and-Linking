@@ -107,7 +107,7 @@ def emb_mat_init(glove, invind):
     def initializer(shape, dtype=None):
         mat = np.random.random_sample(shape)
         for k,v in glove.items():
-            mat[invind[k], :] = v
+            mat[invind[k], :] = v[:shape[1]]
         return mat
     return initializer
 

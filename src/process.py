@@ -55,7 +55,7 @@ def load_glove(path):
 
 def get_core_nlp(docs, lang):
     def call_api(doc):
-        text = str(doc.texts['xml'])
+        text = str(doc.texts['main'])
         return langforia(text, lang).split('\n')
     api_data = []
     start = time.perf_counter()
@@ -133,6 +133,9 @@ def normalize_form(form):
         return '0'
     if '://' in form:
         return '{URL}'
+    # zh_chars = re.findall(u'[\u4e00-\u9fff]+', form)
+    # if zh_chars:
+        # return zh_chars[0]
     return form
 
 
@@ -296,25 +299,55 @@ def predict_to_layer(model, docs, test, spandex, mappings, inv_cats, keys, elmap
     i = 0
     for doc, doc_spans, batch in zip(docs, spandex, batches):
         layer = doc.add_layer('tac/entity', text=T.span('main'), xml=T.span('xml')) 
-        main = doc.text['xml']
+        main = doc.text['main']
         predictions = model.predict_on_batch(batch)
         
         for pred, spans in zip(predictions, doc_spans):
-            for p, s in zip_from_end(pred, spans):
-                _, tp, lbl = inv_cats[np.argmax(p)]
-                text = main[s]
+            ents = []
+            itr = zip_from_end(pred, spans)
+            try:
+                while True:
+                    p, s = next(itr)
+                    start, stop = s
+                    tag, tp, lbl = inv_cats[np.argmax(p)]
+                    cls = (tp, lbl)
+                    if tag == 'B':
+                        cont = True
+                        while cont:
+                            p, s = next(itr)
+                            newtag, newtp, newlbl = inv_cats[np.argmax(p)]
+                            if tag == 'B':
+                                start, stop = s
+                                cls = (newtp, newlbl)
+                                continue
+                            if (newtp, newlbl) == cls:
+                                if tag == 'E':
+                                    ents.append(start, s[1], cls)
+                                if tag == 'I':
+                                    stop = s[1]
+                            else:
+                                cont = False
+                    elif tag == 'S':
+                        ents.append((start, stop, cls))
+                    else:
+                        pass
+            except StopIteration:
+                pass
+
+            for start, stop, (tp, lbl) in ents:
+                text = main[(start, stop)]
                 if str(text) in elmap:
                     tgt = elmap[str(text)]
                 else:
                     tgt, i = 'NIL%s' % format(i, '05d'), i + 1
-                layer.add(xml=text, type=tp, label=lbl, target=tgt)
+                layer.add(text=text, type=tp, label=lbl, target=tgt)
         
         span_translate(doc, 'tac/segments', ('xml', 'text'), 'tac/entity', ('text', 'xml')) 
 
 
 def predict(model, mappings, cats, text, padding=False):
     lbl_sets = defaultdict(set)
-    sentences, spans = core_nlp_features(langforia(text, 'en').split('\n'), lbl_sets)
+    sentences, spans = core_nlp_features(langforia(text, lang).split('\n'), lbl_sets)
     features = list(extract_features(mappings, sentences, padding=padding))
     x = predict_batch_generator(features, mappings)
     Y = model.predict(x)
@@ -410,7 +443,7 @@ if __name__ == '__main__':
         batch_len = 64
         batches = batch_generator(train, gold, mappings, keys, batch_len=batch_len)
         embed_len = len(next(iter(embed.values())))
-        jar = ModelJar(embed, mappings, cats, embed_len)
+        jar = ModelJar(embed, mappings, cats, 100)
         jar.train_batches(batches, len(train), epochs=5, batch_size=batch_len)
         #jar.train([x_word, x_pos, x_ne], y, epochs=10, batch_size=batch_len)
         jar.save(args.model)

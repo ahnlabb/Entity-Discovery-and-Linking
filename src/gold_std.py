@@ -85,7 +85,7 @@ def gold_std_idx(docria):
             def word_spans(key, node):
                 begin, end = key
                 span_index = {}
-                words = str(node.fld.xml.text)[begin:end].split()
+                words = str(node.fld.text.text)[begin:end].split()
                 i = begin
                 for k, word in enumerate(words, 1):
                     tag = 'I'
