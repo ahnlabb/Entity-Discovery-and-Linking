@@ -54,7 +54,8 @@ def gold_std_idx(docria):
             types.add(node.fld.type)
             entity = node.fld.text
             if not entity:
-                entity = node.fld.xml
+                #entity = node.fld.xml
+                continue
 
             span = (entity.start, entity.stop)
             if longest:
