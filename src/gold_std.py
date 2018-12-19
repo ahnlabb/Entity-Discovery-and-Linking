@@ -36,6 +36,12 @@ def entity_to_dict(start, stop, entity):
 def json_compatible(index):
     return [entity_to_dict(s[0], s[1], e) for s,e in index.items()]
 
+def gold_std(docria):
+    index = {}
+    for doc in docria:
+        index[doc.props['docid']] = doc.layers['tac/entity/gold']
+    return index
+
 def gold_std_idx(docria):
     labels, types = set(), set()
     index = {}
@@ -47,38 +53,38 @@ def gold_std_idx(docria):
             labels.add(node.fld.label)
             types.add(node.fld.type)
             entity = node.fld.text
-            # ignore xml-only entities
-            if entity:
-                span = (entity.start, entity.stop)
-                # TODO: simplify logic if possible
-                if longest:
-                    # there is a greater span with same start
-                    if span[0] == longest[0] and span[1] > longest[1]:
-                        del keys[longest]
-                        longest = span
-                    # we are either inside or after the current span
-                    if span[0] > longest[0]:
-                        # this should never happen (overlapping spans)
-                        if span[0] <= longest[1] and span[1] > longest[1]:
-                            continue
-                            raise ValueError("Span %s and Span %s are overlapping"
-                                            % (longest, span))
-                        # we are inside the span
-                        if span[1] <= longest[1]:
-                            continue
-                        # we have a new span
-                        else:
-                            longest = span
-                else:
+            if not entity:
+                entity = node.fld.xml
+
+            span = (entity.start, entity.stop)
+            if longest:
+                # there is a greater span with same start
+                if span[0] == longest[0] and span[1] > longest[1]:
+                    del keys[longest]
                     longest = span
-                
-                keys[span] = node
+                # we are either inside or after the current span
+                if span[0] > longest[0]:
+                    # this should never happen (overlapping spans)
+                    if span[0] <= longest[1] and span[1] > longest[1]:
+                        continue
+                        raise ValueError("Span %s and Span %s are overlapping"
+                                        % (longest, span))
+                    # we are inside the span
+                    if span[1] <= longest[1]:
+                        continue
+                    # we have a new span
+                    else:
+                        longest = span
+            else:
+                longest = span
+            
+            keys[span] = node
                 
         for key, node in keys.items():
             def word_spans(key, node):
                 begin, end = key
                 span_index = {}
-                words = str(node.fld.text.text)[begin:end].split()
+                words = str(node.fld.xml.text)[begin:end].split()
                 i = begin
                 for k, word in enumerate(words, 1):
                     tag = 'I'

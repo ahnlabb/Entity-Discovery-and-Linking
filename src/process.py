@@ -17,6 +17,7 @@ from print_neleval import docria_to_neleval
 import numpy as np
 import time
 import sys
+import regex as re
 
 from keras.preprocessing.sequence import pad_sequences
 from keras.utils import to_categorical
@@ -54,7 +55,7 @@ def load_glove(path):
 
 def get_core_nlp(docs, lang):
     def call_api(doc):
-        text = str(doc.texts['main'])
+        text = str(doc.texts['xml'])
         return langforia(text, lang).split('\n')
     api_data = []
     start = time.perf_counter()
@@ -84,6 +85,10 @@ def txt2xml(doc):
 
 
 def docria_extract(core_nlp, docs, saved_cats=None, per_doc=False):
+
+    def strip_tags(cnlp):
+        return re.sub(r'<[^>]*>', '', cnlp)
+
     train, gold, spandex = [], [], []
     lbl_sets = defaultdict(set)
 
@@ -96,9 +101,18 @@ def docria_extract(core_nlp, docs, saved_cats=None, per_doc=False):
         return gold_std[docid].get(span, none)
 
     for cnlp, doc in zip(core_nlp, docs):
+        cnlp = strip_tags(cnlp)
+        layer = doc.add_layer('corenlp', text=T.span('main'), xml=T.span('xml'))
         docid = doc.props['docid']
+        main = doc.text['main']
+        
         sentences, spans = core_nlp_features(cnlp, lbl_sets)
-        entities = [[get_entity(docid, s) for s in sentence] for sentence in spans]
+        for sentence_spans in spans:
+            for span in sentence_spans:
+                layer.add(text=main[span])
+        span_translate(doc, 'tac/segments', ('xml', 'text'), 'corenlp', ('text', 'xml'))
+        entities = [[get_entity(docid, get_span(n)) for n in node] for sentence in spans]
+
         if per_doc:
             gold.append(entities)
             train.append(sentences)
