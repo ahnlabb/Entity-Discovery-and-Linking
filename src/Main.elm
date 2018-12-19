@@ -1,31 +1,35 @@
-module Main exposing (..)
+module Main exposing (Document, Entity, Model(..), Msg(..), Page, body, documentDecoder, entityDecoder, errorString, getDocuments, getPrediction, getSel, init, localApi, main, newsApi, reduceEntities, reduceHelper, resultView, selectModel, spinner, strToOption, subscriptions, update, view)
 
 import Browser
-import Http
-import Url.Builder as Url
+import Browser.Navigation as Navigation
 import Dict
-import Element exposing (Element, el, text, row, column, alignRight, fill, width, height, rgb255, spacing, centerX, centerY, alignTop, padding, none, px, spacing)
-import Element.Input as Input
+import Element exposing (Element, alignRight, alignTop, centerX, centerY, column, el, fill, height, none, padding, px, rgb255, row, spacing, text, width)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
-import Html exposing (select, option)
-import Html.Attributes as HAttr exposing (style, class)
+import Element.Input as Input
+import Html exposing (option, select)
+import Html.Attributes as HAttr exposing (class, style)
 import Html.Events exposing (onInput)
-import Json.Decode as Decode exposing (Decoder, int, string, dict, list)
-import Json.Decode.Pipeline exposing (required, custom)
+import Http
+import Json.Decode as Decode exposing (Decoder, dict, field, index, int, list, string)
+import Json.Decode.Pipeline exposing (custom, required)
 import Json.Encode as Encode
-import Time
 import Svg
 import Svg.Attributes as SAttr
+import Time
+import Url exposing (Url)
+import Url.Builder as UrlBuilder
 
 
 main =
-    Browser.element
+    Browser.application
         { init = init
         , update = update
         , subscriptions = subscriptions
         , view = view
+        , onUrlRequest = RequestedUrl
+        , onUrlChange = ChangedUrl
         }
 
 
@@ -38,6 +42,8 @@ type Model
     | Error Http.Error
     | NoModels
     | Done Page
+    | News Page
+    | LoadingNews
 
 
 type alias Page =
@@ -45,6 +51,7 @@ type alias Page =
     , models : List String
     , reduceTags : Bool
     , prediction : Maybe Document
+    , text : String
     }
 
 
@@ -61,9 +68,14 @@ type alias Entity =
     }
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
-    ( Loading, getDocuments )
+init : () -> Url -> Navigation.Key -> ( Model, Cmd Msg )
+init _ { fragment } _ =
+    case fragment of
+        Just "news" ->
+            ( LoadingNews, getDocuments )
+
+        _ ->
+            ( Loading, getDocuments )
 
 
 
@@ -72,9 +84,12 @@ init _ =
 
 type Msg
     = NewModels (Result Http.Error (List String))
+    | NewNews (Result Http.Error String)
     | NewPrediction (Result Http.Error Document)
     | ToggleReduce Bool
     | NewSelection String
+    | RequestedUrl Browser.UrlRequest
+    | ChangedUrl Url
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -85,7 +100,20 @@ update msg model =
                 Ok models ->
                     case models of
                         selection :: rest ->
-                            ( Done (Page selection rest True Nothing), Cmd.none )
+                            ( Done (Page selection rest True Nothing ""), Cmd.none )
+
+                        [] ->
+                            ( NoModels, Cmd.none )
+
+                Err e ->
+                    ( Error e, Cmd.none )
+
+        ( NewModels result, LoadingNews ) ->
+            case result of
+                Ok models ->
+                    case models of
+                        selection :: rest ->
+                            ( Done (Page selection rest True Nothing ""), Cmd.none )
 
                         [] ->
                             ( NoModels, Cmd.none )
@@ -101,8 +129,26 @@ update msg model =
                 Err e ->
                     ( Error e, Cmd.none )
 
+        ( NewPrediction result, News page ) ->
+            case result of
+                Ok prediction ->
+                    ( News { page | prediction = Just prediction }, Cmd.none )
+
+                Err e ->
+                    ( Error e, Cmd.none )
+
         ( ToggleReduce bool, Done page ) ->
             ( Done { page | reduceTags = bool }, Cmd.none )
+
+        ( NewNews result, News page ) ->
+            case result of
+                Ok article ->
+                    ( News { page | text = article }
+                    , getPrediction page.selection article
+                    )
+
+                Err e ->
+                    ( Error e, Cmd.none )
 
         ( _, _ ) ->
             ( model, Cmd.none )
@@ -124,20 +170,40 @@ subscriptions _ =
 view model =
     case model of
         Done page ->
-            Element.layout []
-                (body page)
+            Browser.Document "page"
+                [ Element.layout []
+                    (body page)
+                ]
 
         Loading ->
-            Element.layout []
-                (el [] (text "loading"))
+            Browser.Document "loading"
+                [ Element.layout []
+                    (el [] (text "loading"))
+                ]
 
         Error e ->
-            Element.layout []
-                (el [] (text (errorString e)))
+            Browser.Document "error"
+                [ Element.layout []
+                    (el [] (text (errorString e)))
+                ]
 
         NoModels ->
-            Element.layout []
-                (el [] (text "No models found"))
+            Browser.Document "error"
+                [ Element.layout []
+                    (el [] (text "No models found"))
+                ]
+
+        News page ->
+            Browser.Document "news"
+                [ Element.layout []
+                    (viewNews page)
+                ]
+
+        LoadingNews ->
+            Browser.Document "loading"
+                [ Element.layout []
+                    (el [] (text "loading"))
+                ]
 
 
 body : Page -> Element Msg
@@ -146,6 +212,21 @@ body { models, selection, prediction, reduceTags } =
         [ row [ width fill ]
             [ selectModel selection models
             , Input.checkbox []
+                { onChange = ToggleReduce
+                , icon = Input.defaultCheckbox
+                , checked = reduceTags
+                , label = Input.labelLeft [] (text "Reduce Tags")
+                }
+            ]
+        , resultView selection prediction reduceTags
+        ]
+
+
+viewNews : Page -> Element Msg
+viewNews { selection, prediction, reduceTags } =
+    column [ width fill, spacing 30 ]
+        [ row [ width fill ]
+            [ Input.checkbox []
                 { onChange = ToggleReduce
                 , icon = Input.defaultCheckbox
                 , checked = reduceTags
@@ -175,7 +256,7 @@ getSel sel docs =
         get dict key =
             Dict.get key dict
     in
-        sel |> Maybe.andThen (get docs)
+    sel |> Maybe.andThen (get docs)
 
 
 resultView : String -> Maybe Document -> Bool -> Element Msg
@@ -185,7 +266,7 @@ resultView selection prediction reduceTags =
             tag ([ SAttr.x (String.fromFloat x), SAttr.y (String.fromFloat y) ] ++ attrs)
 
         textStyle sz =
-            SAttr.style ("font-size: " ++ (String.fromInt sz) ++ "px;font-family: 'Source Code Pro', monospace;")
+            SAttr.style ("font-size: " ++ String.fromInt sz ++ "px;font-family: 'Source Code Pro', monospace;")
 
         charWidth =
             12
@@ -251,21 +332,21 @@ resultView selection prediction reduceTags =
                 padding =
                     4
             in
-                Svg.svg [ SAttr.width w, SAttr.height h, SAttr.viewBox ("0 0 " ++ w ++ " " ++ h) ]
-                    [ Svg.g []
-                        [ pos 0
-                            0
-                            Svg.rect
-                            [ SAttr.width w
-                            , SAttr.height h
-                            , SAttr.rx "5"
-                            , SAttr.ry "5"
-                            , SAttr.style ("fill:" ++ colorFromClass string ++ ";stroke:black;stroke-width:1;opacity:0.5")
-                            ]
-                            []
-                        , pos padding (height - padding) Svg.text_ [ textStyle 20 ] [ Svg.text string ]
+            Svg.svg [ SAttr.width w, SAttr.height h, SAttr.viewBox ("0 0 " ++ w ++ " " ++ h) ]
+                [ Svg.g []
+                    [ pos 0
+                        0
+                        Svg.rect
+                        [ SAttr.width w
+                        , SAttr.height h
+                        , SAttr.rx "5"
+                        , SAttr.ry "5"
+                        , SAttr.style ("fill:" ++ colorFromClass string ++ ";stroke:black;stroke-width:1;opacity:0.5")
                         ]
+                        []
+                    , pos padding (height - padding) Svg.text_ [ textStyle 20 ] [ Svg.text string ]
                     ]
+                ]
 
         annotate : Int -> String -> List Entity -> List (Html.Html Msg)
         annotate origin string ent =
@@ -300,12 +381,12 @@ resultView selection prediction reduceTags =
                             [ Html.div [] [ mark class ] ]
                         ]
             in
-                case ent of
-                    { start, stop, class } :: tail ->
-                        (line origin start) :: (marked class start stop) :: (annotate stop string tail)
+            case ent of
+                { start, stop, class } :: tail ->
+                    line origin start :: marked class start stop :: annotate stop string tail
 
-                    [] ->
-                        []
+                [] ->
+                    []
 
         viewAnnotations =
             List.map Element.html >> Element.paragraph [ Font.family [ Font.typeface "Source Sans Pro", Font.sansSerif ] ]
@@ -321,12 +402,13 @@ resultView selection prediction reduceTags =
         reduceIfChecked entities =
             if reduceTags then
                 reduceEntities entities
+
             else
                 entities
     in
-        row [ width fill, spacing 50, padding 30 ]
-            [ viewPrediction prediction
-            ]
+    row [ width fill, spacing 50, padding 30 ]
+        [ viewPrediction prediction
+        ]
 
 
 spinner =
@@ -346,18 +428,19 @@ reduceHelper startPrev stopPrev classPrev entityList =
                 className =
                     String.dropLeft 2 class
             in
-                if classPrev /= className then
-                    cur :: reduceEntities t
-                else
-                    case String.left 1 class of
-                        "I" ->
-                            reduceHelper startPrev stop className t
+            if classPrev /= className then
+                cur :: reduceEntities t
 
-                        "E" ->
-                            { start = startPrev, stop = stop, class = className } :: reduceEntities t
+            else
+                case String.left 1 class of
+                    "I" ->
+                        reduceHelper startPrev stop className t
 
-                        _ ->
-                            { start = startPrev, stop = stopPrev, class = classPrev } :: reduceEntities (cur :: t)
+                    "E" ->
+                        { start = startPrev, stop = stop, class = className } :: reduceEntities t
+
+                    _ ->
+                        { start = startPrev, stop = stopPrev, class = classPrev } :: reduceEntities (cur :: t)
 
         [] ->
             [ { start = startPrev, stop = stopPrev, class = classPrev } ]
@@ -389,7 +472,7 @@ errorString error =
             "BadBody: " ++ str
 
         Http.BadStatus code ->
-            "BadStatus: " ++ (String.fromInt code)
+            "BadStatus: " ++ String.fromInt code
 
         Http.BadUrl str ->
             "BadUrl: " ++ str
@@ -407,7 +490,7 @@ errorString error =
 
 localApi : String
 localApi =
-    Url.absolute [ "models" ] []
+    UrlBuilder.absolute [ "models" ] []
 
 
 getDocuments : Cmd Msg
@@ -421,7 +504,7 @@ getDocuments =
 getPrediction : String -> String -> Cmd Msg
 getPrediction model text =
     Http.post
-        { url = Url.absolute [ "predict" ] [ Url.string "model" model ]
+        { url = UrlBuilder.absolute [ "predict" ] [ UrlBuilder.string "model" model ]
         , body = Http.jsonBody (Encode.string text)
         , expect = Http.expectJson NewPrediction (documentDecoder "entities")
         }
@@ -438,3 +521,25 @@ entityDecoder =
         |> required "start" int
         |> required "stop" int
         |> required "class" string
+
+
+newsApi : String -> String -> String -> String
+newsApi lang query apiKey =
+    UrlBuilder.crossOrigin "https://newsapi.org/"
+        [ "v2", "everything" ]
+        [ UrlBuilder.string "language" lang
+        , UrlBuilder.string "q" query
+        , UrlBuilder.string "apiKey" apiKey
+        ]
+
+
+getNews : String -> String -> String -> Cmd Msg
+getNews lang query apiKey =
+    Http.get
+        { url = newsApi lang query apiKey
+        , expect = Http.expectJson NewNews newsDecoder
+        }
+
+
+newsDecoder =
+    field "articles" (index 0 (field "content" string))

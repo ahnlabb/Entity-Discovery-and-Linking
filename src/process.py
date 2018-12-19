@@ -85,10 +85,6 @@ def txt2xml(doc):
 
 
 def docria_extract(core_nlp, docs, saved_cats=None, per_doc=False):
-
-    def strip_tags(cnlp):
-        return re.sub(r'<[^>]*>', '', cnlp)
-
     train, gold, spandex = [], [], []
     lbl_sets = defaultdict(set)
 
@@ -101,17 +97,16 @@ def docria_extract(core_nlp, docs, saved_cats=None, per_doc=False):
         return gold_std[docid].get(span, none)
 
     for cnlp, doc in zip(core_nlp, docs):
-        cnlp = strip_tags(cnlp)
-        layer = doc.add_layer('corenlp', text=T.span('main'), xml=T.span('xml'))
+        #layer = doc.add_layer('corenlp', text=T.span('main'), xml=T.span('xml'))
         docid = doc.props['docid']
-        main = doc.text['main']
+        #main = doc.text['main']
         
         sentences, spans = core_nlp_features(cnlp, lbl_sets)
-        for sentence_spans in spans:
-            for span in sentence_spans:
-                layer.add(text=main[span])
-        span_translate(doc, 'tac/segments', ('xml', 'text'), 'corenlp', ('text', 'xml'))
-        entities = [[get_entity(docid, get_span(n)) for n in node] for sentence in spans]
+        #for sentence_spans in spans:
+        #    for span in sentence_spans:
+        #        layer.add(text=main[span])
+        #span_translate(doc, 'tac/segments', ('xml', 'text'), 'corenlp', ('text', 'xml'))
+        entities = [[get_entity(docid, s) for s in sentence] for sentence in spans]
 
         if per_doc:
             gold.append(entities)
@@ -122,6 +117,7 @@ def docria_extract(core_nlp, docs, saved_cats=None, per_doc=False):
             train.extend(sentences)
             spandex.extend(spans)
 
+    print(list(map(len, (train, lbl_sets, gold, cats, spandex, list(docs)))))
     return train, lbl_sets, gold, cats, spandex, list(docs)
 
 
@@ -133,6 +129,9 @@ def build_indices(train, embed):
 
 
 def core_nlp_features(corenlp, lbl_sets):
+    def strip_tags(cnlp):
+        return re.sub(r'<[^>]*>', '', cnlp)
+
     corenlp = iter(corenlp)
     spans = []
 
@@ -152,8 +151,13 @@ def core_nlp_features(corenlp, lbl_sets):
                 inside, features['ne'] = normalize_ne(inside, features['ne'])
             else:
                 features['ne'] = '_'
-            features['capital'] = features['form'][0].isupper()
             features['form'] = features['form'].lower()
+            features['capital'] = features['form'][0].isupper()
+            features['form'] = strip_tags(features['form'])
+            if not features['form']:
+                features['ne'] = '_'
+                features['pos'] = 'TAG'
+                features['capital'] = False
             add(features, 'pos')
             add(features, 'ne')
             add(features, 'capital')
@@ -271,8 +275,7 @@ def batch_generator(train, gold, mappings, batch_len=128, **keys):
             x, y = zip(*xy[s])
             for key, args in keys.items():
                 outputs.append(field_as_category(x, key, mappings[key], maxlen=maxlen, **args))
-            yield outputs, pad_sequences(y, maxlen=maxlen)
-
+            yield outputs, pad_sequences(y, maxlen=maxlen) 
 
 def predict_batch_generator(test, mappings, **keys):
     for sentences in test:
@@ -285,7 +288,7 @@ def predict_to_layer(model, docs, test, gold, spandex, mappings, inv_cats, elmap
     i = 0
     for doc, doc_spans, batch in zip(docs, spandex, batches):
         layer = doc.add_layer('tac/entity', text=T.span('main'), xml=T.span('xml')) 
-        main = doc.text['main']
+        main = doc.text['xml']
         predictions = model.predict_on_batch(batch)
         
         for pred, spans in zip(predictions, doc_spans):
@@ -296,7 +299,7 @@ def predict_to_layer(model, docs, test, gold, spandex, mappings, inv_cats, elmap
                     tgt = elmap[str(text)]
                 else:
                     tgt, i = 'NIL%s' % format(i, '05d'), i + 1
-                layer.add(text=text, type=tp, label=lbl, target=tgt)
+                layer.add(xml=text, type=tp, label=lbl, target=tgt)
         
         span_translate(doc, 'tac/segments', ('xml', 'text'), 'tac/entity', ('text', 'xml')) 
 
@@ -305,7 +308,7 @@ def predict(model, mappings, cats, text, padding=False):
     lbl_sets = defaultdict(set)
     sentences, spans = core_nlp_features(langforia(text, 'en').split('\n'), lbl_sets)
     features = list(extract_features(mappings, sentences, padding=padding))
-    x = list(batch_generator(features, batch_len=len(features)))
+    x = predict_batch_generator(features, mappings)
     Y = model.predict(x)
     pred = [[interpret_prediction(p, cats) for p in y] for y in Y]
     return format_predictions(text, pred, sentences)
@@ -403,8 +406,8 @@ if __name__ == '__main__':
     if args.predict:
         core_nlp_test, docs_test = read_and_extract(args.predict, lambda docs: get_core_nlp(docs, lang=args.lang))
         test, _, gold_test, _, spandex, docs = docria_extract(core_nlp_test, docs_test, per_doc=True)
-        gold_test = [to_categories(g, cats) for g in gold_test]
-        predict_to_layer(jar.model, docs, test, gold_test, spandex, mappings, inverted(cats), elmap=elmap, **keys)
+        gold_test = [to_categories(g, jar.cats) for g in gold_test]
+        predict_to_layer(jar.model, docs, test, gold_test, spandex, mappings, inverted(jar.cats), elmap=elmap, **keys)
         with open('predict.%s.tsv' % args.lang, 'w') as f:
             f.write(docria_to_neleval(docs, 'tac/entity'))
 
