@@ -1,57 +1,92 @@
 from keras.models import Sequential, load_model
 from keras.utils.generic_utils import get_custom_objects
 from pathlib import Path
+from keras.layers import Bidirectional, LSTM, Dense, Embedding, Concatenate, Input, TimeDistributed, Add
+from keras.models import Model
 from keras_contrib.layers import CRF
+from utils import emb_mat_init
 from pickle import load, dump
-from tempfile import mkstemp
+from tempfile import TemporaryDirectory
 import os
 
 
 class ModelJar:
-    def __init__(self, model, mappings, cats, path: Path = None):
+    def __init__(self, embed, mappings, cats, embed_len):
+        word_inv = mappings['form']
+        npos = len(mappings['pos'])
+        nne = len(mappings['ne'])
+        nout = len(cats)
+        width = len(word_inv) + 2
+
+        pos = Input(shape=(None,), dtype='int32')
+        pos_emb = Embedding(npos, npos // 2)(pos)
+
+        ne = Input(shape=(None,), dtype='int32')
+        ne_emb = Embedding(nne, nne // 2)(ne)
+
+        form = Input(shape=(None,), dtype='int32')
+
+        emb = Embedding(width,
+                        embed_len,
+                        embeddings_initializer=emb_mat_init(embed, word_inv),
+                        mask_zero=True,
+                        input_length=None)(form)
+
+        emb.trainable = True
+
+        concat = Concatenate()([emb, pos_emb, ne_emb])
+
+        lstm1 = Bidirectional(LSTM(25, return_sequences=True), input_shape=(None, width))(concat)
+        skip = Concatenate()([concat, lstm1])
+        lstm2 = Bidirectional(LSTM(25, return_sequences=True), input_shape=(None, width))(skip)
+        dense = TimeDistributed(Dense(nout, activation='softmax'))(lstm2)
+        # crf = CRF(nout, learn_mode='join', activation='softmax')
+        # out = crf(dense)
+        out = dense
+        model = Model(inputs=[form, pos, ne], outputs=out)
+        # model.compile(loss=crf.loss_function, optimizer='nadam', metrics=[crf.accuracy])
+        model.compile(loss='categorical_crossentropy', optimizer='nadam', metrics=['acc'])
+        #model.summary()
+
         self.model = model
         self.mappings = mappings
         self.cats = cats
-        self.path = path
+        self.embed_len = embed_len
         
-    def save(self, filename: Path = None):
-        if filename is None:
-            if self.path is None:
-                raise ValueError('Model needs to have a file name')
-            filename = self.path
+    def save(self, filename: Path):
+        with TemporaryDirectory() as tmpdir:
+            fname = Path(tmpdir) / 'model'
+            self.model.save_weights(str(fname))
+            with open(fname, 'r+b') as f:
+                weights = f.read()
             
-        if not self.mappings:
-            print('Saving model without mappings...')
-        if not self.cats:
-            print('Saving model without classes...')
-            
-        fp, fname = mkstemp()
-        self.model.save(fname)
-        with open(fname, 'r+b') as f:
-            self.model = f.read()
-            
-        os.close(fp)
         with filename.open('w+b') as f:
-            dump(self, f)
+            dump((weights, self.mappings, self.cats, self.embed_len), f)
             
     @staticmethod
-    def load(filename: Path = None, custom_init=None):
-        if filename is None:
-            if self.path is None:
-                raise ValueError('Model needs to have a file name')
-            filename = self.path
-            
+    def load(filename: Path):
         with Path(filename).open('r+b') as f:
-            jar = load(f)
+            weights, mappings, cats, embed_len = load(f)
             
-        if custom_init:
-            get_custom_objects().update({"initializer": lambda: custom_init(jar),
-                                        "CRF": CRF(50)})
-        fp, fname = mkstemp()
-        with open(fname, 'w+b') as f:
-            f.write(jar.model)
-        jar.model = load_model(fname)
+        with TemporaryDirectory() as tmpdir:
+            fname = Path(tmpdir) / 'model'
+            with open(fname, 'w+b') as f:
+                f.write(weights)
+
+            jar = ModelJar({}, mappings, cats, embed_len)
+            jar.model.load_weights(str(fname))
         
-        os.close(fp)
         return jar
         
+
+    def train(self, x, y, epochs=3, batch_size=64):
+        # steps = (train_len / batch_size)# + 1 if train_len % batch_size > 0 else 0
+        # model.fit_generator(gen, epochs=epochs, steps_per_epoch=steps, shuffle=False)
+        self.model.fit(x, y, epochs=epochs, batch_size=batch_size)
+        self.model.summary()
+
+
+    def train_batches(self, gen, train_len, epochs=3, batch_size=64):
+        steps = (train_len / batch_size)  # + 1 if train_len % batch_size > 0 else 0
+        self.model.fit_generator(gen, epochs=epochs, steps_per_epoch=steps, shuffle=True)
+        self.model.summary()

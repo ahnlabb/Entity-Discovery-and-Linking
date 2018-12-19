@@ -25,9 +25,10 @@ with TemporaryDirectory() as tmpdir:
 
     gold = (path / 'gold')
     with gold.open('w') as f:
-        f.write('\n'.join(filter(is_lang('ENG'), args.gold.read_text().split('\n'))))
+        f.write('\n'.join(filter(None, args.gold.read_text().split('\n'))))
     run(['./scripts/run_tac16_evaluation.sh', str(gold), str(system), str(out), '1'])
     for fname in out.iterdir():
         print(fname)
     print((out / '00report.tab').read_text())
     print((out / (args.prediction.name + '.evaluation')).read_text())
+    input()

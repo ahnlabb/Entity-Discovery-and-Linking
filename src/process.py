@@ -12,7 +12,6 @@ from docria.algorithm import span_translate
 from docria import T
 from utils import pickled, langforia, inverted, build_sequence, emb_mat_init, mapget, zip_from_end, print_dims
 from gold_std import entity_to_dict, from_one_hot, one_hot, gold_std_idx, to_neleval, interpret_prediction
-from model import make_model, make_model_batches
 from structs import ModelJar
 from print_neleval import docria_to_neleval
 import numpy as np
@@ -351,48 +350,38 @@ if __name__ == '__main__':
             pass
 
     embed = load_glove(args.glove)
-    embed_len = len(next(iter(embed.values())))
-
-    jar = None
-    if args.model.exists():
-        jar = ModelJar.load(args.model, lambda jar: emb_mat_init(embed, jar.mappings['form']))
-        saved_cats = jar.cats
-        mappings = jar.mappings
-    else:
-        saved_cats = None
-        
-    train, lbl_sets, gold, cats = [], defaultdict(set), [], {}
-    for f in args.file:
-        corenlp, docs = read_and_extract(f, lambda docs: get_core_nlp(docs, lang=args.lang))
-        t, ls, g, cs, _, _ = docria_extract(corenlp, docs, saved_cats=saved_cats)
-        train.extend(t)
-        for k in ls:
-            lbl_sets[k] |= ls[k]
-        gold.extend(g)
-        cats.update(cs)
-    gold = to_categories(gold, cats)
-        
-    if not args.model.exists():
-        mappings = create_mappings(train, embed, lbl_sets)
-
-    #x_word = field_as_category(train, 'form', mappings['form'], default=1, categorical=False)
-    #x_pos = field_as_category(train, 'pos', mappings['pos'], categorical=False)
-    #x_ne = field_as_category(train, 'ne', mappings['ne'], categorical=False)
-    #y = pad_sequences(gold)
 
     keys = {'form': {'default': 1, 'categorical': False},
             'pos': {'categorical': False},
             'ne': {'categorical': False},}
 
-    if not args.model.exists():
-        batch_len = 128
-        batches = batch_generator(train, gold, mappings, batch_len=batch_len, **keys)
-        #model = make_model([x_word, x_pos, x_ne], y, embed, mappings['form'], len(mappings['pos']), len(mappings['ne']), len(cats), embed_len, len(train), epochs=10, batch_size=batch_len)
-        model = make_model_batches(batches, embed, mappings['form'], len(mappings['pos']), len(mappings['ne']), len(cats), embed_len, len(train), epochs=10, batch_size=batch_len)
-        jar = ModelJar(model, mappings, cats, path=args.model)
-        jar.save()
+    if args.model.exists():
+        jar = ModelJar.load(args.model)
+        saved_cats = jar.cats
+        mappings = jar.mappings
     else:
-        model = jar.model
+        saved_cats = None
+        
+        train, lbl_sets, gold, cats = [], defaultdict(set), [], {}
+        for f in args.file:
+            corenlp, docs = read_and_extract(f, lambda docs: get_core_nlp(docs, lang=args.lang))
+            t, ls, g, cs, _, _ = docria_extract(corenlp, docs, saved_cats=saved_cats)
+            train.extend(t)
+            for k in ls:
+                lbl_sets[k] |= ls[k]
+            gold.extend(g)
+            cats.update(cs)
+        gold = to_categories(gold, cats)
+        
+        mappings = create_mappings(train, embed, lbl_sets)
+
+        batch_len = 64
+        batches = batch_generator(train, gold, mappings, batch_len=batch_len, **keys)
+        embed_len = len(next(iter(embed.values())))
+        jar = ModelJar(embed, mappings, cats, embed_len)
+        jar.train_batches(batches, len(train), epochs=5, batch_size=batch_len)
+        #jar.train([x_word, x_pos, x_ne], y, epochs=10, batch_size=batch_len)
+        jar.save(args.model)
 
     with args.elmapping.open('r+b') as f:
         elmap = load(f)
@@ -401,12 +390,21 @@ if __name__ == '__main__':
         core_nlp_test, docs_test = read_and_extract(args.predict, lambda docs: get_core_nlp(docs, lang=args.lang))
         test, _, gold_test, _, spandex, docs = docria_extract(core_nlp_test, docs_test, per_doc=True)
         gold_test = [to_categories(g, cats) for g in gold_test]
-        predict_to_layer(model, docs, test, gold_test, spandex, mappings, inverted(cats), elmap=elmap, **keys)
+        predict_to_layer(jar.model, docs, test, gold_test, spandex, mappings, inverted(cats), elmap=elmap, **keys)
         with open('predict.%s.tsv' % args.lang, 'w') as f:
             f.write(docria_to_neleval(docs, 'tac/entity'))
+
+
+
         #x_word_test = field_as_category(test, 'form', mappings['form'], default=1, categorical=False)
         #x_pos_test = field_as_category(test, 'pos', mappings['pos'], categorical=False)
         #x_ne_test = field_as_category(test, 'ne', mappings['ne'], categorical=False)
         #y_test = pad_sequences(gold_test)
         #pred = model.predict([x_word_test, x_pos_test, x_ne_test])
         #simple_eval(pred, gold_test, inverted(cats))
+
+    #x_word = field_as_category(train, 'form', mappings['form'], default=1, categorical=False)
+    #x_pos = field_as_category(train, 'pos', mappings['pos'], categorical=False)
+    #x_ne = field_as_category(train, 'ne', mappings['ne'], categorical=False)
+    #y = pad_sequences(gold)
+
