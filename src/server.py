@@ -41,7 +41,7 @@ def doc_index():
 def get_models():
     for name in models:
         if not models[name]:
-            jar = ModelJar.load(name, lambda jar: emb_mat_init({}, jar.mappings['form']))
+            jar = ModelJar.load(name)
             models[name] = jar
     return jsonify(list(models.keys()))
 
