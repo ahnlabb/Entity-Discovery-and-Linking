@@ -317,10 +317,13 @@ def predict_to_layer(model, docs, test, spandex, mappings, inv_cats, keys, elmap
             try:
                 while True:
                     start, stop, tag, cls, confidence = get_next(itr)
+                    stack = []
                     if tag == 'B':
                         cont = True
+                        stack.append('B')
                         while cont:
                             newstart, newstop, newtag, newcls, newconfidence = get_next(itr)
+                            stack.append(newtag)
                             if newtag == 'B':
                                 start, stop = newstart, newstop
                                 cls = newcls
@@ -328,18 +331,22 @@ def predict_to_layer(model, docs, test, spandex, mappings, inv_cats, keys, elmap
                             if newcls == cls:
                                 if newtag == 'E':
                                     ents.append((start, newstop, cls))
+                                    cont = False
                                 elif newtag == 'I':
                                     stop = newstop
+                                    tag = newtag
                                 else:
-                                    print(tag, newtag, cls)
+                                    pass
+                                    # print(tag, newtag, cls)
                             else:
-                                if newtag == 'O' and confidence > newconfidence:
-                                    ents.append((start, stop, cls))
-                                else:
-                                    print(tag, newtag, cls, newcls, main[(start, newstop)])
+                                # if newtag == 'O' and confidence > newconfidence:
+                                    # ents.append((start, stop, cls))
+                                # else:
+                                    # print(stack, cls, newcls, main[(start, newstop)], start, newstop)
                                 cont = False
                     elif tag == 'S':
                         ents.append((start, stop, cls))
+                        cont = False
                     else:
                         pass
             except StopIteration:
