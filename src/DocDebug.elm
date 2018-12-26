@@ -305,7 +305,7 @@ resultView docs selection prediction reduceTags =
                                 (line origin start) :: (marked class start stop) :: (annotate stop string tail)
 
                             [] ->
-                                []
+                                [line origin (String.length string)]
 
                 label =
                     List.map
@@ -333,9 +333,9 @@ resultView docs selection prediction reduceTags =
 
                 reduceIfChecked entities =
                     if reduceTags then
-                        reduceEntities doc.entities
+                        reduceEntities entities
                     else
-                        doc.entities
+                        entities
             in
                 row [ width fill, spacing 50, padding 30 ]
                     [ reduceIfChecked doc.entities |> annotate 0 doc.text |> viewAnnotations

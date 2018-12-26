@@ -2,11 +2,13 @@ from flask import Flask, render_template, jsonify, request
 from utils import langforia
 from pathlib import Path
 from gold_std import get_doc_index, gold_std_idx
-from process import predict
+from process import predict, get_tgt
 from docria.storage import DocumentIO
 from structs import ModelJar
 from utils import emb_mat_init
 import tensorflow as tf
+from time import sleep
+from pickle import load
 
 app = Flask(__name__)
 
@@ -29,7 +31,8 @@ def debug():
 
 @app.route('/gold')
 def doc_index():
-    path = Path('./corpus/tac/lang/en/eng.2015.eval.docria')
+    get_models()
+    path = Path('./corpus/tac/lang/en/eng.2017.eval.docria')
     with DocumentIO.read(path) as docria:
         doc = list(docria)
         gold_std, _ = gold_std_idx(doc)
@@ -37,12 +40,23 @@ def doc_index():
         return jsonify(index)
 
 
+@app.route('/link', methods=['POST'])
+def get_links():
+    fname = 'corpus/wikimap_{}.pickle'.format(request.args.get('lang', default='en'))
+    ents = request.get_json()
+    if fname not in wiki_map:
+        with open(fname, 'r+b') as f:
+            wiki_map[fname] = load(f)
+    return jsonify([get_tgt(text, wiki_map[fname]) for text in ents])
+
+
 @app.route('/models')
 def get_models():
-    for name in models:
-        if not models[name]:
-            jar = ModelJar.load(name)
-            models[name] = jar
+    with graph.as_default():
+        for name in models:
+            if not models[name]:
+                jar = ModelJar.load(name)
+                models[name] = jar
     return jsonify(list(models.keys()))
 
 
@@ -66,4 +80,5 @@ def make_prediction():
 
 
 models = {"model.en.pickle": None}
+wiki_map = {}
 graph = tf.get_default_graph()

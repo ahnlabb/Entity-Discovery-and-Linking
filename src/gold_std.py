@@ -26,9 +26,9 @@ def from_one_hot(vector, categories):
             return invind[i]
     raise ValueError("Zero vector")
     
-def interpret_prediction(y, cats):
-    one_hot = np.array([int(x) for x in y == max(y)])
-    return from_one_hot(one_hot, cats)
+def interpret_prediction(Y, cats):
+    inv = inverted(cats)
+    return [inv[np.argmax(p)] for y in Y for p in y]
 
 def entity_to_dict(start, stop, entity):
     return {'start': int(start), 'stop': int(stop), 'class': '-'.join(entity)}

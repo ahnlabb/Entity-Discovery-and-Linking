@@ -24,6 +24,12 @@ from keras.utils import to_categorical
 from keras_contrib.layers import CRF
 
 
+keys = [('form', {'default': 1, 'categorical': False}),
+        ('pos', {'categorical': False}),
+        ('ne', {'categorical': False}),
+        ('capital', {})
+        ]
+
 def get_args():
     parser = ArgumentParser()
     parser.add_argument('file', type=Path, nargs='+', help='one or more docria files to use for training')
@@ -117,7 +123,6 @@ def docria_extract(core_nlp, docs, saved_cats=None, per_doc=False):
             train.extend(sentences)
             spandex.extend(spans)
 
-    print(list(map(len, (train, lbl_sets, gold, cats, spandex, list(docs)))))
     return train, lbl_sets, gold, cats, spandex, list(docs)
 
 
@@ -203,11 +208,7 @@ def extract_features(mappings, sentences, padding=False):
                     label = mapping[feature]
                 else:
                     # Out of vocabulary
-                    if feat_name == 'form':
-                        mapping_len = len(next(iter(mapping.values())))
-                        label = np.zeros(mapping_len)
-                    else:
-                        label = 0
+                    label = 0
                 label_list.append(label)
             labels[feat_name].append(label_list)
 
@@ -272,7 +273,7 @@ def debug_log(x, fun=lambda x: x):
     return x
 
 
-def batch_generator(train, gold, mappings, keys, batch_len=128):
+def batch_generator(train, gold, mappings, keys=keys, batch_len=128):
     xy = sorted(zip(train, gold), key=lambda x: len(x[0]))
     n_batches = len(train) // batch_len + (len(train) % batch_len > 0)
     batches = list(range(n_batches))
@@ -288,10 +289,67 @@ def batch_generator(train, gold, mappings, keys, batch_len=128):
                 outputs.append(field_as_category(x, key, mappings[key], maxlen=maxlen, **args))
             yield outputs, pad_sequences(y, maxlen=maxlen) 
 
-def predict_batch_generator(test, mappings, keys):
+def predict_batch_generator(test, mappings, keys=keys):
     for sentences in test:
         maxlen = len(max(sentences, key=len))
         yield list(field_as_category(sentences, key, mappings[key], maxlen=maxlen, **args) for key, args in keys)
+
+def reduce_tags(pred, spans, inv_cats):
+    ents = []
+    def get_next(itr):
+            p, s = next(itr)
+            start, stop = s
+            i = np.argmax(p)
+            confidence = p[i]
+            tag, tp, lbl = inv_cats[i]
+            cls = (tp, lbl)
+            return start, stop, tag, cls, confidence
+
+    itr = zip_from_end(pred, spans)
+    try:
+        while True:
+            start, stop, tag, cls, confidence = get_next(itr)
+            stack = []
+            if tag == 'B':
+                cont = True
+                stack.append('B')
+                while cont:
+                    newstart, newstop, newtag, newcls, newconfidence = get_next(itr)
+                    stack.append(newtag)
+                    if newtag == 'B':
+                        start, stop = newstart, newstop
+                        cls = newcls
+                        continue
+                    if newcls == cls:
+                        if newtag == 'E':
+                            ents.append((start, newstop, cls))
+                            cont = False
+                        elif newtag == 'I':
+                            stop = newstop
+                            tag = newtag
+                        else:
+                            pass
+                            # print(tag, newtag, cls)
+                    else:
+                        # if newtag == 'O' and confidence > newconfidence:
+                            # ents.append((start, stop, cls))
+                        # else:
+                            # print(stack, cls, newcls, main[(start, newstop)], start, newstop)
+                        cont = False
+            elif tag == 'S':
+                ents.append((start, stop, cls))
+                cont = False
+            else:
+                pass
+    except StopIteration:
+        return ents
+
+def get_tgt(text, elmap):
+    if str(text) in elmap:
+        return elmap[str(text)]
+    if str(text).lower() in elmap:
+        return elmap[str(text).lower()]
+    return elmap.get(' '.join(w.capitalize() for w in str(text).split()), None)
 
 
 def predict_to_layer(model, docs, test, spandex, mappings, inv_cats, keys, elmap={}):
@@ -303,85 +361,32 @@ def predict_to_layer(model, docs, test, spandex, mappings, inv_cats, keys, elmap
         predictions = model.predict_on_batch(batch)
         
         for pred, spans in zip(predictions, doc_spans):
-            ents = []
-            def get_next(itr):
-                    p, s = next(itr)
-                    start, stop = s
-                    i = np.argmax(p)
-                    confidence = p[i]
-                    tag, tp, lbl = inv_cats[i]
-                    cls = (tp, lbl)
-                    return start, stop, tag, cls, confidence
-
-            itr = zip_from_end(pred, spans)
-            try:
-                while True:
-                    start, stop, tag, cls, confidence = get_next(itr)
-                    stack = []
-                    if tag == 'B':
-                        cont = True
-                        stack.append('B')
-                        while cont:
-                            newstart, newstop, newtag, newcls, newconfidence = get_next(itr)
-                            stack.append(newtag)
-                            if newtag == 'B':
-                                start, stop = newstart, newstop
-                                cls = newcls
-                                continue
-                            if newcls == cls:
-                                if newtag == 'E':
-                                    ents.append((start, newstop, cls))
-                                    cont = False
-                                elif newtag == 'I':
-                                    stop = newstop
-                                    tag = newtag
-                                else:
-                                    pass
-                                    # print(tag, newtag, cls)
-                            else:
-                                # if newtag == 'O' and confidence > newconfidence:
-                                    # ents.append((start, stop, cls))
-                                # else:
-                                    # print(stack, cls, newcls, main[(start, newstop)], start, newstop)
-                                cont = False
-                    elif tag == 'S':
-                        ents.append((start, stop, cls))
-                        cont = False
-                    else:
-                        pass
-            except StopIteration:
-                pass
-
-            ents = sorted(ents, key=lambda x: x[0])
+            ents = reduce_tags(pred, spans, inv_cats)
             for start, stop, (tp, lbl) in ents:
                 text = main[(start, stop)]
-                if str(text) in elmap:
-                    tgt = elmap[str(text)]
-                elif str(text).lower() in elmap:
-                    tgt = elmap[str(text).lower()]
-                else:
+                tgt = get_tgt(text, elmap)
+                if not tgt:
                     tgt, i = 'NIL%s' % format(i, '05d'), i + 1
                 layer.add(text=text, type=tp, label=lbl, target=tgt)
         
         span_translate(doc, 'tac/segments', ('xml', 'text'), 'tac/entity', ('text', 'xml')) 
 
 
-def predict(model, mappings, cats, text, padding=False):
-    lbl_sets = defaultdict(set)
-    sentences, spans = core_nlp_features(langforia(text, lang).split('\n'), lbl_sets)
-    features = list(extract_features(mappings, sentences, padding=padding))
-    x = predict_batch_generator(features, mappings)
-    Y = model.predict(x)
-    pred = [[interpret_prediction(p, cats) for p in y] for y in Y]
+def predict(jar, text, lang='en', padding=False):
+    sentences, spans = core_nlp_features(langforia(text, lang).split('\n'), defaultdict(set))
+    X = predict_batch_generator([sentences], jar.mappings)
+    Y = [jar.model.predict_on_batch(x) for x in X]
+    pred = [interpret_prediction(y, jar.cats) for y in Y]
     return format_predictions(text, pred, sentences)
 
 
 def format_predictions(input_text, predictions, sentences):
     pred_dict = {'text': input_text, 'entities': []}
-    for sent, pred in zip(sentences, predictions):
-        for word, class_tuple in zip(sent, pred):
-            entity_dict = entity_to_dict(word['start'], word['end'], class_tuple)
-            pred_dict['entities'].append(entity_dict)
+    sent = [w for s in sentences for w in s]
+    pred = [cls for pred in predictions for cls in pred]
+    for word, class_tuple in zip(sent, pred):
+        entity_dict = entity_to_dict(word['start'], word['end'], class_tuple)
+        pred_dict['entities'].append(entity_dict)
     return pred_dict
 
 
@@ -433,12 +438,6 @@ if __name__ == '__main__':
             pass
 
     embed = load_glove(args.glove)
-
-    keys = [('form', {'default': 1, 'categorical': False}),
-            ('pos', {'categorical': False}),
-            ('ne', {'categorical': False}),
-            ('capital', {})
-            ]
 
     filter_short = lambda seq: filter(lambda x: len(x) > 1, seq)
     if args.model.exists():
