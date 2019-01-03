@@ -1,11 +1,20 @@
-from pathlib import Path
-from pickle import load, dump
-from functools import reduce
-from tempfile import mkstemp
-from keras.models import load_model as keras_load
-import requests
-import numpy as np
 import os
+from functools import reduce
+from pathlib import Path
+from pickle import dump, load
+from tempfile import mkstemp
+
+import numpy as np
+import requests
+
+from keras.models import load_model as keras_load
+
+
+def existing_path(fname):
+    path = Path(fname)
+    if path.exists():
+        return path
+    raise FileNotFoundError(fname)
 
 
 def save_model(filename, **kwargs):
@@ -18,7 +27,8 @@ def save_model(filename, **kwargs):
     os.close(fp)
     with Path(filename).open('w+b') as f:
         dump(kwargs, f)
-        
+
+
 def load_model(filename):
     with Path(filename).open('r+b') as f:
         model_dict = load(f)
@@ -31,11 +41,14 @@ def load_model(filename):
     os.close(fp)
     return model_dict
 
+
 def flatten_once(iterable):
-    return list(reduce(lambda a,b: a+b, iterable))
+    return list(reduce(lambda a, b: a + b, iterable))
+
 
 def inverted(a):
-    return {v:k for k,v in a.items()}
+    return {v: k for k, v in a.items()}
+
 
 def build_sequence(l, invind, default=None):
     if default:
@@ -46,8 +59,10 @@ def build_sequence(l, invind, default=None):
         print(invind.keys())
         raise ValueError(str(invind.keys()))
 
+
 def map2(fun, x, y):
     return fun(x[0], y[0]), fun(x[1], y[1])
+
 
 def print_dims(data):
     """powerful debugging solution"""
@@ -63,15 +78,19 @@ def print_dims(data):
     except:
         print()
 
+
 def trans_mut_map(ab, bc, f=lambda x: x):
     for k in ab:
         ab[k] = f(bc[ab[k]])
 
+
 def trans_map(ab, bc, f=lambda x: x):
-    return {k: f(bc[v]) for k,v in ab.items()}
+    return {k: f(bc[v]) for k, v in ab.items()}
+
 
 def langforia_url(lang, config, format='json'):
     return f'http://vilde.cs.lth.se:9000/{lang}/{config}/api/{format}'
+
 
 def langforia(text, lang, config='corenlp_3.8.0', format='tsv'):
     url = langforia_url(lang, config, format=format)
@@ -80,6 +99,7 @@ def langforia(text, lang, config='corenlp_3.8.0', format='tsv'):
     if format == 'tsv':
         return request.text
     return request.json()
+
 
 def pickled(fun):
     def wrapper(path, *args):
@@ -91,7 +111,9 @@ def pickled(fun):
             with path.with_suffix('.pickle').open('w+b') as f:
                 dump(result, f)
             return result
+
     return wrapper
+
 
 def take_twos(iterable):
     itr = iter(iterable)
@@ -106,11 +128,18 @@ def mapget(key, seq):
 def emb_mat_init(glove, invind):
     def initializer(shape, dtype=None):
         mat = np.random.random_sample(shape)
-        for k,v in glove.items():
+        for k, v in glove.items():
             mat[invind[k], :] = v[:shape[1]]
         return mat
+
     return initializer
+
 
 def zip_from_end(a, b):
     shortest = min(len(a), len(b))
     return ((a[i], b[i]) for i in range(-shortest, 0))
+
+
+def debug_log(x, fun=lambda x: x):
+    print(fun(x))
+    return x

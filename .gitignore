@@ -10,6 +10,7 @@ elm-stuff
 *.pickle
 
 out/
+systems/
 corpus/
 glove/
 

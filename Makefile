@@ -1,4 +1,4 @@
-.PHONY: paper site serve process-en process-es process-zh process
+.PHONY: paper site serve process-en process-es process-zh process neleval
 
 ifneq ($(CONDA_DEFAULT_ENV),nlp-project)
 $(error Not in conda environment)
@@ -39,3 +39,6 @@ process-zh:
 
 process-en:
 	python3 src/process.py corpus/tac/lang/en/eng.2015.eval.pickle corpus/tac/lang/en/eng.2015.train.pickle corpus/tac/lang/en/eng.2016.eval.pickle glove/glove.6B.100d.pickle model.en.pickle en corpus/wikimap_en.pickle --predict corpus/tac/lang/en/eng.2017.eval.pickle
+
+neleval:
+	./run_neleval.sh
