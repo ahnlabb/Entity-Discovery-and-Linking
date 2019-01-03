@@ -522,7 +522,7 @@ def main(args):
             train, gold, mappings, keys, batch_len=batch_len)
         embed_len = len(next(iter(embed.values())))
         jar = ModelJar(embed, mappings, cats, 100)
-        jar.train_batches(batches, len(train), epochs=10, batch_size=batch_len)
+        jar.train_batches(batches, len(train), epochs=20, batch_size=batch_len)
         #jar.train([x_word, x_pos, x_ne], y, epochs=10, batch_size=batch_len)
         jar.save(args.model)
 
