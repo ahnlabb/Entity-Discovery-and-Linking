@@ -19,11 +19,14 @@ class ModelJar:
         nout = len(cats)
         width = len(word_inv) + 2
 
-        pos = Input(shape=(None, ), dtype='int32', name='PoS_Input')
-        pos_emb = Embedding(npos, npos // 2, name='PoS_Embedding')(pos)
+        pos = Input(shape=(None, ), name='PoS_Input')
+        pos_drop = Dropout(0.5)(pos)
+        pos_emb = Embedding(npos, npos // 2, name='PoS_Embedding')(pos_drop)
 
-        ne = Input(shape=(None, ), dtype='int32', name='Named_Entity_Input')
-        ne_emb = Embedding(nne, nne // 2, name='Named_Entity_Embedding')(ne)
+        ne = Input(shape=(None, ), name='Named_Entity_Input')
+        ne_drop = Dropout(0.5)(ne)
+        ne_emb = Embedding(
+            nne, nne // 2, name='Named_Entity_Embedding')(ne_drop)
 
         capital = Input(shape=(None, 2), name='Capital')
 
