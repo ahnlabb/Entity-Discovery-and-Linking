@@ -42,16 +42,16 @@ class ModelJar:
         concat = Concatenate()([emb, pos_emb, ne_emb, capital])
 
         lstm1 = Bidirectional(
-            LSTM(100, return_sequences=True, recurrent_dropout=0.2),
+            LSTM(100, return_sequences=True, recurrent_dropout=0.4),
             input_shape=(None, width))(concat)
 
         skip = Concatenate()([concat, lstm1])
 
         lstm2 = Bidirectional(
-            LSTM(100, return_sequences=True, recurrent_dropout=0.2),
+            LSTM(100, return_sequences=True, recurrent_dropout=0.4),
             input_shape=(None, width))(skip)
 
-        dense = TimeDistributed(Dense(nout, activation='softmax'))(lstm2)
+        dense = Dense(nout, activation='softmax')(lstm2)
         # crf = CRF(nout, learn_mode='join', activation='softmax')
         # out = crf(dense)
         out = dense
