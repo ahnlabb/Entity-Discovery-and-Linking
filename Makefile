@@ -1,4 +1,4 @@
-.PHONY: paper site serve process-en process-es process-zh process neleval
+.PHONY: paper site serve process-en process-es process-zh process neleval clean-model rerun
 
 ifneq ($(CONDA_DEFAULT_ENV),nlp-project)
 $(error Not in conda environment)
@@ -42,3 +42,8 @@ process-en:
 
 neleval:
 	./run_neleval.sh
+
+clean-model:
+	rm -f model.*.pickle
+
+rerun: clean-model process-en process-es process-zh
