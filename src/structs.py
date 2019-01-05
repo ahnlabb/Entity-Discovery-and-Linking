@@ -1,7 +1,7 @@
 from keras.models import Sequential, load_model
 from keras.utils.generic_utils import get_custom_objects
 from pathlib import Path
-from keras.layers import Bidirectional, LSTM, Dense, Embedding, Concatenate, Input, TimeDistributed, Add, Dropout
+from keras.layers import Bidirectional, CuDNNLSTM, Dense, Embedding, Concatenate, Input, TimeDistributed, Add, Dropout
 from keras.models import Model
 from keras_contrib.layers import CRF
 from utils import emb_mat_init
@@ -31,7 +31,6 @@ class ModelJar:
         emb = Embedding(width,
                         embed_len,
                         embeddings_initializer=emb_mat_init(embed, word_inv),
-                        mask_zero=True,
                         input_length=None)(form)
 
         emb.trainable = True
@@ -39,9 +38,9 @@ class ModelJar:
         concat = Concatenate()([emb, pos_emb, ne_emb, capital])
         drop = Dropout(0.25)(concat)
 
-        lstm1 = Bidirectional(LSTM(100, return_sequences=True), input_shape=(None, width))(drop)
+        lstm1 = Bidirectional(CuDNNLSTM(100, return_sequences=True), input_shape=(None, width))(drop)
         skip = Concatenate()([concat, lstm1])
-        lstm2 = Bidirectional(LSTM(100, return_sequences=True), input_shape=(None, width))(skip)
+        lstm2 = Bidirectional(CuDNNLSTM(100, return_sequences=True), input_shape=(None, width))(skip)
         dense = TimeDistributed(Dense(nout, activation='softmax'))(lstm2)
         # crf = CRF(nout, learn_mode='join', activation='softmax')
         # out = crf(dense)
