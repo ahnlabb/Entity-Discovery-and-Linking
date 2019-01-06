@@ -21,8 +21,13 @@
 \bibliographystyle{ACM-Reference-Format}
 
 \usepackage{lipsum}
+\usepackage[acronym]{glossaries}
+
+\makeglossaries
 
 \begin{document}
+
+\newacronym{edl}{EDL}{Entity Discovery and Linking}
 
 %% Title information
 \title[Short Title]{Full Title}         %% [Short Title] is optional;
@@ -59,14 +64,24 @@ Text of abstract \ldots.
 
 \section{Introduction}
 
-Text of paper \ldots
+%Entity discovery and linking
+\acrfull{edl} is the process of finding mentions of entities in a text and linking these entities to the corresponding entry in a knowledge base. Named Entity Recognition (NER) and Entity Linking (EL) are the primary constituent steps of this process and in this paper we will describe the mechanisms by which our system performs these steps, both as separate processes and as a unified process (EDL).
 
-Here is a citation of the Tencent paper~\cite{YangThe2017}
+In this project we attempt to reproduce the results achieved by~\cite{YangThe2017} using the methods outlined in their paper. The goal is to investigate whether the results are reproducible and additionally to potentially add support for other languages, seeking similar performance.
 
-\lipsum[1-3] %% Boilerplate text
+Our course of action for developing this system has been to iteratively reproduce the parts of the model from \cite{YangThe2017}, evaluating the model and adding features in each step of the iteration.
 
-\section{Content}
-Replace the header of this section with something appropriate for your paper. Use around 1-4 sections for the content.
+More text here
+
+%\textit{Something about reproducing the model in iterative steps, comparing the performance as more features and layers are added?}
+
+\section{System Description}
+\subsection{Mention Detection}
+As a first step in our iteration we leverage readily existing features from GloVe and CoreNLP to evaluate baseline performance in a basic reconstruction of the network described in \cite{YangThe2017}. The GloVe dataset provides our model with pre-trained word embeddings and CoreNLP provides us with basic NER (Named Entity Recognition) and POS (Part of Speech) tagging.
+
+In future iterations we intend to add character embeddings (as described in \cite{Lample2016NeuralRecognition}) to compensate for OOV (Out of Vocabulary) issues. Additionally, 
+
+\subsection{BiLSTM-CRF Model}
 
 \lipsum[4-10] %% Boilerplate text
 
@@ -83,7 +98,7 @@ Replace the header of this section with something appropriate for your paper. Us
 \section{Conclusion}
 
 \lipsum[16-17] %% Boilerplate text
-
+    
 %% Acknowledgments
 \begin{acks}
 Text of acknowledgments \ldots.
