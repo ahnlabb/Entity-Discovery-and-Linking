@@ -266,7 +266,6 @@ viewNews : Page -> Element Msg
 viewNews { selection, text, prediction, reduceTags } =
     column [ width fill, spacing 30 ]
         [ row [ width fill ] [ reduceToggle reduceTags ]
-        , row [ width fill ] (prediction |> Maybe.map (.entities >> List.map (Element.text << .class)) |> Maybe.withDefault [ Element.none ])
         , el [ width fill, height fill ] (resultView text selection prediction reduceTags)
         , el [ width fill, height fill ] (Input.button [ centerX ] { onPress = Just MoreNews, label = Element.text "Get more news!" })
         ]

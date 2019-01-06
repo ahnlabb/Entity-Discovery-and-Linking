@@ -106,11 +106,11 @@ def gold_std_idx(docria):
         
     tags = {'B', 'E', 'I', 'S'}
     categories = {pair: index for index, pair
-                  in enumerate(product(sorted(tags), sorted(types), sorted(labels)))}
+                  in enumerate(product(sorted(tags), sorted(types), sorted(labels)), 2)}
     
     outside, padding = ('O','NOE','OUT'), ('O','NOE','PAD')
-    categories[outside] = len(categories)
-    categories[padding] = len(categories)
+    categories[outside] = 1
+    categories[padding] = 0
     
     return index, categories
 

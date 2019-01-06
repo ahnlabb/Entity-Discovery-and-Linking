@@ -73,9 +73,8 @@ def read_and_extract(path, fun):
 def load_glove(path):
     with path.open('r') as f:
         rows = map(lambda x: x.split(), f)
-        embed = {}
-        for row in rows:
-            embed[row[0]] = np.asarray(row[1:], dtype='float32')
+        embed = [(row[0], np.asarray(row[1:], dtype='float32'))
+                 for row in rows]
         return embed
 
 
@@ -158,11 +157,26 @@ def docria_extract(core_nlp, docs, saved_cats=None, per_doc=False):
     return train, lbl_sets, gold, cats, spandex, list(docs)
 
 
-def build_indices(train, embed):
-    wordset = set(
-        [features['form'] for sentence in train for features in sentence])
-    wordset.update(embed.keys())
-    word_inv = dict(zip(wordset, count(2)))
+def build_indices(train, embed, embed_n=None):
+    word_counts = Counter(
+        features['form'] for sentence in train for features in sentence)
+    if embed_n:
+        tot = sum(word_counts.values())
+        word_inv = {}
+        i = 2
+        for word, cnt in word_counts.items():
+            if cnt * embed_n > tot:
+                word_inv[word] = i
+                i += 1
+        print(i)
+        for word, _ in embed:
+            if word not in word_inv:
+                word_inv[word] = i
+                i += 1
+    else:
+        wordset = set(word_counts)
+        wordset.update(word for word, _ in embed)
+        word_inv = dict(zip(wordset, count(2)))
     return word_inv
 
 
@@ -229,7 +243,7 @@ def create_mappings(train, embed, lbl_sets):
     }
     for key in mappings:
         mappings[key]['OOV'] = 0
-    mappings['form'] = build_indices(train, embed)
+    mappings['form'] = build_indices(train, embed, embed_n=40000)
     return mappings
 
 
@@ -435,6 +449,10 @@ def predict(jar, text, lang='en', padding=False):
     X = predict_batch_generator([sentences], jar.mappings)
     Y = [jar.model.predict_on_batch(x) for x in X]
     pred = [interpret_prediction(y, jar.cats) for y in Y]
+    for y in Y[0][0]:
+        print(' '.join(f'{val:2.2}' for val in y))
+    print(jar.cats)
+    print(pred)
     return format_predictions(text, pred, sentences)
 
 
@@ -517,11 +535,11 @@ def main(args):
 
         mappings = create_mappings(train, embed, lbl_sets)
 
-        batch_len = 64
+        batch_len = 8
         batches = batch_generator(
             train, gold, mappings, keys, batch_len=batch_len)
-        embed_len = len(next(iter(embed.values())))
-        jar = ModelJar(embed, mappings, cats, 100)
+        embed_len = len(embed[0][1])
+        jar = ModelJar(embed, mappings, cats, embed_len)
         jar.train_batches(batches, len(train), epochs=20, batch_size=batch_len)
         #jar.train([x_word, x_pos, x_ne], y, epochs=10, batch_size=batch_len)
         jar.save(args.model)

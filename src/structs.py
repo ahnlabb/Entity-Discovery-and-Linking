@@ -1,4 +1,4 @@
-import os
+import datetime
 from pathlib import Path
 from pickle import dump, load
 from tempfile import TemporaryDirectory
@@ -31,7 +31,7 @@ class ModelJar:
         form = Input(shape=(None, ), dtype='int32')
 
         emb = Embedding(
-            width,
+            40000,
             embed_len,
             embeddings_initializer=emb_mat_init(embed, word_inv),
             input_length=None)(form)
@@ -100,7 +100,10 @@ class ModelJar:
             batch_size=batch_size,
             callbacks=[
                 EarlyStopping(monitor='acc', min_delta=0.0005),
-                TensorBoard()
+                TensorBoard(
+                    log_dir=
+                    f'./logs/{datetime.datetime.now().strftime("%y%m%d_%H%M")}'
+                )
             ])
         self.model.summary()
 
@@ -114,6 +117,9 @@ class ModelJar:
             shuffle=True,
             callbacks=[
                 EarlyStopping(monitor='acc', min_delta=0.0005),
-                TensorBoard()
+                TensorBoard(
+                    log_dir=
+                    f'./logs/{datetime.datetime.now().strftime("%y%m%d_%H%M")}'
+                )
             ])
         self.model.summary()
