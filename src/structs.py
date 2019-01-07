@@ -28,7 +28,7 @@ class ModelJar:
 
         capital = Input(shape=(None, 3), name='Capital_Input')
 
-        special = Input(shape=(None, 3), name='Special_Input')
+        special = Input(shape=(None, 27), name='Special_Input')
 
         form = Input(shape=(None, ), dtype='int32')
 

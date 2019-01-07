@@ -205,6 +205,12 @@ def core_nlp_features(corenlp, lbl_sets):
     sentences = [[]]
     spans = [[]]
     inside = ''
+    special = [
+        'the', 'in', 'of', 'and', 'a', 'to', 'that', 'with', 'for', 'from',
+        'by', 'on', 'his', 'president', "'s", 'at', 'as', 'said', '’s', 'an',
+        'like', 'former', 'about', 'is', 'if'
+    ]
+    lbl_sets['special'] = set(range(len(special) + 1))
     for row in corenlp:
         if row:
             cols = row.split('\t')
@@ -215,7 +221,8 @@ def core_nlp_features(corenlp, lbl_sets):
                 features['ne'] = '_'
             features['capital'] = features['form'][0].isupper()
             features['form'] = normalize_form(features['form'])
-            features['special'] = features['form'] in ['the', 'of', 'in']
+            features['special'] = special.index(
+                features['form']) + 1 if features['form'] in special else 0
             features['form'] = strip_tags(features['form'])
             if not features['form']:
                 features['ne'] = '_'
@@ -331,10 +338,7 @@ def batch_generator(train, gold, mappings, keys=keys, batch_len=128):
         maxlen = len(batch_xy[-1][0])
         shuffle(batch_xy)
         x, y = zip(*batch_xy)
-        outputs = [
-            field_as_category(x, key, mappings[key], maxlen=maxlen, **args)
-            for key, args in keys
-        ]
+        outputs = list(categorical_gen(x, keys, mappings, maxlen))
         return outputs, pad_sequences(y, maxlen=maxlen)
 
     while True:
@@ -344,13 +348,16 @@ def batch_generator(train, gold, mappings, keys=keys, batch_len=128):
             yield process_batch(xy[batch_slice])
 
 
+def categorical_gen(sentences, keys, mappings, maxlen):
+    for key, args in keys:
+        yield field_as_category(
+            sentences, key, mappings[key], maxlen=maxlen, **args)
+
+
 def predict_batch_generator(test, mappings, keys=keys):
     for sentences in test:
         maxlen = len(max(sentences, key=len))
-        yield list(
-            field_as_category(
-                sentences, key, mappings[key], maxlen=maxlen, **args)
-            for key, args in keys)
+        yield list(categorical_gen(sentences, keys, mappings, maxlen))
 
 
 def reduce_tags(pred, spans, inv_cats):
