@@ -20,7 +20,7 @@ from keras.utils import to_categorical
 from print_neleval import docria_to_neleval
 from structs import ModelJar
 from utils import (build_sequence, existing_path, inverted, langforia, mapget,
-                   pickled, zip_from_end)
+                   pickled, print_dims, zip_from_end)
 
 keys = [('form', {
     'default': 1,
@@ -29,7 +29,7 @@ keys = [('form', {
     'categorical': False
 }), ('ne', {
     'categorical': False
-}), ('capital', {})]
+}), ('capital', {}), ('special', {})]
 
 
 def get_args():
@@ -120,13 +120,11 @@ def txt2xml(doc):
     return index
 
 
-def docria_extract(core_nlp, docs, saved_cats=None, per_doc=False):
+def docria_extract(core_nlp, docs, per_doc=False):
     train, gold, spandex = [], [], []
     lbl_sets = defaultdict(set)
 
     gold_std, cats = gold_std_idx(docs)
-    if saved_cats:
-        cats = saved_cats
 
     def get_entity(docid, span):
         none = ('O', 'NOE', 'OUT')
@@ -215,8 +213,9 @@ def core_nlp_features(corenlp, lbl_sets):
                 inside, features['ne'] = normalize_ne(inside, features['ne'])
             else:
                 features['ne'] = '_'
-            features['form'] = normalize_form(features['form'])
             features['capital'] = features['form'][0].isupper()
+            features['form'] = normalize_form(features['form'])
+            features['special'] = features['form'] in ['the', 'of', 'in']
             features['form'] = strip_tags(features['form'])
             if not features['form']:
                 features['ne'] = '_'
@@ -225,6 +224,7 @@ def core_nlp_features(corenlp, lbl_sets):
             add(features, 'pos')
             add(features, 'ne')
             add(features, 'capital')
+            add(features, 'special')
             sentences[-1].append(features)
             spans[-1].append((int(features['start']), int(features['end'])))
         else:
@@ -444,25 +444,21 @@ def predict_to_layer(model,
 
 
 def predict(jar, text, lang='en', padding=False):
-    sentences, spans = core_nlp_features(
-        langforia(text, lang).split('\n'), defaultdict(set))
-    X = predict_batch_generator([sentences], jar.mappings)
-    Y = [jar.model.predict_on_batch(x) for x in X]
-    pred = [interpret_prediction(y, jar.cats) for y in Y]
-    for y in Y[0][0]:
-        print(' '.join(f'{val:2.2}' for val in y))
-    print(jar.cats)
-    print(pred)
+    langforia_res = langforia(text, lang).split('\n')
+    sentences, _ = core_nlp_features(langforia_res, defaultdict(set))
+    batch_gen = predict_batch_generator([sentences], jar.mappings)
+    pred_mat = [jar.model.predict_on_batch(x) for x in batch_gen][0]
+    pred = interpret_prediction(pred_mat, jar.cats)
     return format_predictions(text, pred, sentences)
 
 
 def format_predictions(input_text, predictions, sentences):
     pred_dict = {'text': input_text, 'entities': []}
-    sent = [w for s in sentences for w in s]
-    pred = [cls for pred in predictions for cls in pred]
-    for word, class_tuple in zip(sent, pred):
-        entity_dict = entity_to_dict(word['start'], word['end'], class_tuple)
-        pred_dict['entities'].append(entity_dict)
+    for sent in zip(sentences, predictions):
+        for word, class_tuple in zip_from_end(*sent):
+            start, end = word['start'], word['end']
+            entity_dict = entity_to_dict(start, end, class_tuple)
+            pred_dict['entities'].append(entity_dict)
     return pred_dict
 
 
@@ -507,6 +503,28 @@ def simple_eval(pred, gold, out_index):
     print(corr_sum / act_sum)
 
 
+def init_model(embed, files, lang):
+    train, lbl_sets, gold, cats = [], defaultdict(set), [], {}
+
+    def _get_core_nlp(docs):
+        return get_core_nlp(docs, lang=lang)
+
+    for f in files:
+        corenlp, docs = read_and_extract(f, _get_core_nlp)
+        t, ls, g, cs, _, _ = docria_extract(corenlp, docs)
+        train.extend(t)
+        for k in ls:
+            lbl_sets[k] |= ls[k]
+        gold.extend(g)
+        cats.update(cs)
+    gold = to_categories(gold, cats)
+
+    mappings = create_mappings(train, embed, lbl_sets)
+    embed_len = len(embed[0][1])
+
+    return ModelJar(embed, mappings, cats, embed_len), train, gold
+
+
 def main(args):
     embed = load_glove(args.glove)
 
@@ -515,31 +533,12 @@ def main(args):
 
     if args.model.exists():
         jar = ModelJar.load(args.model)
-        saved_cats = jar.cats
-        mappings = jar.mappings
     else:
-        saved_cats = None
+        jar, train, gold = init_model(embed, args.file, args.lang)
 
-        train, lbl_sets, gold, cats = [], defaultdict(set), [], {}
-        for f in args.file:
-            corenlp, docs = read_and_extract(
-                f, lambda docs: get_core_nlp(docs, lang=args.lang))
-            t, ls, g, cs, _, _ = docria_extract(
-                corenlp, docs, saved_cats=saved_cats)
-            train.extend(t)
-            for k in ls:
-                lbl_sets[k] |= ls[k]
-            gold.extend(g)
-            cats.update(cs)
-        gold = to_categories(gold, cats)
-
-        mappings = create_mappings(train, embed, lbl_sets)
-
-        batch_len = 8
+        batch_len = 128
         batches = batch_generator(
-            train, gold, mappings, keys, batch_len=batch_len)
-        embed_len = len(embed[0][1])
-        jar = ModelJar(embed, mappings, cats, embed_len)
+            train, gold, jar.mappings, keys, batch_len=batch_len)
         jar.train_batches(batches, len(train), epochs=20, batch_size=batch_len)
         #jar.train([x_word, x_pos, x_ne], y, epochs=10, batch_size=batch_len)
         jar.save(args.model)
@@ -558,7 +557,7 @@ def main(args):
             docs,
             test,
             spandex,
-            mappings,
+            jar.mappings,
             inverted(jar.cats),
             keys,
             elmap=elmap)

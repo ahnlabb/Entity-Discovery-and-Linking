@@ -1,16 +1,20 @@
-from pathlib import Path
-from keras.utils import to_categorical
-from utils import trans_mut_map, inverted, flatten_once
-from docria.storage import DocumentIO
 from argparse import ArgumentParser
 from itertools import product
+from pathlib import Path
+
 import numpy as np
+
+from docria.storage import DocumentIO
+from keras.utils import to_categorical
+from utils import flatten_once, inverted, trans_mut_map
 
 
 def one_hot(index, categories):
     n_cls = len(categories)
+
     def to_cat(x):
         return to_categorical(x, num_classes=n_cls)
+
     for k in index:
         trans_mut_map(index[k], categories, to_cat)
     old_cats = dict(categories)
@@ -18,29 +22,35 @@ def one_hot(index, categories):
         categories[key] = to_cat(val)
     return old_cats
 
+
 def from_one_hot(vector, categories):
     assert len(vector) == len(categories)
     invind = inverted(categories)
-    for i,v in enumerate(vector):
+    for i, v in enumerate(vector):
         if v == 1:
             return invind[i]
     raise ValueError("Zero vector")
-    
+
+
 def interpret_prediction(Y, cats):
     inv = inverted(cats)
-    return [inv[np.argmax(p)] for y in Y for p in y]
+    return [[inv[np.argmax(p)] for p in y] for y in Y]
+
 
 def entity_to_dict(start, stop, entity):
     return {'start': int(start), 'stop': int(stop), 'class': '-'.join(entity)}
 
+
 def json_compatible(index):
-    return [entity_to_dict(s[0], s[1], e) for s,e in index.items()]
+    return [entity_to_dict(s[0], s[1], e) for s, e in index.items()]
+
 
 def gold_std(docria):
     index = {}
     for doc in docria:
         index[doc.props['docid']] = doc.layers['tac/entity/gold']
     return index
+
 
 def gold_std_idx(docria):
     labels, types = set(), set()
@@ -69,7 +79,7 @@ def gold_std_idx(docria):
                     if span[0] <= longest[1] and span[1] > longest[1]:
                         continue
                         raise ValueError("Span %s and Span %s are overlapping"
-                                        % (longest, span))
+                                         % (longest, span))
                     # we are inside the span
                     if span[1] <= longest[1]:
                         continue
@@ -78,10 +88,11 @@ def gold_std_idx(docria):
                         longest = span
             else:
                 longest = span
-            
+
             keys[span] = node
-                
+
         for key, node in keys.items():
+
             def word_spans(key, node):
                 begin, end = key
                 span_index = {}
@@ -95,46 +106,60 @@ def gold_std_idx(docria):
                         tag = 'S'
                     elif k == len(words):
                         tag = 'E'
-                    span_index[(i, i + len(word))] = (tag, node.fld.type, node.fld.label)
+                    span_index[(i, i + len(word))] = (tag, node.fld.type,
+                                                      node.fld.label)
                     i += len(word) + 1
                 return span_index
-            
-            for s,e in word_spans(key, node).items():
+
+            for s, e in word_spans(key, node).items():
                 doc_index[s] = e
-                                 
+
         index[doc.props['docid']] = doc_index
-        
+
     tags = {'B', 'E', 'I', 'S'}
-    categories = {pair: index for index, pair
-                  in enumerate(product(sorted(tags), sorted(types), sorted(labels)), 2)}
-    
-    outside, padding = ('O','NOE','OUT'), ('O','NOE','PAD')
+    categories = {
+        pair: index
+        for index, pair in enumerate(
+            product(sorted(tags), sorted(types), sorted(labels)), 2)
+    }
+
+    outside, padding = ('O', 'NOE', 'OUT'), ('O', 'NOE', 'PAD')
     categories[outside] = 1
     categories[padding] = 0
-    
+
     return index, categories
 
-def to_neleval(classes, span_index, doc_index, cats, iteration, include_outside=False):
+
+def to_neleval(classes,
+               span_index,
+               doc_index,
+               cats,
+               iteration,
+               include_outside=False):
     rows = []
     k = 0
-    for cls,span,docid in zip(*map(flatten_once, (classes, span_index, doc_index))):
+    for cls, span, docid in zip(*map(flatten_once, (classes, span_index,
+                                                    doc_index))):
         cls = interpret_prediction(cls, cats)
         if cls[0] == 'O' and not include_outside:
             continue
         start, stop = str(span[0]), str(span[1] + 1)
         entity_id = 'NIL_' + str(iteration * len(classes) + k)
-        row = docid + '\t' + start + '\t' + stop + '\t' + entity_id + '\t' + '1.0' + '\t' + cls[2]
+        row = docid + '\t' + start + '\t' + stop + '\t' + entity_id + '\t' + '1.0' + '\t' + cls[
+            2]
         rows.append(row)
         k += 1
     if rows:
         return '\n'.join(rows) + '\n'
     return ''
 
+
 def gold2vec(docria):
     def wrapper():
         index, categories = gold_std_idx(docria)
         index = one_hot(index, categories)
         return index
+
 
 def get_args():
     parser = ArgumentParser()
@@ -146,8 +171,10 @@ def get_doc_index(docria, gold_std):
     index = {}
     for doc in docria:
         docid = doc.props['docid']
-        index[docid] = {'text': str(doc.texts['main']),
-                        'gold': json_compatible(gold_std[docid])}
+        index[docid] = {
+            'text': str(doc.texts['main']),
+            'gold': json_compatible(gold_std[docid])
+        }
     return index
 
 
@@ -156,6 +183,6 @@ if __name__ == '__main__':
     if args.file:
         with DocumentIO.read(args.file) as docria:
             gold_std, cats = gold_std_idx(docria)
-            for i,doc in gold_std.items():
+            for i, doc in gold_std.items():
                 for span, entity in doc.items():
                     print(span, entity)

@@ -26,7 +26,9 @@ class ModelJar:
         ne = Input(shape=(None, ), dtype='int32')
         ne_emb = Embedding(nne, nne // 2)(ne)
 
-        capital = Input(shape=(None, 2))
+        capital = Input(shape=(None, 3), name='Capital_Input')
+
+        special = Input(shape=(None, 3), name='Special_Input')
 
         form = Input(shape=(None, ), dtype='int32')
 
@@ -38,7 +40,7 @@ class ModelJar:
 
         emb.trainable = True
 
-        concat = Concatenate()([emb, pos_emb, ne_emb, capital])
+        concat = Concatenate()([emb, pos_emb, ne_emb, capital, special])
         drop = Dropout(0.25)(concat)
 
         lstm1 = Bidirectional(
@@ -52,7 +54,7 @@ class ModelJar:
         # crf = CRF(nout, learn_mode='join', activation='softmax')
         # out = crf(dense)
         out = dense
-        model = Model(inputs=[form, pos, ne, capital], outputs=out)
+        model = Model(inputs=[form, pos, ne, capital, special], outputs=out)
         # model.compile(loss=crf.loss_function, optimizer='nadam', metrics=[crf.accuracy])
         model.compile(
             loss='categorical_crossentropy',
