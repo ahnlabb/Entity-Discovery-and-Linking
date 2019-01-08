@@ -206,9 +206,7 @@ def core_nlp_features(corenlp, lbl_sets):
     spans = [[]]
     inside = ''
     special = [
-        'the', 'in', 'of', 'and', 'a', 'to', 'that', 'with', 'for', 'from',
-        'by', 'on', 'his', 'president', "'s", 'at', 'as', 'said', '’s', 'an',
-        'like', 'former', 'about', 'is', 'if'
+        'the', 'in', 'of', 'to', 'from', 'by', 'his', 'president', "'s", 'at'
     ]
     lbl_sets['special'] = set(range(len(special) + 1))
     for row in corenlp:
