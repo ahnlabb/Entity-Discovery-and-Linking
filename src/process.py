@@ -446,9 +446,15 @@ def predict_to_layer(model,
 
         span_translate(doc, 'tac/segments', ('xml', 'text'), 'tac/entity',
                        ('text', 'xml'))
-        for match in re.finditer(r'author="([^"]*)"', str(doc.text['xml'])):
+        authors = {}
+        for match in re.finditer(r' author="([^"]*)"', str(doc.text['xml'])):
             #print(match[0], match[1], match.start(1), match.end(1) - 1)
-            tgt, i = 'NIL%s' % format(i, '05d'), i + 1
+            text = match[1]
+            if text in authors:
+                tgt = authors[text]
+            else:
+                tgt, i = 'NIL%s' % format(i, '05d'), i + 1
+                authors[text] = tgt
             layer.add(
                 text=match[1],
                 type='NAM',
