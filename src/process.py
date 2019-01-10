@@ -2,7 +2,7 @@
 import sys
 import time
 from argparse import ArgumentParser
-from collections import Counter, defaultdict
+from collections import Counter, defaultdict, namedtuple
 from itertools import count
 from pathlib import Path
 from pickle import load
@@ -446,6 +446,16 @@ def predict_to_layer(model,
 
         span_translate(doc, 'tac/segments', ('xml', 'text'), 'tac/entity',
                        ('text', 'xml'))
+        for match in re.finditer(r'author="([^"]*)"', str(doc.text['xml'])):
+            #print(match[0], match[1], match.start(1), match.end(1) - 1)
+            tgt, i = 'NIL%s' % format(i, '05d'), i + 1
+            layer.add(
+                text=match[1],
+                type='NAM',
+                label='PER',
+                target=tgt,
+                xml=namedtuple('Span', ['start', 'stop'])(match.start(1),
+                                                          match.end(1) - 1))
 
 
 def predict(jar, text, lang='en', padding=False):
