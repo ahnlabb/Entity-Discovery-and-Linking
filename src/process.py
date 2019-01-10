@@ -455,7 +455,7 @@ def predict_to_layer(model,
                 label='PER',
                 target=tgt,
                 xml=namedtuple('Span', ['start', 'stop'])(match.start(1),
-                                                          match.end(1) - 1))
+                                                          match.end(1)))
 
 
 def predict(jar, text, lang='en', padding=False):
