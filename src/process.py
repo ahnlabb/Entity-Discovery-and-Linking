@@ -411,12 +411,14 @@ def reduce_tags(pred, spans, inv_cats):
         return ents
 
 
-def get_tgt(text, elmap):
+def get_tgt(text, elmap, wiki=False):
+    index = 1 if wiki else 0
     if str(text) in elmap:
-        return elmap[str(text)]
+        return elmap[str(text)][index]
     if str(text).lower() in elmap:
-        return elmap[str(text).lower()]
-    return elmap.get(' '.join(w.capitalize() for w in str(text).split()), None)
+        return elmap[str(text).lower()][index]
+    capitalized = ' '.join(w.capitalize() for w in str(text).split())
+    return elmap.get(capitalized, (None, None))[index]
 
 
 def predict_to_layer(model,
@@ -464,23 +466,44 @@ def predict_to_layer(model,
                                                           match.end(1)))
 
 
-def predict(jar, text, lang='en', padding=False):
+def predict(jar, text, elmap={}, lang='en', padding=False):
+    inv = inverted(jar.cats)
     langforia_res = langforia(text, lang).split('\n')
     sentences, _ = core_nlp_features(langforia_res, defaultdict(set))
     batch_gen = predict_batch_generator([sentences], jar.mappings)
     pred_mat = [jar.model.predict_on_batch(x) for x in batch_gen][0]
-    pred = interpret_prediction(pred_mat, jar.cats)
-    return format_predictions(text, pred, sentences)
+    pred = interpret_prediction(pred_mat, inv)
+    spans = [[(int(word['start']), int(word['end'])) for word in s]
+             for s in sentences]
+
+    ents = [reduce_tags(p, s, inv) for p, s in zip(pred_mat, spans)]
+    ents = [e for ent in ents for e in ent]
+    targets = []
+    for start, stop, (tp, lbl) in ents:
+        name = text[start:stop]
+        targets.append(get_tgt(name, elmap, wiki=True))
+    return format_predictions(text, pred, sentences, ents, targets)
 
 
-def format_predictions(input_text, predictions, sentences):
-    pred_dict = {'text': input_text, 'entities': []}
+def format_predictions(input_text, predictions, sentences, ents, targets):
+    ents = [{
+        'class': '-'.join(cls),
+        'start': start,
+        'stop': stop
+    } for start, stop, cls in ents]
+
+    pred_dict = {
+        'text': input_text,
+        'entities': [],
+        'reduced': ents,
+    }
+
     for sent in zip(sentences, predictions):
         for word, class_tuple in zip_from_end(*sent):
             start, end = word['start'], word['end']
             entity_dict = entity_to_dict(start, end, class_tuple)
             pred_dict['entities'].append(entity_dict)
-    return pred_dict
+    return pred_dict, targets
 
 
 def field_as_category(data,

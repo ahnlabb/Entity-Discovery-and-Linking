@@ -32,8 +32,7 @@ def from_one_hot(vector, categories):
     raise ValueError("Zero vector")
 
 
-def interpret_prediction(Y, cats):
-    inv = inverted(cats)
+def interpret_prediction(Y, inv):
     return [[inv[np.argmax(p)] for p in y] for y in Y]
 
 
@@ -138,9 +137,10 @@ def to_neleval(classes,
                include_outside=False):
     rows = []
     k = 0
+    inv = inverted(cats)
     for cls, span, docid in zip(*map(flatten_once, (classes, span_index,
                                                     doc_index))):
-        cls = interpret_prediction(cls, cats)
+        cls = interpret_prediction(cls, inv)
         if cls[0] == 'O' and not include_outside:
             continue
         start, stop = str(span[0]), str(span[1] + 1)

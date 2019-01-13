@@ -1,14 +1,15 @@
-from flask import Flask, render_template, jsonify, request
-from utils import langforia
 from pathlib import Path
-from gold_std import get_doc_index, gold_std_idx
-from process import predict, get_tgt
-from docria.storage import DocumentIO
-from structs import ModelJar
-from utils import emb_mat_init
-import tensorflow as tf
-from time import sleep
 from pickle import load
+from time import sleep
+
+import sparql
+import tensorflow as tf
+from docria.storage import DocumentIO
+from flask import Flask, jsonify, render_template, request
+from gold_std import get_doc_index, gold_std_idx
+from process import get_tgt, predict
+from structs import ModelJar
+from utils import emb_mat_init, langforia
 
 app = Flask(__name__)
 
@@ -42,16 +43,23 @@ def doc_index():
 
 @app.route('/link', methods=['POST'])
 def get_links():
-    fname = 'corpus/wikimap_{}.pickle'.format(request.args.get('lang', default='en'))
+    fname = 'corpus/wikimap_{}.pickle'.format(
+        request.args.get('lang', default='en'))
     ents = request.get_json()
     if fname not in wiki_map:
         with open(fname, 'r+b') as f:
             wiki_map[fname] = load(f)
-    return jsonify([get_tgt(text, wiki_map[fname]) for text in ents])
+    return jsonify(
+        [get_tgt(text, wiki_map[fname], wiki=True) for text in ents])
 
 
 @app.route('/models')
 def get_models():
+    fname = 'corpus/wikimap_{}.pickle'.format(
+        request.args.get('lang', default='en'))
+    if fname not in wiki_map:
+        with open(fname, 'r+b') as f:
+            wiki_map[fname] = load(f)
     with graph.as_default():
         for name in models:
             if not models[name]:
@@ -75,7 +83,15 @@ def make_prediction():
     model_name = request.args.get('model', default='model.en.pickle')
     text = request.get_json()
     with graph.as_default():
-        pred = predict(models[model_name], text)
+        pred, targets = predict(
+            models[model_name],
+            text,
+            elmap=wiki_map['corpus/wikimap_en.pickle'])
+    wikidata = sparql.get_results(filter(None, targets), [41, 18, 154])
+    print(wikidata)
+    wikidata = [{k: v['value'] for k, v in r.items()} for r in wikidata]
+    wikidata = {int(r['entity'].split('/')[-1][1:]): r for r in wikidata}
+    pred['targets'] = [wikidata.get(tgt) for tgt in targets if tgt]
     return jsonify(pred)
 
 

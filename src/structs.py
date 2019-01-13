@@ -50,7 +50,7 @@ class ModelJar:
         lstm2 = Bidirectional(
             CuDNNLSTM(100, return_sequences=True), input_shape=(None,
                                                                 width))(skip)
-        dense = TimeDistributed(Dense(nout, activation='softmax'))(lstm2)
+        dense = Dense(nout, activation='softmax')(lstm2)
         # crf = CRF(nout, learn_mode='join', activation='softmax')
         # out = crf(dense)
         out = dense
