@@ -20,23 +20,24 @@ class ModelJar:
         nout = len(cats)
         width = len(word_inv) + 2
 
-        pos = Input(shape=(None, ), dtype='int32')
-        pos_emb = Embedding(npos, npos // 2)(pos)
+        pos = Input(shape=(None, ), dtype='int32', name='POS')
+        pos_emb = Embedding(npos, npos // 2, name='emb_pos')(pos)
 
-        ne = Input(shape=(None, ), dtype='int32')
-        ne_emb = Embedding(nne, nne // 2)(ne)
+        ne = Input(shape=(None, ), dtype='int32', name='NE')
+        ne_emb = Embedding(nne, nne // 2, name='emb_ne')(ne)
 
-        capital = Input(shape=(None, 3), name='Capital_Input')
+        capital = Input(shape=(None, 3), name='Capital')
 
-        special = Input(shape=(None, 12), name='Special_Input')
+        special = Input(shape=(None, 12), name='Special')
 
-        form = Input(shape=(None, ), dtype='int32')
+        form = Input(shape=(None, ), dtype='int32', name='Form')
 
         emb = Embedding(
             40000,
             embed_len,
             embeddings_initializer=emb_mat_init(embed, word_inv),
-            input_length=None)(form)
+            input_length=None,
+            name='emb_form')(form)
 
         emb.trainable = True
 
@@ -46,7 +47,7 @@ class ModelJar:
         lstm1 = Bidirectional(
             CuDNNLSTM(100, return_sequences=True), input_shape=(None,
                                                                 width))(drop)
-        skip = Concatenate()([concat, lstm1])
+        skip = Concatenate()([drop, lstm1])
         lstm2 = Bidirectional(
             CuDNNLSTM(100, return_sequences=True), input_shape=(None,
                                                                 width))(skip)
