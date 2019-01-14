@@ -1,9 +1,9 @@
-module Main exposing (Document, Entity, Model(..), Msg(..), Page, body, documentDecoder, entityDecoder, errorString, getDocuments, getPrediction, getSel, init, localApi, main, newsApi, reduceEntities, reduceHelper, resultView, selectModel, spinner, strToOption, subscriptions, update, view)
+module Main exposing (main)
 
 import Browser
 import Browser.Navigation as Navigation
 import Dict
-import Element exposing (Element, alignRight, alignTop, centerX, centerY, column, el, fill, height, none, padding, px, rgb255, row, spacing, text, width)
+import Element exposing (Element, alignRight, alignTop, centerX, centerY, column, el, fill, height, none, padding, px, rgb255, row, spacing, width)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
@@ -12,7 +12,7 @@ import Html exposing (option, select)
 import Html.Attributes as HAttr exposing (class, style)
 import Html.Events exposing (onInput)
 import Http
-import Json.Decode as Decode exposing (Decoder, dict, field, index, int, list, string)
+import Json.Decode as Decode exposing (Decoder, dict, field, int, list, string)
 import Json.Decode.Pipeline exposing (custom, required)
 import Json.Encode as Encode
 import Svg
@@ -42,8 +42,15 @@ type Model
     | Error Http.Error
     | NoModels
     | Done Page
-    | News Page
+    | News ApiData Page
     | LoadingNews
+
+
+type alias ApiData =
+    { query : String
+    , index : Int
+    , key : String
+    }
 
 
 type alias Page =
@@ -52,13 +59,34 @@ type alias Page =
     , reduceTags : Bool
     , prediction : Maybe Document
     , text : String
+    , links : List String
     }
+
+
+emptyPage selection models =
+    Page selection models True (Just emptyDocument) "" []
+
+
+initNews selection models =
+    News initApiData (emptyPage selection models)
+
+
+initApiData =
+    { query = "China", index = 0, key = "8e7937f06f5d43fa9f51f2d08258864f" }
+
+
+nextResult apiData =
+    { apiData | index = apiData.index + 1 }
 
 
 type alias Document =
     { text : String
     , entities : List Entity
     }
+
+
+emptyDocument =
+    Document "" []
 
 
 type alias Entity =
@@ -72,10 +100,10 @@ init : () -> Url -> Navigation.Key -> ( Model, Cmd Msg )
 init _ { fragment } _ =
     case fragment of
         Just "news" ->
-            ( LoadingNews, getDocuments )
+            ( LoadingNews, getModels )
 
         _ ->
-            ( Loading, getDocuments )
+            ( Loading, getModels )
 
 
 
@@ -86,72 +114,92 @@ type Msg
     = NewModels (Result Http.Error (List String))
     | NewNews (Result Http.Error String)
     | NewPrediction (Result Http.Error Document)
+    | NewLinks (Result Http.Error (List String))
     | ToggleReduce Bool
     | NewSelection String
     | RequestedUrl Browser.UrlRequest
     | ChangedUrl Url
+    | MoreNews
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case ( msg, model ) of
         ( NewModels result, Loading ) ->
-            case result of
-                Ok models ->
-                    case models of
-                        selection :: rest ->
-                            ( Done (Page selection rest True Nothing ""), Cmd.none )
+            result
+                |> handleResult
+                    (\models ->
+                        case models of
+                            selection :: rest ->
+                                ( Done (emptyPage selection rest), Cmd.none )
 
-                        [] ->
-                            ( NoModels, Cmd.none )
-
-                Err e ->
-                    ( Error e, Cmd.none )
+                            [] ->
+                                ( NoModels, Cmd.none )
+                    )
 
         ( NewModels result, LoadingNews ) ->
-            case result of
-                Ok models ->
-                    case models of
-                        selection :: rest ->
-                            ( Done (Page selection rest True Nothing ""), Cmd.none )
+            result
+                |> handleResult
+                    (\models ->
+                        case models of
+                            selection :: rest ->
+                                ( initNews selection rest, getNews initApiData )
 
-                        [] ->
-                            ( NoModels, Cmd.none )
-
-                Err e ->
-                    ( Error e, Cmd.none )
+                            [] ->
+                                ( NoModels, Cmd.none )
+                    )
 
         ( NewPrediction result, Done page ) ->
-            case result of
-                Ok prediction ->
-                    ( Done { page | prediction = Just prediction }, Cmd.none )
+            updatePrediction Done page result
 
-                Err e ->
-                    ( Error e, Cmd.none )
+        ( NewPrediction result, News apiData page ) ->
+            updatePrediction (News apiData) page result
 
-        ( NewPrediction result, News page ) ->
-            case result of
-                Ok prediction ->
-                    ( News { page | prediction = Just prediction }, Cmd.none )
+        ( NewLinks result, Done page ) ->
+            updateLinks Done page result
 
-                Err e ->
-                    ( Error e, Cmd.none )
+        ( NewLinks result, News apiData page ) ->
+            updateLinks (News apiData) page result
 
         ( ToggleReduce bool, Done page ) ->
             ( Done { page | reduceTags = bool }, Cmd.none )
 
-        ( NewNews result, News page ) ->
-            case result of
-                Ok article ->
-                    ( News { page | text = article }
-                    , getPrediction page.selection article
+        ( ToggleReduce bool, News apiData page ) ->
+            ( News apiData { page | reduceTags = bool }, Cmd.none )
+
+        ( NewNews result, News ind page ) ->
+            result
+                |> handleResult
+                    (\article ->
+                        ( News ind { page | text = article, prediction = Nothing }
+                        , getPrediction page.selection article
+                        )
                     )
 
-                Err e ->
-                    ( Error e, Cmd.none )
+        ( MoreNews, News apiData page ) ->
+            ( News (nextResult apiData) page
+            , getNews apiData
+            )
 
         ( _, _ ) ->
             ( model, Cmd.none )
+
+
+handleResult okHandler result =
+    case result of
+        Ok ok ->
+            okHandler ok
+
+        Err e ->
+            ( Error e, Cmd.none )
+
+
+updatePrediction model page =
+    handleResult (\pred -> ( model { page | prediction = Just pred }, Cmd.none ))
+
+
+updateLinks model page =
+    handleResult (\links -> ( model { page | links = links }, Cmd.none ))
 
 
 
@@ -178,22 +226,22 @@ view model =
         Loading ->
             Browser.Document "loading"
                 [ Element.layout []
-                    (el [] (text "loading"))
+                    (el [] (Element.text "loading"))
                 ]
 
         Error e ->
             Browser.Document "error"
                 [ Element.layout []
-                    (el [] (text (errorString e)))
+                    (el [] (Element.text (errorString e)))
                 ]
 
         NoModels ->
             Browser.Document "error"
                 [ Element.layout []
-                    (el [] (text "No models found"))
+                    (el [] (Element.text "No models found"))
                 ]
 
-        News page ->
+        News ind page ->
             Browser.Document "news"
                 [ Element.layout []
                     (viewNews page)
@@ -202,39 +250,35 @@ view model =
         LoadingNews ->
             Browser.Document "loading"
                 [ Element.layout []
-                    (el [] (text "loading"))
+                    (el [] (Element.text "loading"))
                 ]
 
 
 body : Page -> Element Msg
-body { models, selection, prediction, reduceTags } =
+body { models, selection, text, prediction, reduceTags } =
     column [ width fill, spacing 30 ]
-        [ row [ width fill ]
-            [ selectModel selection models
-            , Input.checkbox []
-                { onChange = ToggleReduce
-                , icon = Input.defaultCheckbox
-                , checked = reduceTags
-                , label = Input.labelLeft [] (text "Reduce Tags")
-                }
-            ]
-        , resultView selection prediction reduceTags
+        [ row [ width fill ] [ reduceToggle reduceTags ]
+        , resultView text selection prediction reduceTags
         ]
 
 
 viewNews : Page -> Element Msg
-viewNews { selection, prediction, reduceTags } =
+viewNews { selection, text, prediction, reduceTags } =
     column [ width fill, spacing 30 ]
-        [ row [ width fill ]
-            [ Input.checkbox []
-                { onChange = ToggleReduce
-                , icon = Input.defaultCheckbox
-                , checked = reduceTags
-                , label = Input.labelLeft [] (text "Reduce Tags")
-                }
-            ]
-        , resultView selection prediction reduceTags
+        [ row [ width fill ] [ reduceToggle reduceTags ]
+        , row [ width fill ] (prediction |> Maybe.map (.entities >> List.map (Element.text << .class)) |> Maybe.withDefault [ Element.none ])
+        , el [ width fill, height fill ] (resultView text selection prediction reduceTags)
+        , el [ width fill, height fill ] (Input.button [ centerX ] { onPress = Just MoreNews, label = Element.text "Get more news!" })
         ]
+
+
+reduceToggle reduceTags =
+    Input.checkbox []
+        { onChange = ToggleReduce
+        , icon = Input.defaultCheckbox
+        , checked = reduceTags
+        , label = Input.labelLeft [] (Element.text "Reduce Tags")
+        }
 
 
 selectModel : String -> List String -> Element Msg
@@ -259,8 +303,8 @@ getSel sel docs =
     sel |> Maybe.andThen (get docs)
 
 
-resultView : String -> Maybe Document -> Bool -> Element Msg
-resultView selection prediction reduceTags =
+resultView : String -> String -> Maybe Document -> Bool -> Element Msg
+resultView text selection prediction reduceTags =
     let
         pos x y tag attrs =
             tag ([ SAttr.x (String.fromFloat x), SAttr.y (String.fromFloat y) ] ++ attrs)
@@ -386,7 +430,7 @@ resultView selection prediction reduceTags =
                     line origin start :: marked class start stop :: annotate stop string tail
 
                 [] ->
-                    []
+                    [ line origin (String.length string) ]
 
         viewAnnotations =
             List.map Element.html >> Element.paragraph [ Font.family [ Font.typeface "Source Sans Pro", Font.sansSerif ] ]
@@ -397,7 +441,7 @@ resultView selection prediction reduceTags =
                     reduceIfChecked document.entities |> annotate 0 document.text |> viewAnnotations
 
                 Nothing ->
-                    el [ width fill, alignTop ] spinner
+                    Element.paragraph [ width fill, alignTop, Element.inFront (el [ width fill, alignTop ] spinner) ] [ Element.text text ]
 
         reduceIfChecked entities =
             if reduceTags then
@@ -414,7 +458,7 @@ resultView selection prediction reduceTags =
 spinner =
     column [ centerX, alignTop ]
         [ Html.div [ class "lds-dual-ring" ] [] |> Element.html |> el [ centerX, padding 60 ]
-        , el [ Font.center, width fill ] (Element.text "Predicting labels")
+        , el [ Font.center, width fill ] (Element.text "Predicting labels  ")
         ]
 
 
@@ -493,8 +537,8 @@ localApi =
     UrlBuilder.absolute [ "models" ] []
 
 
-getDocuments : Cmd Msg
-getDocuments =
+getModels : Cmd Msg
+getModels =
     Http.get
         { url = localApi
         , expect = Http.expectJson NewModels (list string)
@@ -507,6 +551,15 @@ getPrediction model text =
         { url = UrlBuilder.absolute [ "predict" ] [ UrlBuilder.string "model" model ]
         , body = Http.jsonBody (Encode.string text)
         , expect = Http.expectJson NewPrediction (documentDecoder "entities")
+        }
+
+
+getLinks : List String -> Cmd Msg
+getLinks entities =
+    Http.post
+        { url = UrlBuilder.absolute [ "links" ] [ UrlBuilder.string "lang" "en" ]
+        , body = entities |> Encode.list Encode.string |> Http.jsonBody
+        , expect = Http.expectJson NewLinks (Decode.list Decode.string)
         }
 
 
@@ -533,13 +586,13 @@ newsApi lang query apiKey =
         ]
 
 
-getNews : String -> String -> String -> Cmd Msg
-getNews lang query apiKey =
+getNews : ApiData -> Cmd Msg
+getNews { query, index, key } =
     Http.get
-        { url = newsApi lang query apiKey
-        , expect = Http.expectJson NewNews newsDecoder
+        { url = newsApi "en" query key
+        , expect = Http.expectJson NewNews (newsDecoder index)
         }
 
 
-newsDecoder =
-    field "articles" (index 0 (field "content" string))
+newsDecoder ind =
+    field "articles" (Decode.index ind (field "description" string))

@@ -1,0 +1,3 @@
+[submodule "neleval"]
+	path = neleval
+	url = git@github.com:wikilinks/neleval.git

@@ -1,8 +1,18 @@
 paper.pdf
 src/static/elm.js
+src/static/elm_debug.js
+src/static/elm_debug.min.js
 src/static/elm.min.js
 __pycache__
 elm-stuff
+.ipynb_checkpoints/
+
+*.pickle
+
+out/
+systems/
+corpus/
+glove/
 
 
 ### TeX.gitignore https://github.com/github/gitignore/blob/master/TeX.gitignore ###
