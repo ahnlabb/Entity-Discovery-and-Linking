@@ -102,7 +102,7 @@ class ModelJar:
             epochs=epochs,
             batch_size=batch_size,
             callbacks=[
-                EarlyStopping(monitor='acc', min_delta=0.0005),
+                EarlyStopping(monitor='acc', min_delta=0.001),
                 TensorBoard(
                     log_dir=
                     f'./logs/{datetime.datetime.now().strftime("%y%m%d_%H%M")}'
@@ -119,7 +119,7 @@ class ModelJar:
             steps_per_epoch=steps,
             shuffle=True,
             callbacks=[
-                EarlyStopping(monitor='acc', min_delta=0.0005),
+                EarlyStopping(monitor='acc', min_delta=0.001),
                 TensorBoard(
                     log_dir=
                     f'./logs/{datetime.datetime.now().strftime("%y%m%d_%H%M")}'

@@ -431,6 +431,7 @@ def predict_to_layer(model,
                      elmap={}):
     batches = predict_batch_generator(test, mappings, keys)
     i = 0
+    nil = {}
     for doc, doc_spans, batch in zip(docs, spandex, batches):
         layer = doc.add_layer(
             'tac/entity', text=T.span('main'), xml=T.span('xml'))
@@ -443,20 +444,22 @@ def predict_to_layer(model,
                 text = main[(start, stop)]
                 tgt = get_tgt(text, elmap)
                 if not tgt:
-                    tgt, i = 'NIL%s' % format(i, '05d'), i + 1
+                    string = str(text)
+                    if string not in nil:
+                        i += 1
+                        nil[string] = 'NIL%s' % format(i, '05d')
+                    tgt = nil[string]
                 layer.add(text=text, type=tp, label=lbl, target=tgt)
 
         span_translate(doc, 'tac/segments', ('xml', 'text'), 'tac/entity',
                        ('text', 'xml'))
-        authors = {}
         for match in re.finditer(r' author="([^"]*)"', str(doc.text['xml'])):
             #print(match[0], match[1], match.start(1), match.end(1) - 1)
             text = match[1]
-            if text in authors:
-                tgt = authors[text]
-            else:
-                tgt, i = 'NIL%s' % format(i, '05d'), i + 1
-                authors[text] = tgt
+            if text not in nil:
+                i += 1
+                nil[text] = 'NIL%s' % format(i, '05d')
+            tgt = nil[text]
             layer.add(
                 text=match[1],
                 type='NAM',
