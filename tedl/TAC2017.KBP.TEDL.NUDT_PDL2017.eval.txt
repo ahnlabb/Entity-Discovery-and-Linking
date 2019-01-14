@@ -1,0 +1,205 @@
+========================================================================
+TAC KBP 2017 TRI-LINGUAL ENTITY DISCOVERY AND LINKING EVALUATION RESULTS
+========================================================================
+
+
+Team ID:  NUDT_PDL2017
+Organization:  College of Computer, National University of Defense Technology,
+
+
+*************************************************************
+
+Run ID:  NUDT_PDL20171
+Languages addressed: Chinese, English, Spanish
+Did the run access the live Web during the evaluation window:  Yes
+Did the run use the Wikipedia links in the Reference KB: Yes
+Did the run use the relation/slot information encoded in the Reference KB: Yes
+Did the run use the text descriptions in the nodes of the Reference KB: Yes
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.771	0.529	0.627	strong_mention_match
+0.681	0.467	0.554	strong_typed_mention_match
+0.257	0.176	0.209	strong_typed_all_match
+0.304	0.184	0.229	strong_typed_link_match
+0.178	0.157	0.167	strong_typed_nil_match
+0.326	0.311	0.318	entity_match
+0.391	0.268	0.318	mention_ceaf
+0.349	0.239	0.284	typed_mention_ceaf
+0.231	0.158	0.188	typed_mention_ceaf_plus
+0.647	0.174	0.275	b_cubed
+0.262	0.092	0.136	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.747	0.579	0.652	strong_mention_match
+0.641	0.497	0.560	strong_typed_mention_match
+0.246	0.191	0.215	strong_typed_all_match
+0.252	0.187	0.215	strong_typed_link_match
+0.235	0.196	0.214	strong_typed_nil_match
+0.285	0.331	0.306	entity_match
+0.402	0.312	0.351	mention_ceaf
+0.346	0.268	0.302	typed_mention_ceaf
+0.207	0.161	0.181	typed_mention_ceaf_plus
+0.624	0.240	0.347	b_cubed
+0.261	0.116	0.161	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.778	0.461	0.579	strong_mention_match
+0.724	0.429	0.539	strong_typed_mention_match
+0.266	0.158	0.198	strong_typed_all_match
+0.364	0.173	0.235	strong_typed_link_match
+0.120	0.113	0.116	strong_typed_nil_match
+0.343	0.240	0.283	entity_match
+0.474	0.281	0.353	mention_ceaf
+0.449	0.267	0.335	typed_mention_ceaf
+0.252	0.150	0.188	typed_mention_ceaf_plus
+0.690	0.175	0.280	b_cubed
+0.263	0.085	0.129	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.788	0.576	0.666	strong_mention_match
+0.672	0.491	0.568	strong_typed_mention_match
+0.256	0.187	0.216	strong_typed_all_match
+0.293	0.196	0.235	strong_typed_link_match
+0.193	0.168	0.180	strong_typed_nil_match
+0.352	0.370	0.361	entity_match
+0.436	0.318	0.368	mention_ceaf
+0.377	0.276	0.318	typed_mention_ceaf
+0.232	0.169	0.196	typed_mention_ceaf_plus
+0.654	0.228	0.338	b_cubed
+0.272	0.121	0.168	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  NUDT_PDL20172
+Languages addressed: Chinese, English, Spanish
+Did the run access the live Web during the evaluation window:  Yes
+Did the run use the Wikipedia links in the Reference KB: Yes
+Did the run use the relation/slot information encoded in the Reference KB: Yes
+Did the run use the text descriptions in the nodes of the Reference KB: No
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.771	0.529	0.627	strong_mention_match
+0.681	0.467	0.554	strong_typed_mention_match
+0.287	0.197	0.233	strong_typed_all_match
+0.307	0.242	0.271	strong_typed_link_match
+0.200	0.088	0.122	strong_typed_nil_match
+0.320	0.392	0.352	entity_match
+0.459	0.315	0.374	mention_ceaf
+0.409	0.280	0.333	typed_mention_ceaf
+0.277	0.190	0.225	typed_mention_ceaf_plus
+0.596	0.209	0.310	b_cubed
+0.284	0.110	0.159	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.747	0.579	0.652	strong_mention_match
+0.641	0.497	0.560	strong_typed_mention_match
+0.223	0.173	0.195	strong_typed_all_match
+0.238	0.214	0.225	strong_typed_link_match
+0.174	0.094	0.122	strong_typed_nil_match
+0.271	0.375	0.315	entity_match
+0.433	0.336	0.378	mention_ceaf
+0.367	0.285	0.321	typed_mention_ceaf
+0.212	0.164	0.185	typed_mention_ceaf_plus
+0.582	0.260	0.359	b_cubed
+0.236	0.115	0.155	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.778	0.461	0.579	strong_mention_match
+0.724	0.429	0.539	strong_typed_mention_match
+0.342	0.203	0.254	strong_typed_all_match
+0.354	0.256	0.297	strong_typed_link_match
+0.216	0.044	0.074	strong_typed_nil_match
+0.324	0.365	0.343	entity_match
+0.605	0.359	0.450	mention_ceaf
+0.569	0.338	0.424	typed_mention_ceaf
+0.337	0.200	0.251	typed_mention_ceaf_plus
+0.630	0.243	0.351	b_cubed
+0.324	0.123	0.178	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.788	0.576	0.666	strong_mention_match
+0.672	0.491	0.568	strong_typed_mention_match
+0.289	0.211	0.244	strong_typed_all_match
+0.313	0.247	0.276	strong_typed_link_match
+0.219	0.132	0.164	strong_typed_nil_match
+0.361	0.435	0.395	entity_match
+0.479	0.350	0.404	mention_ceaf
+0.414	0.302	0.349	typed_mention_ceaf
+0.275	0.201	0.232	typed_mention_ceaf_plus
+0.613	0.247	0.352	b_cubed
+0.301	0.137	0.189	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  NUDT_PDL20173
+Languages addressed: Chinese, English, Spanish
+Did the run access the live Web during the evaluation window:  Yes
+Did the run use the Wikipedia links in the Reference KB: Yes
+Did the run use the relation/slot information encoded in the Reference KB: Yes
+Did the run use the text descriptions in the nodes of the Reference KB: No
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.802	0.645	0.715	strong_mention_match
+0.725	0.583	0.646	strong_typed_mention_match
+0.389	0.312	0.346	strong_typed_all_match
+0.307	0.242	0.271	strong_typed_link_match
+0.573	0.482	0.524	strong_typed_nil_match
+0.320	0.392	0.352	entity_match
+0.547	0.440	0.488	mention_ceaf
+0.504	0.405	0.449	typed_mention_ceaf
+0.383	0.308	0.341	typed_mention_ceaf_plus
+0.641	0.331	0.437	b_cubed
+0.381	0.225	0.283	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.784	0.721	0.751	strong_mention_match
+0.694	0.638	0.665	strong_typed_mention_match
+0.342	0.314	0.327	strong_typed_all_match
+0.238	0.214	0.225	strong_typed_link_match
+0.530	0.510	0.520	strong_typed_nil_match
+0.271	0.375	0.315	entity_match
+0.549	0.504	0.526	mention_ceaf
+0.494	0.454	0.473	typed_mention_ceaf
+0.334	0.307	0.320	typed_mention_ceaf_plus
+0.631	0.421	0.505	b_cubed
+0.345	0.255	0.294	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.801	0.535	0.642	strong_mention_match
+0.752	0.503	0.603	strong_typed_mention_match
+0.413	0.276	0.331	strong_typed_all_match
+0.354	0.256	0.297	strong_typed_link_match
+0.667	0.337	0.447	strong_typed_nil_match
+0.324	0.365	0.343	entity_match
+0.649	0.433	0.520	mention_ceaf
+0.616	0.412	0.494	typed_mention_ceaf
+0.409	0.273	0.328	typed_mention_ceaf_plus
+0.665	0.315	0.427	b_cubed
+0.395	0.192	0.259	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.821	0.728	0.772	strong_mention_match
+0.725	0.643	0.682	strong_typed_mention_match
+0.409	0.362	0.384	strong_typed_all_match
+0.313	0.247	0.276	strong_typed_link_match
+0.562	0.621	0.590	strong_typed_nil_match
+0.361	0.435	0.395	entity_match
+0.582	0.516	0.547	mention_ceaf
+0.527	0.467	0.495	typed_mention_ceaf
+0.404	0.357	0.379	typed_mention_ceaf_plus
+0.661	0.412	0.508	b_cubed
+0.412	0.294	0.343	b_cubed_plus

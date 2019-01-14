@@ -1,0 +1,289 @@
+==============================================================
+TAC KBP 2017 KB CONSTRUCTION: COMPONENT EDL EVALUATION RESULTS
+==============================================================
+
+
+Team ID:  STANFORD
+Organization:  Stanford University
+
+
+*************************************************************
+
+Run ID:  STANFORD_KB_XLING_1 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.817	0.530	0.643	strong_mention_match
+0.717	0.465	0.564	strong_typed_mention_match
+0.055	0.035	0.043	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.055	0.121	0.075	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.545	0.353	0.429	mention_ceaf
+0.493	0.320	0.388	typed_mention_ceaf
+0.048	0.031	0.037	typed_mention_ceaf_plus
+0.724	0.246	0.367	b_cubed
+0.063	0.031	0.042	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.736	0.502	0.596	strong_mention_match
+0.682	0.465	0.553	strong_typed_mention_match
+0.064	0.044	0.052	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.064	0.129	0.086	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.641	0.437	0.520	mention_ceaf
+0.606	0.413	0.491	typed_mention_ceaf
+0.053	0.036	0.043	typed_mention_ceaf_plus
+0.665	0.339	0.449	b_cubed
+0.071	0.029	0.041	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.854	0.508	0.637	strong_mention_match
+0.811	0.483	0.605	strong_typed_mention_match
+0.050	0.030	0.037	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.050	0.119	0.070	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.759	0.451	0.566	mention_ceaf
+0.731	0.435	0.546	typed_mention_ceaf
+0.046	0.028	0.035	typed_mention_ceaf_plus
+0.802	0.335	0.473	b_cubed
+0.050	0.023	0.031	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.849	0.587	0.694	strong_mention_match
+0.635	0.439	0.519	strong_typed_mention_match
+0.052	0.036	0.042	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.052	0.116	0.071	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.689	0.477	0.564	mention_ceaf
+0.578	0.400	0.473	typed_mention_ceaf
+0.045	0.031	0.037	typed_mention_ceaf_plus
+0.684	0.398	0.504	b_cubed
+0.071	0.047	0.056	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  STANFORD_KB_ENG_1 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.736	0.502	0.596	strong_mention_match
+0.682	0.465	0.553	strong_typed_mention_match
+0.064	0.044	0.052	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.064	0.129	0.086	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.641	0.437	0.520	mention_ceaf
+0.606	0.413	0.491	typed_mention_ceaf
+0.053	0.036	0.043	typed_mention_ceaf_plus
+0.665	0.339	0.449	b_cubed
+0.071	0.029	0.041	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  STANFORD_KB_ENG_2 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.806	0.510	0.625	strong_mention_match
+0.751	0.475	0.582	strong_typed_mention_match
+0.074	0.047	0.057	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.074	0.138	0.096	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.727	0.460	0.564	mention_ceaf
+0.691	0.437	0.536	typed_mention_ceaf
+0.064	0.040	0.049	typed_mention_ceaf_plus
+0.772	0.368	0.498	b_cubed
+0.084	0.034	0.048	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  STANFORD_KB_ENG_3 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.785	0.489	0.603	strong_mention_match
+0.713	0.445	0.548	strong_typed_mention_match
+0.078	0.049	0.060	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.078	0.144	0.102	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.671	0.418	0.516	mention_ceaf
+0.627	0.391	0.481	typed_mention_ceaf
+0.070	0.044	0.054	typed_mention_ceaf_plus
+0.731	0.312	0.437	b_cubed
+0.082	0.039	0.052	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  STANFORD_KB_ENG_4 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.795	0.521	0.630	strong_mention_match
+0.716	0.469	0.567	strong_typed_mention_match
+0.074	0.048	0.059	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.074	0.143	0.097	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.661	0.434	0.524	mention_ceaf
+0.613	0.402	0.486	typed_mention_ceaf
+0.067	0.044	0.053	typed_mention_ceaf_plus
+0.744	0.331	0.458	b_cubed
+0.076	0.038	0.051	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  STANFORD_KB_ENG_5 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.791	0.483	0.600	strong_mention_match
+0.710	0.434	0.539	strong_typed_mention_match
+0.078	0.048	0.059	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.078	0.141	0.101	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.674	0.412	0.511	mention_ceaf
+0.624	0.381	0.473	typed_mention_ceaf
+0.071	0.043	0.054	typed_mention_ceaf_plus
+0.740	0.305	0.432	b_cubed
+0.081	0.037	0.051	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  STANFORD_KB_CMN_1 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.854	0.508	0.637	strong_mention_match
+0.811	0.483	0.605	strong_typed_mention_match
+0.050	0.030	0.037	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.050	0.119	0.070	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.759	0.451	0.566	mention_ceaf
+0.731	0.435	0.546	typed_mention_ceaf
+0.046	0.028	0.035	typed_mention_ceaf_plus
+0.802	0.335	0.473	b_cubed
+0.050	0.023	0.031	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  STANFORD_KB_CMN_2 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.884	0.489	0.630	strong_mention_match
+0.842	0.465	0.599	strong_typed_mention_match
+0.043	0.024	0.031	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.043	0.094	0.059	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.753	0.416	0.536	mention_ceaf
+0.729	0.403	0.519	typed_mention_ceaf
+0.040	0.022	0.029	typed_mention_ceaf_plus
+0.844	0.300	0.443	b_cubed
+0.044	0.016	0.024	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  STANFORD_KB_CMN_3 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.875	0.476	0.616	strong_mention_match
+0.802	0.436	0.565	strong_typed_mention_match
+0.043	0.023	0.030	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.043	0.093	0.058	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.796	0.433	0.561	mention_ceaf
+0.735	0.400	0.518	typed_mention_ceaf
+0.040	0.022	0.028	typed_mention_ceaf_plus
+0.837	0.311	0.453	b_cubed
+0.043	0.017	0.024	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  STANFORD_KB_CMN_4 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.860	0.446	0.587	strong_mention_match
+0.767	0.398	0.524	strong_typed_mention_match
+0.042	0.022	0.029	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.042	0.087	0.057	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.770	0.399	0.526	mention_ceaf
+0.696	0.361	0.475	typed_mention_ceaf
+0.039	0.020	0.026	typed_mention_ceaf_plus
+0.819	0.269	0.405	b_cubed
+0.042	0.016	0.024	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  STANFORD_KB_SPA_1 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.849	0.587	0.694	strong_mention_match
+0.635	0.439	0.519	strong_typed_mention_match
+0.052	0.036	0.042	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.052	0.116	0.071	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.689	0.477	0.564	mention_ceaf
+0.578	0.400	0.473	typed_mention_ceaf
+0.045	0.031	0.037	typed_mention_ceaf_plus
+0.684	0.398	0.504	b_cubed
+0.071	0.047	0.056	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  STANFORD_KB_SPA_2 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.849	0.587	0.694	strong_mention_match
+0.635	0.439	0.519	strong_typed_mention_match
+0.052	0.036	0.042	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.052	0.116	0.071	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.689	0.477	0.564	mention_ceaf
+0.578	0.400	0.473	typed_mention_ceaf
+0.045	0.031	0.037	typed_mention_ceaf_plus
+0.684	0.398	0.504	b_cubed
+0.071	0.047	0.056	b_cubed_plus

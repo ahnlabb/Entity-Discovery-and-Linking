@@ -1,0 +1,271 @@
+========================================================================
+TAC KBP 2017 TRI-LINGUAL ENTITY DISCOVERY AND LINKING EVALUATION RESULTS
+========================================================================
+
+
+Team ID:  YorkNRM
+Organization:  York University
+
+
+*************************************************************
+
+Run ID:  YorkNRM1
+Languages addressed: Chinese, English, Spanish
+Did the run access the live Web during the evaluation window:  Yes
+Did the run use the Wikipedia links in the Reference KB: Yes
+Did the run use the relation/slot information encoded in the Reference KB: No
+Did the run use the text descriptions in the nodes of the Reference KB: No
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.838	0.757	0.796	strong_mention_match
+0.808	0.729	0.767	strong_typed_mention_match
+0.595	0.537	0.565	strong_typed_all_match
+0.585	0.556	0.570	strong_typed_link_match
+0.624	0.492	0.550	strong_typed_nil_match
+0.611	0.673	0.640	entity_match
+0.628	0.568	0.596	mention_ceaf
+0.617	0.557	0.586	typed_mention_ceaf
+0.556	0.502	0.528	typed_mention_ceaf_plus
+0.609	0.503	0.551	b_cubed
+0.476	0.425	0.449	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.835	0.817	0.826	strong_mention_match
+0.796	0.779	0.787	strong_typed_mention_match
+0.578	0.566	0.572	strong_typed_all_match
+0.536	0.589	0.561	strong_typed_link_match
+0.700	0.521	0.597	strong_typed_nil_match
+0.555	0.694	0.617	entity_match
+0.640	0.627	0.633	mention_ceaf
+0.622	0.608	0.615	typed_mention_ceaf
+0.531	0.520	0.526	typed_mention_ceaf_plus
+0.613	0.598	0.606	b_cubed
+0.464	0.483	0.473	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.824	0.696	0.754	strong_mention_match
+0.796	0.673	0.729	strong_typed_mention_match
+0.633	0.534	0.579	strong_typed_all_match
+0.652	0.584	0.616	strong_typed_link_match
+0.559	0.387	0.457	strong_typed_nil_match
+0.695	0.701	0.698	entity_match
+0.681	0.575	0.624	mention_ceaf
+0.671	0.567	0.615	typed_mention_ceaf
+0.617	0.521	0.565	typed_mention_ceaf_plus
+0.642	0.493	0.558	b_cubed
+0.537	0.424	0.474	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.861	0.787	0.822	strong_mention_match
+0.834	0.762	0.797	strong_typed_mention_match
+0.563	0.515	0.538	strong_typed_all_match
+0.538	0.484	0.509	strong_typed_link_match
+0.617	0.583	0.600	strong_typed_nil_match
+0.581	0.625	0.602	entity_match
+0.584	0.534	0.558	mention_ceaf
+0.573	0.523	0.547	typed_mention_ceaf
+0.502	0.458	0.479	typed_mention_ceaf_plus
+0.591	0.498	0.541	b_cubed
+0.425	0.407	0.416	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  YorkNRM2
+Languages addressed: Chinese, English, Spanish
+Did the run access the live Web during the evaluation window:  Yes
+Did the run use the Wikipedia links in the Reference KB: Yes
+Did the run use the relation/slot information encoded in the Reference KB: No
+Did the run use the text descriptions in the nodes of the Reference KB: No
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.838	0.757	0.796	strong_mention_match
+0.808	0.729	0.767	strong_typed_mention_match
+0.644	0.582	0.611	strong_typed_all_match
+0.737	0.569	0.642	strong_typed_link_match
+0.502	0.613	0.552	strong_typed_nil_match
+0.722	0.648	0.683	entity_match
+0.652	0.589	0.618	mention_ceaf
+0.639	0.577	0.607	typed_mention_ceaf
+0.594	0.536	0.564	typed_mention_ceaf_plus
+0.661	0.527	0.586	b_cubed
+0.549	0.472	0.508	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.835	0.817	0.826	strong_mention_match
+0.796	0.779	0.787	strong_typed_mention_match
+0.653	0.639	0.646	strong_typed_all_match
+0.721	0.611	0.661	strong_typed_link_match
+0.562	0.696	0.622	strong_typed_nil_match
+0.740	0.698	0.718	entity_match
+0.655	0.641	0.648	mention_ceaf
+0.637	0.623	0.630	typed_mention_ceaf
+0.584	0.571	0.578	typed_mention_ceaf_plus
+0.653	0.616	0.634	b_cubed
+0.547	0.544	0.545	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.824	0.696	0.754	strong_mention_match
+0.796	0.673	0.729	strong_typed_mention_match
+0.674	0.570	0.617	strong_typed_all_match
+0.796	0.603	0.686	strong_typed_link_match
+0.425	0.469	0.446	strong_typed_nil_match
+0.755	0.665	0.707	entity_match
+0.720	0.608	0.659	mention_ceaf
+0.710	0.600	0.650	typed_mention_ceaf
+0.657	0.555	0.602	typed_mention_ceaf_plus
+0.709	0.529	0.606	b_cubed
+0.619	0.476	0.538	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.861	0.787	0.822	strong_mention_match
+0.834	0.762	0.797	strong_typed_mention_match
+0.595	0.544	0.569	strong_typed_all_match
+0.659	0.478	0.554	strong_typed_link_match
+0.518	0.692	0.593	strong_typed_nil_match
+0.669	0.587	0.625	entity_match
+0.607	0.554	0.579	mention_ceaf
+0.595	0.544	0.568	typed_mention_ceaf
+0.523	0.478	0.499	typed_mention_ceaf_plus
+0.630	0.520	0.570	b_cubed
+0.476	0.436	0.455	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  YorkNRM3
+Languages addressed: Chinese, English, Spanish
+Did the run access the live Web during the evaluation window:  Yes
+Did the run use the Wikipedia links in the Reference KB: Yes
+Did the run use the relation/slot information encoded in the Reference KB: No
+Did the run use the text descriptions in the nodes of the Reference KB: No
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.838	0.757	0.796	strong_mention_match
+0.808	0.729	0.767	strong_typed_mention_match
+0.616	0.556	0.584	strong_typed_all_match
+0.607	0.582	0.595	strong_typed_link_match
+0.642	0.492	0.557	strong_typed_nil_match
+0.603	0.676	0.638	entity_match
+0.644	0.582	0.612	mention_ceaf
+0.633	0.572	0.601	typed_mention_ceaf
+0.577	0.521	0.547	typed_mention_ceaf_plus
+0.614	0.523	0.565	b_cubed
+0.491	0.450	0.470	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.835	0.817	0.826	strong_mention_match
+0.796	0.779	0.787	strong_typed_mention_match
+0.599	0.586	0.592	strong_typed_all_match
+0.564	0.619	0.590	strong_typed_link_match
+0.700	0.521	0.597	strong_typed_nil_match
+0.566	0.715	0.632	entity_match
+0.644	0.630	0.637	mention_ceaf
+0.626	0.613	0.619	typed_mention_ceaf
+0.552	0.540	0.546	typed_mention_ceaf_plus
+0.620	0.606	0.613	b_cubed
+0.478	0.502	0.489	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.824	0.696	0.754	strong_mention_match
+0.796	0.673	0.729	strong_typed_mention_match
+0.667	0.564	0.611	strong_typed_all_match
+0.680	0.623	0.650	strong_typed_link_match
+0.611	0.387	0.474	strong_typed_nil_match
+0.690	0.704	0.696	entity_match
+0.713	0.603	0.653	mention_ceaf
+0.704	0.595	0.645	typed_mention_ceaf
+0.651	0.550	0.596	typed_mention_ceaf_plus
+0.647	0.528	0.581	b_cubed
+0.566	0.464	0.510	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.861	0.787	0.822	strong_mention_match
+0.834	0.762	0.797	strong_typed_mention_match
+0.566	0.517	0.540	strong_typed_all_match
+0.541	0.487	0.513	strong_typed_link_match
+0.617	0.583	0.600	strong_typed_nil_match
+0.554	0.613	0.582	entity_match
+0.587	0.536	0.560	mention_ceaf
+0.575	0.526	0.549	typed_mention_ceaf
+0.504	0.460	0.481	typed_mention_ceaf_plus
+0.599	0.502	0.546	b_cubed
+0.426	0.413	0.419	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  YorkNRM4
+Languages addressed: Chinese, English, Spanish
+Did the run access the live Web during the evaluation window:  No
+Did the run use the Wikipedia links in the Reference KB: Yes
+Did the run use the relation/slot information encoded in the Reference KB: No
+Did the run use the text descriptions in the nodes of the Reference KB: No
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.815	0.704	0.755	strong_mention_match
+0.792	0.684	0.734	strong_typed_mention_match
+0.642	0.554	0.595	strong_typed_all_match
+0.736	0.552	0.631	strong_typed_link_match
+0.492	0.560	0.524	strong_typed_nil_match
+0.729	0.641	0.682	entity_match
+0.654	0.564	0.606	mention_ceaf
+0.643	0.555	0.596	typed_mention_ceaf
+0.597	0.515	0.553	typed_mention_ceaf_plus
+0.662	0.485	0.560	b_cubed
+0.551	0.439	0.489	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.899	0.721	0.800	strong_mention_match
+0.876	0.703	0.780	strong_typed_mention_match
+0.742	0.595	0.661	strong_typed_all_match
+0.776	0.585	0.667	strong_typed_link_match
+0.687	0.615	0.649	strong_typed_nil_match
+0.791	0.685	0.734	entity_match
+0.737	0.591	0.656	mention_ceaf
+0.725	0.581	0.645	typed_mention_ceaf
+0.671	0.538	0.598	typed_mention_ceaf_plus
+0.748	0.546	0.631	b_cubed
+0.639	0.494	0.557	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.712	0.697	0.704	strong_mention_match
+0.692	0.678	0.685	strong_typed_mention_match
+0.573	0.562	0.567	strong_typed_all_match
+0.729	0.594	0.655	strong_typed_link_match
+0.315	0.463	0.375	strong_typed_nil_match
+0.712	0.665	0.688	entity_match
+0.618	0.605	0.612	mention_ceaf
+0.608	0.596	0.602	typed_mention_ceaf
+0.558	0.546	0.552	typed_mention_ceaf_plus
+0.596	0.509	0.549	b_cubed
+0.507	0.456	0.480	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.919	0.696	0.792	strong_mention_match
+0.890	0.674	0.767	strong_typed_mention_match
+0.666	0.504	0.574	strong_typed_all_match
+0.706	0.455	0.554	strong_typed_link_match
+0.608	0.613	0.610	strong_typed_nil_match
+0.696	0.579	0.632	entity_match
+0.686	0.520	0.591	mention_ceaf
+0.670	0.507	0.577	typed_mention_ceaf
+0.595	0.450	0.513	typed_mention_ceaf_plus
+0.724	0.466	0.567	b_cubed
+0.561	0.399	0.467	b_cubed_plus

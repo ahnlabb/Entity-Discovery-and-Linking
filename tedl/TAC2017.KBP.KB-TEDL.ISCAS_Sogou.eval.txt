@@ -1,0 +1,107 @@
+==============================================================
+TAC KBP 2017 KB CONSTRUCTION: COMPONENT EDL EVALUATION RESULTS
+==============================================================
+
+
+Team ID:  ISCAS_Sogou
+Organization:  Institute of Software, Chinese Academy of Sciences & Sogou, Inc.
+
+
+*************************************************************
+
+Run ID:  ISCAS_Sogou_KB_CMN_1 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.562	0.715	0.630	strong_mention_match
+0.517	0.659	0.579	strong_typed_mention_match
+0.099	0.127	0.111	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.099	0.504	0.166	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.340	0.433	0.381	mention_ceaf
+0.319	0.406	0.357	typed_mention_ceaf
+0.089	0.114	0.100	typed_mention_ceaf_plus
+0.507	0.325	0.396	b_cubed
+0.099	0.117	0.107	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  ISCAS_Sogou_KB_CMN_2 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.562	0.715	0.630	strong_mention_match
+0.517	0.659	0.579	strong_typed_mention_match
+0.099	0.127	0.111	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.099	0.504	0.166	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.340	0.433	0.381	mention_ceaf
+0.319	0.406	0.357	typed_mention_ceaf
+0.089	0.114	0.100	typed_mention_ceaf_plus
+0.507	0.325	0.396	b_cubed
+0.099	0.117	0.107	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  ISCAS_Sogou_KB_CMN_3 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.562	0.715	0.630	strong_mention_match
+0.517	0.659	0.579	strong_typed_mention_match
+0.099	0.127	0.111	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.099	0.504	0.166	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.340	0.433	0.381	mention_ceaf
+0.319	0.406	0.357	typed_mention_ceaf
+0.089	0.114	0.100	typed_mention_ceaf_plus
+0.507	0.325	0.396	b_cubed
+0.099	0.117	0.107	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  ISCAS_Sogou_KB_CMN_4 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.562	0.715	0.630	strong_mention_match
+0.517	0.659	0.579	strong_typed_mention_match
+0.099	0.127	0.111	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.099	0.504	0.166	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.340	0.433	0.381	mention_ceaf
+0.319	0.406	0.357	typed_mention_ceaf
+0.089	0.114	0.100	typed_mention_ceaf_plus
+0.507	0.325	0.396	b_cubed
+0.099	0.117	0.107	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  ISCAS_Sogou_KB_CMN_5 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.562	0.715	0.630	strong_mention_match
+0.517	0.659	0.579	strong_typed_mention_match
+0.099	0.127	0.111	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.099	0.504	0.166	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.340	0.433	0.381	mention_ceaf
+0.319	0.406	0.357	typed_mention_ceaf
+0.089	0.114	0.100	typed_mention_ceaf_plus
+0.507	0.325	0.396	b_cubed
+0.099	0.117	0.107	b_cubed_plus

@@ -1,0 +1,395 @@
+==============================================================
+TAC KBP 2017 KB CONSTRUCTION: COMPONENT EDL EVALUATION RESULTS
+==============================================================
+
+
+Team ID:  hltcoe
+Organization:  Human Language Technology Center of Excellence
+
+
+*************************************************************
+
+Run ID:  hltcoe_KB_XLING_1 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.766	0.479	0.589	strong_mention_match
+0.712	0.445	0.548	strong_typed_mention_match
+0.500	0.312	0.384	strong_typed_all_match
+0.691	0.284	0.403	strong_typed_link_match
+0.334	0.380	0.355	strong_typed_nil_match
+0.766	0.285	0.416	entity_match
+0.614	0.383	0.472	mention_ceaf
+0.589	0.368	0.453	typed_mention_ceaf
+0.473	0.296	0.364	typed_mention_ceaf_plus
+0.639	0.289	0.398	b_cubed
+0.441	0.224	0.297	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.786	0.791	0.788	strong_mention_match
+0.726	0.730	0.728	strong_typed_mention_match
+0.527	0.530	0.528	strong_typed_all_match
+0.605	0.464	0.525	strong_typed_link_match
+0.447	0.657	0.532	strong_typed_nil_match
+0.702	0.495	0.581	entity_match
+0.637	0.640	0.638	mention_ceaf
+0.609	0.613	0.611	typed_mention_ceaf
+0.486	0.489	0.487	typed_mention_ceaf_plus
+0.616	0.597	0.606	b_cubed
+0.443	0.456	0.449	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.750	0.605	0.670	strong_mention_match
+0.700	0.565	0.626	strong_typed_mention_match
+0.478	0.385	0.427	strong_typed_all_match
+0.775	0.361	0.493	strong_typed_link_match
+0.251	0.458	0.324	strong_typed_nil_match
+0.844	0.387	0.531	entity_match
+0.635	0.512	0.567	mention_ceaf
+0.608	0.490	0.543	typed_mention_ceaf
+0.463	0.374	0.414	typed_mention_ceaf_plus
+0.666	0.396	0.497	b_cubed
+0.444	0.293	0.353	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.000	0.000	0.000	strong_mention_match
+0.000	0.000	0.000	strong_typed_mention_match
+0.000	0.000	0.000	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.000	0.000	0.000	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.000	0.000	0.000	mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf_plus
+0.000	0.000	0.000	b_cubed
+0.000	0.000	0.000	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  hltcoe_KB_XLING_2 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.766	0.479	0.589	strong_mention_match
+0.712	0.445	0.548	strong_typed_mention_match
+0.500	0.312	0.384	strong_typed_all_match
+0.690	0.284	0.403	strong_typed_link_match
+0.334	0.380	0.355	strong_typed_nil_match
+0.767	0.285	0.416	entity_match
+0.614	0.384	0.472	mention_ceaf
+0.589	0.368	0.453	typed_mention_ceaf
+0.474	0.296	0.364	typed_mention_ceaf_plus
+0.639	0.289	0.398	b_cubed
+0.441	0.224	0.297	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.786	0.791	0.788	strong_mention_match
+0.726	0.730	0.728	strong_typed_mention_match
+0.526	0.530	0.528	strong_typed_all_match
+0.604	0.464	0.525	strong_typed_link_match
+0.447	0.657	0.532	strong_typed_nil_match
+0.702	0.495	0.581	entity_match
+0.637	0.641	0.639	mention_ceaf
+0.609	0.613	0.611	typed_mention_ceaf
+0.486	0.489	0.487	typed_mention_ceaf_plus
+0.616	0.597	0.606	b_cubed
+0.443	0.456	0.449	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.750	0.605	0.670	strong_mention_match
+0.700	0.565	0.626	strong_typed_mention_match
+0.478	0.385	0.427	strong_typed_all_match
+0.775	0.361	0.493	strong_typed_link_match
+0.251	0.458	0.324	strong_typed_nil_match
+0.844	0.387	0.531	entity_match
+0.635	0.512	0.567	mention_ceaf
+0.608	0.490	0.543	typed_mention_ceaf
+0.464	0.374	0.414	typed_mention_ceaf_plus
+0.666	0.396	0.497	b_cubed
+0.444	0.293	0.353	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.000	0.000	0.000	strong_mention_match
+0.000	0.000	0.000	strong_typed_mention_match
+0.000	0.000	0.000	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.000	0.000	0.000	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.000	0.000	0.000	mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf_plus
+0.000	0.000	0.000	b_cubed
+0.000	0.000	0.000	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  hltcoe_KB_XLING_3 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.766	0.479	0.589	strong_mention_match
+0.712	0.445	0.548	strong_typed_mention_match
+0.501	0.313	0.385	strong_typed_all_match
+0.691	0.285	0.404	strong_typed_link_match
+0.335	0.380	0.356	strong_typed_nil_match
+0.768	0.286	0.417	entity_match
+0.614	0.384	0.472	mention_ceaf
+0.589	0.368	0.453	typed_mention_ceaf
+0.475	0.296	0.365	typed_mention_ceaf_plus
+0.639	0.289	0.398	b_cubed
+0.442	0.224	0.298	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.786	0.791	0.788	strong_mention_match
+0.726	0.730	0.728	strong_typed_mention_match
+0.529	0.532	0.530	strong_typed_all_match
+0.606	0.468	0.528	strong_typed_link_match
+0.449	0.657	0.534	strong_typed_nil_match
+0.704	0.498	0.584	entity_match
+0.637	0.641	0.639	mention_ceaf
+0.609	0.613	0.611	typed_mention_ceaf
+0.488	0.491	0.490	typed_mention_ceaf_plus
+0.617	0.597	0.607	b_cubed
+0.445	0.458	0.451	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.750	0.605	0.670	strong_mention_match
+0.700	0.565	0.626	strong_typed_mention_match
+0.478	0.385	0.427	strong_typed_all_match
+0.775	0.361	0.493	strong_typed_link_match
+0.251	0.458	0.324	strong_typed_nil_match
+0.844	0.387	0.531	entity_match
+0.635	0.512	0.567	mention_ceaf
+0.608	0.490	0.543	typed_mention_ceaf
+0.463	0.374	0.414	typed_mention_ceaf_plus
+0.666	0.396	0.497	b_cubed
+0.444	0.293	0.353	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.000	0.000	0.000	strong_mention_match
+0.000	0.000	0.000	strong_typed_mention_match
+0.000	0.000	0.000	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.000	0.000	0.000	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.000	0.000	0.000	mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf_plus
+0.000	0.000	0.000	b_cubed
+0.000	0.000	0.000	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  hltcoe_KB_XLING_4 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.766	0.479	0.589	strong_mention_match
+0.712	0.445	0.548	strong_typed_mention_match
+0.500	0.312	0.384	strong_typed_all_match
+0.692	0.284	0.403	strong_typed_link_match
+0.333	0.380	0.355	strong_typed_nil_match
+0.767	0.286	0.416	entity_match
+0.614	0.384	0.472	mention_ceaf
+0.589	0.368	0.453	typed_mention_ceaf
+0.473	0.296	0.364	typed_mention_ceaf_plus
+0.639	0.289	0.398	b_cubed
+0.441	0.224	0.297	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.786	0.791	0.788	strong_mention_match
+0.726	0.730	0.728	strong_typed_mention_match
+0.526	0.529	0.528	strong_typed_all_match
+0.606	0.464	0.525	strong_typed_link_match
+0.445	0.657	0.531	strong_typed_nil_match
+0.704	0.496	0.582	entity_match
+0.637	0.641	0.639	mention_ceaf
+0.609	0.613	0.611	typed_mention_ceaf
+0.486	0.488	0.487	typed_mention_ceaf_plus
+0.617	0.597	0.607	b_cubed
+0.443	0.456	0.449	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.750	0.605	0.670	strong_mention_match
+0.700	0.565	0.626	strong_typed_mention_match
+0.478	0.385	0.427	strong_typed_all_match
+0.775	0.361	0.493	strong_typed_link_match
+0.251	0.458	0.324	strong_typed_nil_match
+0.844	0.387	0.531	entity_match
+0.635	0.512	0.567	mention_ceaf
+0.608	0.490	0.543	typed_mention_ceaf
+0.463	0.374	0.414	typed_mention_ceaf_plus
+0.666	0.396	0.497	b_cubed
+0.444	0.293	0.353	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.000	0.000	0.000	strong_mention_match
+0.000	0.000	0.000	strong_typed_mention_match
+0.000	0.000	0.000	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.000	0.000	0.000	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.000	0.000	0.000	mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf_plus
+0.000	0.000	0.000	b_cubed
+0.000	0.000	0.000	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  hltcoe_KB_ENG_1 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.786	0.791	0.788	strong_mention_match
+0.726	0.730	0.728	strong_typed_mention_match
+0.526	0.530	0.528	strong_typed_all_match
+0.605	0.464	0.525	strong_typed_link_match
+0.447	0.658	0.532	strong_typed_nil_match
+0.703	0.497	0.582	entity_match
+0.636	0.640	0.638	mention_ceaf
+0.608	0.612	0.610	typed_mention_ceaf
+0.486	0.489	0.487	typed_mention_ceaf_plus
+0.618	0.594	0.605	b_cubed
+0.444	0.454	0.449	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  hltcoe_KB_ENG_2 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.786	0.791	0.788	strong_mention_match
+0.726	0.730	0.728	strong_typed_mention_match
+0.525	0.528	0.527	strong_typed_all_match
+0.607	0.462	0.525	strong_typed_link_match
+0.443	0.658	0.530	strong_typed_nil_match
+0.705	0.498	0.584	entity_match
+0.636	0.640	0.638	mention_ceaf
+0.608	0.612	0.610	typed_mention_ceaf
+0.484	0.487	0.486	typed_mention_ceaf_plus
+0.619	0.593	0.606	b_cubed
+0.443	0.453	0.448	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  hltcoe_KB_ENG_3 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.786	0.791	0.788	strong_mention_match
+0.726	0.730	0.728	strong_typed_mention_match
+0.526	0.529	0.527	strong_typed_all_match
+0.603	0.463	0.524	strong_typed_link_match
+0.446	0.657	0.532	strong_typed_nil_match
+0.701	0.495	0.580	entity_match
+0.634	0.638	0.636	mention_ceaf
+0.606	0.610	0.608	typed_mention_ceaf
+0.485	0.487	0.486	typed_mention_ceaf_plus
+0.614	0.594	0.604	b_cubed
+0.442	0.454	0.448	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  hltcoe_KB_ENG_4 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.786	0.791	0.788	strong_mention_match
+0.726	0.730	0.728	strong_typed_mention_match
+0.526	0.529	0.528	strong_typed_all_match
+0.605	0.463	0.524	strong_typed_link_match
+0.447	0.658	0.532	strong_typed_nil_match
+0.705	0.498	0.584	entity_match
+0.635	0.639	0.637	mention_ceaf
+0.607	0.611	0.609	typed_mention_ceaf
+0.485	0.488	0.487	typed_mention_ceaf_plus
+0.614	0.594	0.604	b_cubed
+0.442	0.454	0.448	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  hltcoe_KB_CMN_1 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.750	0.605	0.670	strong_mention_match
+0.700	0.565	0.626	strong_typed_mention_match
+0.478	0.385	0.427	strong_typed_all_match
+0.775	0.361	0.493	strong_typed_link_match
+0.251	0.458	0.324	strong_typed_nil_match
+0.844	0.387	0.531	entity_match
+0.629	0.508	0.562	mention_ceaf
+0.602	0.486	0.538	typed_mention_ceaf
+0.459	0.370	0.410	typed_mention_ceaf_plus
+0.667	0.390	0.492	b_cubed
+0.445	0.288	0.350	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  hltcoe_KB_CMN_2 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.727	0.535	0.617	strong_mention_match
+0.673	0.495	0.571	strong_typed_mention_match
+0.430	0.316	0.364	strong_typed_all_match
+0.777	0.361	0.493	strong_typed_link_match
+0.118	0.183	0.144	strong_typed_nil_match
+0.850	0.387	0.532	entity_match
+0.603	0.444	0.511	mention_ceaf
+0.573	0.422	0.486	typed_mention_ceaf
+0.417	0.307	0.354	typed_mention_ceaf_plus
+0.643	0.324	0.430	b_cubed
+0.400	0.222	0.286	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  hltcoe_KB_CMN_3 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.727	0.535	0.617	strong_mention_match
+0.673	0.495	0.571	strong_typed_mention_match
+0.430	0.316	0.364	strong_typed_all_match
+0.777	0.361	0.493	strong_typed_link_match
+0.118	0.183	0.144	strong_typed_nil_match
+0.850	0.387	0.532	entity_match
+0.603	0.444	0.511	mention_ceaf
+0.573	0.422	0.486	typed_mention_ceaf
+0.417	0.307	0.354	typed_mention_ceaf_plus
+0.643	0.324	0.430	b_cubed
+0.400	0.222	0.286	b_cubed_plus

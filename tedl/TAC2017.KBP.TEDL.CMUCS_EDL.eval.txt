@@ -1,0 +1,73 @@
+========================================================================
+TAC KBP 2017 TRI-LINGUAL ENTITY DISCOVERY AND LINKING EVALUATION RESULTS
+========================================================================
+
+
+Team ID:  CMUCS_EDL
+Organization:  Language Technologies Institute, Carnegie Mellon University
+
+
+*************************************************************
+
+Run ID:  CMUCS_EDL1
+Languages addressed: Chinese, English, Spanish
+Did the run access the live Web during the evaluation window:  No
+Did the run use the Wikipedia links in the Reference KB: Yes
+Did the run use the relation/slot information encoded in the Reference KB: No
+Did the run use the text descriptions in the nodes of the Reference KB: No
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.834	0.513	0.635	strong_mention_match
+0.760	0.467	0.579	strong_typed_mention_match
+0.668	0.411	0.509	strong_typed_all_match
+0.652	0.392	0.490	strong_typed_link_match
+0.702	0.455	0.552	strong_typed_nil_match
+0.643	0.474	0.545	entity_match
+0.697	0.429	0.531	mention_ceaf
+0.664	0.408	0.506	typed_mention_ceaf
+0.626	0.385	0.476	typed_mention_ceaf_plus
+0.698	0.339	0.457	b_cubed
+0.582	0.309	0.404	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.880	0.580	0.699	strong_mention_match
+0.793	0.523	0.630	strong_typed_mention_match
+0.690	0.455	0.548	strong_typed_all_match
+0.660	0.431	0.522	strong_typed_link_match
+0.747	0.500	0.599	strong_typed_nil_match
+0.669	0.521	0.586	entity_match
+0.740	0.488	0.588	mention_ceaf
+0.689	0.454	0.547	typed_mention_ceaf
+0.637	0.420	0.507	typed_mention_ceaf_plus
+0.729	0.431	0.542	b_cubed
+0.613	0.381	0.470	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.784	0.473	0.590	strong_mention_match
+0.722	0.436	0.544	strong_typed_mention_match
+0.624	0.377	0.470	strong_typed_all_match
+0.632	0.387	0.480	strong_typed_link_match
+0.599	0.345	0.438	strong_typed_nil_match
+0.623	0.444	0.518	entity_match
+0.703	0.424	0.529	mention_ceaf
+0.664	0.401	0.500	typed_mention_ceaf
+0.614	0.371	0.462	typed_mention_ceaf_plus
+0.686	0.324	0.440	b_cubed
+0.559	0.288	0.380	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.857	0.504	0.635	strong_mention_match
+0.780	0.459	0.578	strong_typed_mention_match
+0.708	0.417	0.525	strong_typed_all_match
+0.680	0.364	0.474	strong_typed_link_match
+0.755	0.535	0.626	strong_typed_nil_match
+0.640	0.466	0.539	entity_match
+0.714	0.420	0.529	mention_ceaf
+0.675	0.397	0.500	typed_mention_ceaf
+0.631	0.371	0.467	typed_mention_ceaf_plus
+0.724	0.353	0.474	b_cubed
+0.613	0.322	0.422	b_cubed_plus

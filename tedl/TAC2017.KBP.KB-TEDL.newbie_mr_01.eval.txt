@@ -1,0 +1,27 @@
+==============================================================
+TAC KBP 2017 KB CONSTRUCTION: COMPONENT EDL EVALUATION RESULTS
+==============================================================
+
+
+Team ID:  newbie_mr_01
+Organization:  Machine Reading Co
+
+
+*************************************************************
+
+Run ID:  newbie_mr_01_KB_ENG_1 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.515	0.329	0.401	strong_mention_match
+0.297	0.190	0.232	strong_typed_mention_match
+0.052	0.033	0.040	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.052	0.097	0.067	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.317	0.202	0.246	mention_ceaf
+0.212	0.135	0.165	typed_mention_ceaf
+0.049	0.031	0.038	typed_mention_ceaf_plus
+0.414	0.137	0.206	b_cubed
+0.071	0.038	0.049	b_cubed_plus

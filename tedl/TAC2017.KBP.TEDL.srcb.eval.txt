@@ -1,0 +1,337 @@
+========================================================================
+TAC KBP 2017 TRI-LINGUAL ENTITY DISCOVERY AND LINKING EVALUATION RESULTS
+========================================================================
+
+
+Team ID:  srcb
+Organization:  Ricoh Software Research Center (Beijing) Co.,Ltd.
+
+
+*************************************************************
+
+Run ID:  srcb1
+Languages addressed: Chinese, English
+Did the run access the live Web during the evaluation window:  No
+Did the run use the Wikipedia links in the Reference KB: Yes
+Did the run use the relation/slot information encoded in the Reference KB: No
+Did the run use the text descriptions in the nodes of the Reference KB: No
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.891	0.438	0.587	strong_mention_match
+0.844	0.415	0.557	strong_typed_mention_match
+0.613	0.302	0.404	strong_typed_all_match
+0.547	0.323	0.406	strong_typed_link_match
+0.980	0.250	0.399	strong_typed_nil_match
+0.458	0.380	0.415	entity_match
+0.720	0.354	0.475	mention_ceaf
+0.696	0.342	0.459	typed_mention_ceaf
+0.584	0.287	0.385	typed_mention_ceaf_plus
+0.774	0.260	0.390	b_cubed
+0.558	0.205	0.300	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.876	0.733	0.798	strong_mention_match
+0.817	0.683	0.744	strong_typed_mention_match
+0.546	0.456	0.497	strong_typed_all_match
+0.453	0.473	0.463	strong_typed_link_match
+0.982	0.424	0.592	strong_typed_nil_match
+0.377	0.586	0.459	entity_match
+0.687	0.575	0.626	mention_ceaf
+0.655	0.548	0.597	typed_mention_ceaf
+0.508	0.425	0.463	typed_mention_ceaf_plus
+0.755	0.506	0.606	b_cubed
+0.496	0.375	0.427	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.904	0.548	0.683	strong_mention_match
+0.869	0.527	0.656	strong_typed_mention_match
+0.676	0.410	0.510	strong_typed_all_match
+0.630	0.444	0.521	strong_typed_link_match
+0.978	0.309	0.470	strong_typed_nil_match
+0.553	0.572	0.562	entity_match
+0.793	0.481	0.599	mention_ceaf
+0.771	0.468	0.582	typed_mention_ceaf
+0.667	0.405	0.504	typed_mention_ceaf_plus
+0.833	0.373	0.515	b_cubed
+0.649	0.308	0.418	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.000	0.000	0.000	strong_mention_match
+0.000	0.000	0.000	strong_typed_mention_match
+0.000	0.000	0.000	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.000	0.000	0.000	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.000	0.000	0.000	mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf_plus
+0.000	0.000	0.000	b_cubed
+0.000	0.000	0.000	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  srcb2
+Languages addressed: Chinese, English
+Did the run access the live Web during the evaluation window:  No
+Did the run use the Wikipedia links in the Reference KB: Yes
+Did the run use the relation/slot information encoded in the Reference KB: No
+Did the run use the text descriptions in the nodes of the Reference KB: No
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.891	0.438	0.587	strong_mention_match
+0.844	0.415	0.557	strong_typed_mention_match
+0.623	0.307	0.411	strong_typed_all_match
+0.565	0.330	0.416	strong_typed_link_match
+0.927	0.251	0.395	strong_typed_nil_match
+0.486	0.393	0.434	entity_match
+0.727	0.358	0.479	mention_ceaf
+0.699	0.344	0.461	typed_mention_ceaf
+0.593	0.292	0.391	typed_mention_ceaf_plus
+0.739	0.271	0.397	b_cubed
+0.555	0.214	0.309	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.876	0.733	0.798	strong_mention_match
+0.817	0.683	0.744	strong_typed_mention_match
+0.589	0.493	0.536	strong_typed_all_match
+0.509	0.526	0.518	strong_typed_link_match
+0.946	0.427	0.588	strong_typed_nil_match
+0.437	0.666	0.528	entity_match
+0.713	0.596	0.649	mention_ceaf
+0.674	0.564	0.614	typed_mention_ceaf
+0.549	0.459	0.500	typed_mention_ceaf_plus
+0.737	0.536	0.621	b_cubed
+0.535	0.418	0.469	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.904	0.548	0.683	strong_mention_match
+0.869	0.527	0.656	strong_typed_mention_match
+0.655	0.397	0.495	strong_typed_all_match
+0.614	0.427	0.504	strong_typed_link_match
+0.905	0.309	0.461	strong_typed_nil_match
+0.543	0.545	0.544	entity_match
+0.805	0.488	0.608	mention_ceaf
+0.783	0.475	0.591	typed_mention_ceaf
+0.647	0.392	0.488	typed_mention_ceaf_plus
+0.790	0.395	0.526	b_cubed
+0.612	0.309	0.410	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.000	0.000	0.000	strong_mention_match
+0.000	0.000	0.000	strong_typed_mention_match
+0.000	0.000	0.000	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.000	0.000	0.000	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.000	0.000	0.000	mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf_plus
+0.000	0.000	0.000	b_cubed
+0.000	0.000	0.000	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  srcb3
+Languages addressed: Chinese, English
+Did the run access the live Web during the evaluation window:  No
+Did the run use the Wikipedia links in the Reference KB: Yes
+Did the run use the relation/slot information encoded in the Reference KB: No
+Did the run use the text descriptions in the nodes of the Reference KB: No
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.853	0.431	0.572	strong_mention_match
+0.796	0.402	0.534	strong_typed_mention_match
+0.566	0.286	0.380	strong_typed_all_match
+0.495	0.301	0.374	strong_typed_link_match
+0.973	0.250	0.398	strong_typed_nil_match
+0.408	0.375	0.391	entity_match
+0.688	0.347	0.461	mention_ceaf
+0.658	0.332	0.442	typed_mention_ceaf
+0.545	0.275	0.366	typed_mention_ceaf_plus
+0.741	0.252	0.376	b_cubed
+0.521	0.193	0.281	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.831	0.726	0.775	strong_mention_match
+0.765	0.668	0.713	strong_typed_mention_match
+0.509	0.444	0.474	strong_typed_all_match
+0.414	0.455	0.433	strong_typed_link_match
+0.977	0.424	0.591	strong_typed_nil_match
+0.344	0.590	0.435	entity_match
+0.653	0.570	0.608	mention_ceaf
+0.620	0.541	0.578	typed_mention_ceaf
+0.476	0.415	0.443	typed_mention_ceaf_plus
+0.711	0.511	0.595	b_cubed
+0.459	0.373	0.411	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.873	0.534	0.663	strong_mention_match
+0.825	0.505	0.626	strong_typed_mention_match
+0.621	0.380	0.472	strong_typed_all_match
+0.569	0.404	0.472	strong_typed_link_match
+0.968	0.309	0.469	strong_typed_nil_match
+0.483	0.556	0.517	entity_match
+0.753	0.461	0.572	mention_ceaf
+0.723	0.442	0.549	typed_mention_ceaf
+0.613	0.375	0.465	typed_mention_ceaf_plus
+0.789	0.343	0.478	b_cubed
+0.593	0.273	0.374	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.000	0.000	0.000	strong_mention_match
+0.000	0.000	0.000	strong_typed_mention_match
+0.000	0.000	0.000	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.000	0.000	0.000	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.000	0.000	0.000	mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf_plus
+0.000	0.000	0.000	b_cubed
+0.000	0.000	0.000	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  srcb4
+Languages addressed: Chinese, English
+Did the run access the live Web during the evaluation window:  No
+Did the run use the Wikipedia links in the Reference KB: Yes
+Did the run use the relation/slot information encoded in the Reference KB: No
+Did the run use the text descriptions in the nodes of the Reference KB: No
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.853	0.431	0.572	strong_mention_match
+0.796	0.402	0.534	strong_typed_mention_match
+0.584	0.295	0.392	strong_typed_all_match
+0.521	0.312	0.390	strong_typed_link_match
+0.909	0.254	0.397	strong_typed_nil_match
+0.439	0.391	0.413	entity_match
+0.697	0.352	0.468	mention_ceaf
+0.664	0.335	0.446	typed_mention_ceaf
+0.563	0.284	0.378	typed_mention_ceaf_plus
+0.709	0.263	0.384	b_cubed
+0.527	0.205	0.295	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.831	0.726	0.775	strong_mention_match
+0.765	0.668	0.713	strong_typed_mention_match
+0.552	0.482	0.515	strong_typed_all_match
+0.469	0.510	0.488	strong_typed_link_match
+0.943	0.428	0.589	strong_typed_nil_match
+0.399	0.670	0.500	entity_match
+0.677	0.591	0.631	mention_ceaf
+0.638	0.557	0.595	typed_mention_ceaf
+0.518	0.452	0.483	typed_mention_ceaf_plus
+0.686	0.543	0.606	b_cubed
+0.495	0.419	0.454	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.873	0.534	0.663	strong_mention_match
+0.825	0.505	0.626	strong_typed_mention_match
+0.615	0.376	0.467	strong_typed_all_match
+0.570	0.396	0.468	strong_typed_link_match
+0.870	0.316	0.463	strong_typed_nil_match
+0.486	0.536	0.510	entity_match
+0.769	0.470	0.584	mention_ceaf
+0.737	0.451	0.560	typed_mention_ceaf
+0.606	0.371	0.460	typed_mention_ceaf_plus
+0.755	0.361	0.488	b_cubed
+0.573	0.281	0.377	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.000	0.000	0.000	strong_mention_match
+0.000	0.000	0.000	strong_typed_mention_match
+0.000	0.000	0.000	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.000	0.000	0.000	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.000	0.000	0.000	mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf_plus
+0.000	0.000	0.000	b_cubed
+0.000	0.000	0.000	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  srcb5
+Languages addressed: Chinese, English
+Did the run access the live Web during the evaluation window:  No
+Did the run use the Wikipedia links in the Reference KB: Yes
+Did the run use the relation/slot information encoded in the Reference KB: No
+Did the run use the text descriptions in the nodes of the Reference KB: No
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.853	0.431	0.572	strong_mention_match
+0.796	0.402	0.534	strong_typed_mention_match
+0.580	0.293	0.390	strong_typed_all_match
+0.517	0.309	0.387	strong_typed_link_match
+0.909	0.254	0.397	strong_typed_nil_match
+0.436	0.387	0.410	entity_match
+0.691	0.349	0.464	mention_ceaf
+0.658	0.332	0.442	typed_mention_ceaf
+0.559	0.282	0.375	typed_mention_ceaf_plus
+0.692	0.264	0.382	b_cubed
+0.521	0.204	0.294	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.831	0.726	0.775	strong_mention_match
+0.765	0.668	0.713	strong_typed_mention_match
+0.554	0.484	0.517	strong_typed_all_match
+0.471	0.513	0.491	strong_typed_link_match
+0.943	0.428	0.589	strong_typed_nil_match
+0.401	0.670	0.502	entity_match
+0.680	0.594	0.634	mention_ceaf
+0.636	0.555	0.593	typed_mention_ceaf
+0.520	0.455	0.485	typed_mention_ceaf_plus
+0.679	0.548	0.607	b_cubed
+0.497	0.423	0.457	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.873	0.534	0.663	strong_mention_match
+0.825	0.505	0.626	strong_typed_mention_match
+0.606	0.371	0.460	strong_typed_all_match
+0.559	0.389	0.459	strong_typed_link_match
+0.870	0.316	0.463	strong_typed_nil_match
+0.478	0.526	0.501	entity_match
+0.757	0.463	0.574	mention_ceaf
+0.727	0.445	0.552	typed_mention_ceaf
+0.597	0.365	0.453	typed_mention_ceaf_plus
+0.732	0.360	0.482	b_cubed
+0.559	0.277	0.370	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.000	0.000	0.000	strong_mention_match
+0.000	0.000	0.000	strong_typed_mention_match
+0.000	0.000	0.000	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.000	0.000	0.000	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.000	0.000	0.000	mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf_plus
+0.000	0.000	0.000	b_cubed
+0.000	0.000	0.000	b_cubed_plus

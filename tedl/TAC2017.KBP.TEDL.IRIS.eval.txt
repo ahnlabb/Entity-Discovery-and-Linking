@@ -1,0 +1,73 @@
+========================================================================
+TAC KBP 2017 TRI-LINGUAL ENTITY DISCOVERY AND LINKING EVALUATION RESULTS
+========================================================================
+
+
+Team ID:  IRIS
+Organization:  Paul Sabatier University
+
+
+*************************************************************
+
+Run ID:  IRIS1
+Languages addressed: English
+Did the run access the live Web during the evaluation window:  No
+Did the run use the Wikipedia links in the Reference KB: No
+Did the run use the relation/slot information encoded in the Reference KB: No
+Did the run use the text descriptions in the nodes of the Reference KB: No
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.670	0.108	0.186	strong_mention_match
+0.479	0.077	0.133	strong_typed_mention_match
+0.337	0.054	0.093	strong_typed_all_match
+0.386	0.072	0.121	strong_typed_link_match
+0.113	0.011	0.020	strong_typed_nil_match
+0.452	0.146	0.220	entity_match
+0.575	0.092	0.159	mention_ceaf
+0.418	0.067	0.116	typed_mention_ceaf
+0.332	0.053	0.092	typed_mention_ceaf_plus
+0.633	0.039	0.074	b_cubed
+0.426	0.026	0.049	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.670	0.380	0.485	strong_mention_match
+0.479	0.272	0.347	strong_typed_mention_match
+0.337	0.191	0.244	strong_typed_all_match
+0.386	0.271	0.319	strong_typed_link_match
+0.113	0.034	0.053	strong_typed_nil_match
+0.452	0.505	0.477	entity_match
+0.575	0.326	0.416	mention_ceaf
+0.418	0.237	0.303	typed_mention_ceaf
+0.332	0.188	0.240	typed_mention_ceaf_plus
+0.633	0.220	0.327	b_cubed
+0.426	0.164	0.237	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.000	0.000	0.000	strong_mention_match
+0.000	0.000	0.000	strong_typed_mention_match
+0.000	0.000	0.000	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.000	0.000	0.000	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.000	0.000	0.000	mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf_plus
+0.000	0.000	0.000	b_cubed
+0.000	0.000	0.000	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.000	0.000	0.000	strong_mention_match
+0.000	0.000	0.000	strong_typed_mention_match
+0.000	0.000	0.000	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.000	0.000	0.000	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.000	0.000	0.000	mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf_plus
+0.000	0.000	0.000	b_cubed
+0.000	0.000	0.000	b_cubed_plus
