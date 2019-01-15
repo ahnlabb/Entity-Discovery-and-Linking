@@ -33,7 +33,7 @@ class ModelJar:
         form = Input(shape=(None, ), dtype='int32', name='Form')
 
         emb = Embedding(
-            40000,
+            70000,
             embed_len,
             embeddings_initializer=emb_mat_init(embed, word_inv),
             input_length=None,

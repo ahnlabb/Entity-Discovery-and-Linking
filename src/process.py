@@ -248,7 +248,7 @@ def create_mappings(train, embed, lbl_sets):
     }
     for key in mappings:
         mappings[key]['OOV'] = 0
-    mappings['form'] = build_indices(train, embed, embed_n=40000)
+    mappings['form'] = build_indices(train, embed, embed_n=70000)
     return mappings
 
 
