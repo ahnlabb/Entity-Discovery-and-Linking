@@ -1,8 +1,10 @@
 import fileinput
+from argparse import ArgumentParser
+
+import numpy as np
+
 import matplotlib.pyplot as plt
 from matplotlib.mlab import griddata
-import numpy as np
-from argparse import ArgumentParser
 
 parser = ArgumentParser()
 parser.add_argument('files', nargs='+')
@@ -12,7 +14,7 @@ parser.add_argument('precrec', type=eval, nargs=2)
 parser.add_argument('-v', '--verbose', action='store_true')
 args = parser.parse_args()
 
-sep = '*'*61
+sep = '*' * 61
 
 with fileinput.input(files=args.files) as f:
     runs = ''.join(l for l in f).split(sep)[1:]
@@ -30,8 +32,7 @@ with fileinput.input(files=args.files) as f:
                         x.append(recall)
                         y.append(prec)
 
-
-
+    plt.figure(num=None, figsize=(5, 5), dpi=500)
     x, y = np.array(x), np.array(y)
     plt.ylim(0, 1)
     plt.xlim(0, 1)
@@ -46,7 +47,7 @@ with fileinput.input(files=args.files) as f:
     xi = np.arange(0.01, 1, 0.01)
     yi = np.arange(0.01, 1, 0.01)
     xx, yy = np.meshgrid(xi, yi, sparse=True)
-    z = 2*yy*xx/(yy+xx)
+    z = 2 * yy * xx / (yy + xx)
     plt.contour(xi, yi, z, 10, linestyles='dotted')
 
     plt.savefig(args.out)
