@@ -6,6 +6,7 @@ import Dict
 import Element exposing (Element, alignRight, alignTop, centerX, centerY, column, el, fill, height, none, padding, px, rgb255, row, spacing, width)
 import Element.Background as Background
 import Element.Border as Border
+import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
 import Html exposing (option, select)
@@ -13,8 +14,9 @@ import Html.Attributes as HAttr exposing (class, style)
 import Html.Events exposing (onInput)
 import Http
 import Json.Decode as Decode exposing (Decoder, dict, field, int, list, string)
-import Json.Decode.Pipeline exposing (custom, required)
+import Json.Decode.Pipeline exposing (custom, hardcoded, required)
 import Json.Encode as Encode
+import Set
 import Svg
 import Svg.Attributes as SAttr
 import Time
@@ -60,11 +62,13 @@ type alias Page =
     , prediction : Maybe Document
     , text : String
     , links : List String
+    , showingInfo : Set.Set Int
     }
 
 
+emptyPage : String -> List String -> Page
 emptyPage selection models =
-    Page selection models True (Just emptyDocument) "" []
+    Page selection models True (Just emptyDocument) "" [] Set.empty
 
 
 initNews selection models =
@@ -81,18 +85,47 @@ nextResult apiData =
 
 type alias Document =
     { text : String
-    , entities : List Entity
+    , entities : List Tag
+    , reduced : List Entity
     }
 
 
+showInfo index page =
+    { page | showingInfo = Set.insert index page.showingInfo }
+
+
+hideInfo index page =
+    { page | showingInfo = Set.remove index page.showingInfo }
+
+
+emptyDocument : Document
 emptyDocument =
-    Document "" []
+    Document "" [] []
 
 
-type alias Entity =
+initEntity tag wikidata =
+    Entity tag wikidata
+
+
+type alias Tag =
     { start : Int
     , stop : Int
     , class : String
+    }
+
+
+type alias Entity =
+    { tag : Tag
+    , wikidata : Maybe Wikidata
+    }
+
+
+type alias Wikidata =
+    { entity : String
+    , image : String
+    , name : String
+    , link : String
+    , description : String
     }
 
 
@@ -115,6 +148,8 @@ type Msg
     | NewNews (Result Http.Error String)
     | NewPrediction (Result Http.Error Document)
     | NewLinks (Result Http.Error (List String))
+    | StartHoveringEntity Int
+    | StopHoveringEntity Int
     | ToggleReduce Bool
     | NewSelection String
     | RequestedUrl Browser.UrlRequest
@@ -161,6 +196,12 @@ update msg model =
         ( NewLinks result, News apiData page ) ->
             updateLinks (News apiData) page result
 
+        ( StartHoveringEntity index, News apiData page ) ->
+            ( News apiData (showInfo index page), Cmd.none )
+
+        ( StopHoveringEntity index, News apiData page ) ->
+            ( News apiData (hideInfo index page), Cmd.none )
+
         ( ToggleReduce bool, Done page ) ->
             ( Done { page | reduceTags = bool }, Cmd.none )
 
@@ -171,14 +212,14 @@ update msg model =
             result
                 |> handleResult
                     (\article ->
-                        ( News ind { page | text = article, prediction = Nothing }
+                        ( News ind { page | text = article, prediction = Nothing, showingInfo = Set.empty }
                         , getPrediction page.selection article
                         )
                     )
 
         ( MoreNews, News apiData page ) ->
             ( News (nextResult apiData) page
-            , getNews apiData
+            , getNews (nextResult apiData)
             )
 
         ( _, _ ) ->
@@ -195,7 +236,13 @@ handleResult okHandler result =
 
 
 updatePrediction model page =
-    handleResult (\pred -> ( model { page | prediction = Just pred }, Cmd.none ))
+    let
+        okHandler pred =
+            ( model { page | prediction = Just pred }
+            , Cmd.none
+            )
+    in
+    handleResult okHandler
 
 
 updateLinks model page =
@@ -255,20 +302,31 @@ view model =
 
 
 body : Page -> Element Msg
-body { models, selection, text, prediction, reduceTags } =
+body { models, selection, text, prediction, reduceTags, showingInfo } =
     column [ width fill, spacing 30 ]
         [ row [ width fill ] [ reduceToggle reduceTags ]
-        , resultView text selection prediction reduceTags
+        , resultView text selection prediction reduceTags showingInfo
         ]
 
 
 viewNews : Page -> Element Msg
-viewNews { selection, text, prediction, reduceTags } =
-    column [ width fill, spacing 30 ]
+viewNews { selection, text, prediction, reduceTags, showingInfo } =
+    column [ width fill, spacing 50, padding 150 ]
         [ row [ width fill ] [ reduceToggle reduceTags ]
-        , row [ width fill ] (prediction |> Maybe.map (.entities >> List.map (Element.text << .class)) |> Maybe.withDefault [ Element.none ])
-        , el [ width fill, height fill ] (resultView text selection prediction reduceTags)
-        , el [ width fill, height fill ] (Input.button [ centerX ] { onPress = Just MoreNews, label = Element.text "Get more news!" })
+        , el [ width fill, height fill ] (resultView text selection prediction reduceTags showingInfo)
+        , el [ width fill, height fill ] (button { onPress = Just MoreNews, label = Element.text "Get more news!" })
+        ]
+
+
+button =
+    Input.button
+        [ centerX
+        , Border.width 1
+        , Background.color (Element.rgb 1 1 1)
+        , Border.color (Element.rgb255 219 219 219)
+        , Border.rounded 290486
+        , padding 8
+        , Element.mouseOver [ Border.color (Element.rgb 0 0 0) ]
         ]
 
 
@@ -303,8 +361,8 @@ getSel sel docs =
     sel |> Maybe.andThen (get docs)
 
 
-resultView : String -> String -> Maybe Document -> Bool -> Element Msg
-resultView text selection prediction reduceTags =
+resultView : String -> String -> Maybe Document -> Bool -> Set.Set Int -> Element Msg
+resultView text selection prediction reduceTags showingInfo =
     let
         pos x y tag attrs =
             tag ([ SAttr.x (String.fromFloat x), SAttr.y (String.fromFloat y) ] ++ attrs)
@@ -392,67 +450,101 @@ resultView text selection prediction reduceTags =
                     ]
                 ]
 
-        annotate : Int -> String -> List Entity -> List (Html.Html Msg)
-        annotate origin string ent =
+        annotate : Int -> Int -> String -> List Entity -> List (Element Msg)
+        annotate index origin string ent =
             let
-                annotation attrs marks begin end =
-                    Html.span ([] ++ attrs)
-                        ([ String.slice begin end string |> Html.text ] ++ marks)
-
                 line begin end =
-                    Html.span [ style "line-height" "4.5em" ] [ plain begin end ]
+                    el [] (plain begin end)
 
                 plain begin end =
-                    Html.text (String.slice begin end string)
+                    Element.text (String.slice begin end string)
 
-                marked class begin end =
-                    Html.div
-                        [ style "display" "inline-flex"
-                        , style "flex-direction" "column"
-                        , style "height" "3em"
+                entityImage image name =
+                    Element.image [ width fill, Element.centerX, Border.width 1 ] { src = image, description = "Image of depicting " ++ name }
+
+                entityLink maybeData label =
+                    case maybeData of
+                        Just { image, name, link } ->
+                            Element.link
+                                []
+                                { url = link
+                                , label =
+                                    el
+                                        [ Element.mouseOver [ Font.color (Element.rgb255 4 46 115) ]
+                                        , Font.color (Element.rgb255 6 69 173)
+                                        ]
+                                        label
+                                }
+
+                        Nothing ->
+                            label
+
+                infoBox { name, image, description } =
+                    Element.column
+                        [ Element.centerX
+                        , Background.color (Element.rgb 1 1 1)
+                        , Border.rounded 5
+                        , Border.width 1
+                        , width (px 300)
+                        , padding 5
+                        , spacing 5
                         ]
-                        [ Html.div
-                            [ style "flex" "0 1 auto"
-                            , style "text-align" "center"
-                            , style "border" ("1px solid " ++ colorFromClass class)
-                            , style "border-radius" "5px"
-                            ]
-                            [ plain begin end ]
-                        , Html.div
-                            [ style "flex" "0 1 auto"
-                            , style "text-align" "center"
-                            ]
-                            [ Html.div [] [ mark class ] ]
+                        [ el [] (Element.text name)
+                        , el [] (entityImage image name)
+                        , Element.paragraph [] [ Element.text description ]
+                        ]
+
+                marked { tag, wikidata } =
+                    let
+                        attributes maybeData =
+                            case maybeData of
+                                Just data ->
+                                    Element.centerX
+                                        :: (if Set.member index showingInfo then
+                                                [ infoBox data |> Element.below ]
+
+                                            else
+                                                []
+                                           )
+
+                                Nothing ->
+                                    [ Element.centerX ]
+                    in
+                    Element.column
+                        [ Events.onMouseEnter (StartHoveringEntity index)
+                        , Events.onMouseLeave (StopHoveringEntity index)
+                        ]
+                        [ el (attributes wikidata)
+                            (entityLink wikidata
+                                (plain tag.start tag.stop)
+                            )
+                        , el
+                            [ Element.centerX ]
+                            (mark tag.class |> Element.html)
                         ]
             in
             case ent of
-                { start, stop, class } :: tail ->
-                    line origin start :: marked class start stop :: annotate stop string tail
+                entity :: tail ->
+                    line origin entity.tag.start :: marked entity :: annotate (index + 1) entity.tag.stop string tail
 
                 [] ->
                     [ line origin (String.length string) ]
 
         viewAnnotations =
-            List.map Element.html >> Element.paragraph [ Font.family [ Font.typeface "Source Sans Pro", Font.sansSerif ] ]
+            Element.paragraph [ Font.family [ Font.typeface "Source Sans Pro", Font.sansSerif ] ]
 
         viewPrediction pred =
             case pred of
                 Just document ->
-                    reduceIfChecked document.entities |> annotate 0 document.text |> viewAnnotations
+                    document.reduced
+                        |> annotate 0 0 document.text
+                        |> viewAnnotations
 
                 Nothing ->
                     Element.paragraph [ width fill, alignTop, Element.inFront (el [ width fill, alignTop ] spinner) ] [ Element.text text ]
-
-        reduceIfChecked entities =
-            if reduceTags then
-                reduceEntities entities
-
-            else
-                entities
     in
-    row [ width fill, spacing 50, padding 30 ]
-        [ viewPrediction prediction
-        ]
+    el [ width fill, spacing 50 ]
+        (viewPrediction prediction)
 
 
 spinner =
@@ -460,54 +552,6 @@ spinner =
         [ Html.div [ class "lds-dual-ring" ] [] |> Element.html |> el [ centerX, padding 60 ]
         , el [ Font.center, width fill ] (Element.text "Predicting labels  ")
         ]
-
-
-reduceHelper startPrev stopPrev classPrev entityList =
-    case entityList of
-        { start, stop, class } :: t ->
-            let
-                cur =
-                    { start = start, stop = stop, class = class }
-
-                className =
-                    String.dropLeft 2 class
-            in
-            if classPrev /= className then
-                cur :: reduceEntities t
-
-            else
-                case String.left 1 class of
-                    "I" ->
-                        reduceHelper startPrev stop className t
-
-                    "E" ->
-                        { start = startPrev, stop = stop, class = className } :: reduceEntities t
-
-                    _ ->
-                        { start = startPrev, stop = stopPrev, class = classPrev } :: reduceEntities (cur :: t)
-
-        [] ->
-            [ { start = startPrev, stop = stopPrev, class = classPrev } ]
-
-
-reduceEntities entityList =
-    case entityList of
-        { start, stop, class } :: t ->
-            case String.left 1 class of
-                "B" ->
-                    reduceHelper start stop (String.dropLeft 2 class) t
-
-                "S" ->
-                    { start = start, stop = stop, class = String.dropLeft 2 class } :: reduceEntities t
-
-                "O" ->
-                    reduceEntities t
-
-                _ ->
-                    { start = start, stop = stop, class = class } :: reduceEntities t
-
-        [] ->
-            []
 
 
 errorString error =
@@ -550,7 +594,7 @@ getPrediction model text =
     Http.post
         { url = UrlBuilder.absolute [ "predict" ] [ UrlBuilder.string "model" model ]
         , body = Http.jsonBody (Encode.string text)
-        , expect = Http.expectJson NewPrediction (documentDecoder "entities")
+        , expect = Http.expectJson NewPrediction documentDecoder
         }
 
 
@@ -563,17 +607,25 @@ getLinks entities =
         }
 
 
-documentDecoder name =
+documentDecoder : Decoder Document
+documentDecoder =
     Decode.succeed Document
         |> required "text" string
-        |> required name (list entityDecoder)
+        |> required "entities" (list tagDecoder)
+        |> custom entityDecoder
 
 
-entityDecoder =
-    Decode.succeed Entity
+tagDecoder =
+    Decode.succeed Tag
         |> required "start" int
         |> required "stop" int
         |> required "class" string
+
+
+entityDecoder =
+    Decode.succeed (List.map2 initEntity)
+        |> required "reduced" (list tagDecoder)
+        |> required "targets" (list (Decode.maybe wikidataTupleDecoder))
 
 
 newsApi : String -> String -> String -> String
@@ -596,3 +648,12 @@ getNews { query, index, key } =
 
 newsDecoder ind =
     field "articles" (Decode.index ind (field "description" string))
+
+
+wikidataTupleDecoder =
+    Decode.succeed Wikidata
+        |> required "entity" string
+        |> required "image" string
+        |> required "name" string
+        |> required "sitelink" string
+        |> required "entityDescription" string

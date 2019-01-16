@@ -128,8 +128,10 @@ def mapget(key, seq):
 def emb_mat_init(glove, invind):
     def initializer(shape, dtype=None):
         mat = np.random.random_sample(shape)
-        for k, v in glove.items():
-            mat[invind[k], :] = v[:shape[1]]
+        for k, v in glove:
+            row = invind[k]
+            if row < shape[0]:
+                mat[row, :] = v[:shape[1]]
         return mat
 
     return initializer
