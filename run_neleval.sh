@@ -9,14 +9,13 @@ if ! git diff-index --quiet HEAD --; then
         echo
 fi
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-
-        : >systems/predict.all.tsv
-        for f in predict.*.tsv; do
-                (
+        outfile="systems/predict.all.tsv"
+        (
+                for f in predict.*.tsv; do
                         cat "$f"
                         echo
-                ) >>systems/predict.all.tsv
-        done
+                done
+        ) >"$outfile"
         cd neleval
         ./scripts/run_tac16_evaluation.sh ../corpus/tac/gold/tac_kbp_2017_edl_evaluation_gold_standard_entity_mentions.tab ../systems ../out 1
         cd ..
@@ -24,10 +23,10 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
         read comment
 
         (
-                echo "# $(git log -1 --pretty="format:%h %s %d")"
+        echo "# $(git log -1 --pretty="format:%h %s %d")"
 
-                echo "# $comment" >>out/predict.log
-                cat out/predict.all.tsv.evaluation
+        echo "# $comment" >>out/predict.log
+        cat out/predict.all.tsv.evaluation
         ) >>out/predict.log
 
         less +G out/predict.log
