@@ -20,15 +20,17 @@
 %% Bibliography style
 \bibliographystyle{ACM-Reference-Format}
 
-\usepackage{lipsum}
 \usepackage[acronym]{glossaries}
 \usepackage{booktabs}
 
-\makeglossaries
+%\makeglossaries
+
+\pagenumbering{gobble}
 
 \begin{document}
 
 \newacronym{edl}{EDL}{Entity Discovery and Linking}
+\newacronym{md}{MD}{Mention Detection}
 \newacronym{ner}{NER}{Named Entity Recognition}
 \newacronym{el}{EL}{Entity Linking}
 \newacronym{bilstm}{BiLSTM}{Bidirectional Long Short-Term Memory}
@@ -40,6 +42,15 @@
 \newacronym{tedl}{TEDL}{Trilingual Entity Discovery and Linking}
 \newacronym{tac}{TAC}{Text Analysis Conference}
 \newacronym{kbp}{KBP}{Knowledge Base Population}
+\newacronym{nam}{NAM}{Named Entity}
+\newacronym{nom}{NOM}{Nominal Entity}
+\newacronym{per}{PER}{Person}
+\newacronym{gpe}{GPE}{Geopolitical Entity}
+\newacronym{org}{ORG}{Organization}
+\newacronym{loc}{LOC}{Location}
+\newacronym{fac}{FAC}{Faculty}
+\newacronym{ttl}{TTL}{Title}
+
 
 \newcommand{\namper}{NAM-PER}
 \newcommand{\nomper}{NOM-PER}
@@ -47,7 +58,7 @@
 \newcommand{\mention}{strong typed mention match}
 
 %% Title information
-\title{Entity Recognition and Linking}         %% [Short Title] is optional;
+\title{Entity Discovery and Linking}         %% [Short Title] is optional;
                                         %% when present, will be used in
                                         %% header instead of Full Title.
 %\subtitle{Subtitle}                     %% \subtitle is optional
@@ -72,7 +83,19 @@
 
 
 \begin{abstract}
-Text of abstract \ldots.
+In this paper we outline an attempt to build a system for \acrfull{tedl} based on a paper by Yang et al. \cite{YangThe2017}.
+\acrlong{edl} is the problem of finding and identifying names of people, organizations, locations and so on (i.e. \textit{entities}) in arbitrary unstructured bodies of text.
+
+The solution to this problem can be divided into two distinct parts: \acrfull{md} -- the process of detecting and capturing sequences of words as references to an entity, and \acrfull{el} -- the \textit{linking} of a detected entity in the text to an existing entity. This latter step requires disambiguating the detected entity from a list of possible candidates of existing entities based on some set of heuristics.
+
+Our model for detecting entity mentions is based on a deep neural network consisting of two \acrfull{bilstm} layers. The entity linking is accomplished by creating a mapping from words to Wikipedia articles and generating a list of candidates from that mapping for each detected entity.
+
+We also describe a graphical interface for demonstrating our system where news articles are fetched and annotated with entity classifications and Wikipedia links.
+
+We evaluate the system using neleval \cite{Nothman2014Neleval} on data from the \acrfull{tac} 2017 and achieve F1 scores of 0.692 in \mention{} and 0.494 in \linking{}.
+
+Finally, as this is a work in progress, we discuss some planned improvements for the future of this project.
+
 \end{abstract}
 
 
@@ -82,46 +105,46 @@ Text of abstract \ldots.
 \section{Introduction}
 
 %Entity discovery and linking
-\acrfull{edl} is the process of finding mentions of entities in a text and linking these entities to the corresponding entry in a knowledge base. \acrfull{ner} and \acrfull{el} are the primary constituent steps of this process and in this paper we will describe the mechanisms by which our system performs these steps, both as separate processes and as a unified process (EDL).
+\acrfull{edl} is the process of finding mentions of entities in a text and linking these entities to the corresponding entry in a knowledge base. \acrfull{md} and \acrfull{el} are the primary constituent steps of this process and in this paper we will describe the mechanisms by which our system performs these steps, both as separate processes and as a unified process (EDL).
 
-In this project we attempt to reproduce the results achieved by Yang et al.~\citep{YangThe2017} using the methods outlined in their paper.
-% TODO: The following sentence was commented out because we haven't had time to extend
-%The goal is to investigate whether the results are reproducible and additionally to potentially add support for other languages, seeking similar performance.
-Those results were submitted to the \acrfull{tedl} track at \acrfull{tac} 2017. %\acrfull{kbp} % TODO
+In this project we attempt to reproduce the results achieved by Yang et al.~\citep{YangThe2017}, using the methods outlined in their paper.
+Their system, the \textit{TAI system}, was submitted to the \acrfull{tedl} track at \acrfull{tac} 2017. %\acrfull{kbp} % TODO
 
 Our course of action for developing this system has been to iteratively reproduce the parts of the model from \cite{YangThe2017}, evaluating the model and adding features in each step of the iteration.
 
-We implemented the majority of our system in python using Keras to develop the neural network. \cite{Francois2015Keras}
+We implemented the majority of our system in Python using Keras to develop the neural network. \cite{Francois2015Keras}
 
 %\textit{Something about reproducing the model in iterative steps, comparing the performance as more features and layers are added?}
 
 \section{Mention Detection}
-As a first step in our iteration we leverage readily existing features from GloVe and CoreNLP to evaluate baseline performance in a basic reconstruction of the network described in \cite{YangThe2017}. The GloVe dataset provides our model with pre-trained word embeddings and CoreNLP provides us with basic \acrshort{ner} and \acrfull{pos} tagging.
+In reproducing the TAI system we reduce the task of mention detection to detecting named (\acrshort{nam}) and nominal entities (\acrshort{nom}) in text and classifying them into six predetermined categories, namely: \acrfull{per}, \acrfull{org}, \acrfull{gpe}, \acrfull{loc}, \acrfull{fac} and \acrfull{ttl}.
 
-In future iterations we intend to add character embeddings, as described in \cite{Lample2016NeuralRecognition}, to compensate for \acrfull{oov} issues.
+As a first step in our iteration we leverage readily existing features from CoreNLP with word embeddings to evaluate baseline performance in a basic reconstruction of the network described in \cite{YangThe2017}.
+CoreNLP provides us with basic \acrfull{ner} and \acrfull{pos} tagging and we use GloVe as a pretrained embedding for English. \cite{ManningTheToolkit,PenningtonGloVe:Representation}
 
 \subsection{Features}
-\subsubsection*{Word form}
+We have considered the following for our features, as per Yang et al. \citep{YangThe2017} as well as arriving at our own heuristics through trial and error.
+\subsubsection{Word form}
 Based on term frequency in our data set, we rank word forms and include only the most frequent ones in order to reduce noise arising from infrequent terms.
 We then match each word with its corresponding GloVe vector while replacing \acrshort{oov} instances with a specific \acrshort{oov} vector.
-\subsubsection*{Part of speech}
+\subsubsection{Part of speech}
 Using CoreNLP, we predict \acrshort{pos} tags and use these predictions as features.
-\subsubsection*{Preemptive entity type}
+\subsubsection{Preemptive entity type}
 In a similar manner, we use CoreNLP to detect entity boundaries and a preemptive entity type and use these as features.
-\subsubsection*{Capitalization signifier}
+\subsubsection{Capitalization signifier}
 In English and Spanish, the first letter in a name is capitalized. Furthermore, acronyms of organizations and the like are often written in uppercase. For that reason, we use a boolean signifier which is true if the word contains an uppercase letter and use that boolean value as a feature.
-\subsubsection*{Special tokens}
-We include a separate feature for "special" tokens in English, like prepositions and possessive signifiers -- as well as often recurring words like \textit{president}, which are either instances of \nomper{} or part of an instance of \namper{} -- in order to give greater weight to these tokens during training.
+\subsubsection{Special tokens}
+We include a separate feature for "special" tokens in English, like prepositions and possessive signifiers -- as well as often recurring words like \textit{president} -- in order to give greater weight to these tokens during training.
 
 \subsection{Network Architecture}
-%TODO refer to figure
-Figure~\ref{fig:neural_net}
 We use the terms \textit{input layer}, \textit{representative layer} and \textit{output layer} to help give a high-level description of our architecture.
+
+Figure~\ref{fig:neural_net} shows an overview of the network where each node in the graph represents a layer in the network.
 
 The input layer consists of three trainable embeddings representing the word form, the \acrshort{pos} and the named entity type. In addition to the embeddings, two untrainable input layers representing word capitalization and special tokens, respectively.
 The embeddings are concatenated with the untrainable input layers and fed into the representative layer.
 
-The model is centered around the representative layer which consists two consecutive \acrfull{bilstm} layers.
+The model is centered around the representative layer which consists of two consecutive \acrfull{bilstm} layers.
 The concatenated input is routed through a dropout layer with a dropout rate of 0.25 which in turn feeds into the \acrshort{bilstm} layers.
 The output from the first \acrshort{bilstm} layer and the output from the previously mentioned dropout layer is concatenated to form the input for the second \acrshort{bilstm} layer.
 To speed up training we used CuDNNLSTM, available in Keras, as the implementation of the \acrshort{bilstm}s. We chose the output dimensionality of each \acrshort{bilstm} to be 100. 
@@ -179,14 +202,14 @@ The TAC Dataset includes some annotated structured data. The \texttt{author} att
 \section{Entity Linking}
 
 We created a mapping from words to Wikipedia pages by iterating over all anchors in all Wikipedia pages in the respective languages. For all anchors with the same text the most frequent target page was selected as the target entity in the dictionary.
-Due to the size of Wikipedia we used Apache Spark to perform the processing and wrote that part of the code in Scala to maximize performance on Spark. In the implementation we also used Docria which implements an input specification for Map-Reduce jobs.\cite{Zaharia2016ApacheSpark}\cite{Klang2018Docria}
+Due to the size of Wikipedia we used Apache Spark to perform the processing and wrote that part of the code in Scala to maximize performance on Spark. In the implementation we also used Docria which implements an input specification for Map-Reduce jobs.\cite{Zaharia2016ApacheSpark,Klang2018Docria}
 
 %\subsection{Candidate Generation}
 
 %\subsection{Candidate Ranking}
 
 \section{Evaluation}
-We evaluated the system's performance by applying the neleval \texttt{tac2016} evaluation script on our system output and the tac2017 gold standard. %TODO: ref?
+We evaluated the system's performance by applying the neleval \texttt{tac2016} evaluation script on our system output with the TAC 2017 gold standard. %TODO: ref?
 The results of this evaluation for some chosen metrics are presented in tables~\ref{tab:mention} and~\ref{tab:linkning}.
 
 \begin{table}[]
@@ -221,44 +244,72 @@ The results of this evaluation for some chosen metrics are presented in tables~\
     \label{tab:linkning}
 \end{table}
 
-PLOT PLOT PLOT
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\textwidth]{plot_tmm.png}
+    \caption{Scatter plot of the \textit{strong typed mention match} from the results of all submitted runs for the TEDL task at TAC-KBP 2017. The red and green dots signify our results and the the Tencent AI team's results respectively. The contour lines show the F1-score.}
+    \label{fig:tmm}
+\end{figure}
 
-In plots %TODO
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\textwidth]{plot_tam.png}
+    \caption{Scatter plot of the \textit{strong all mention match} from the results of all submitted runs for the TEDL task at TAC-KBP 2017. The red and green dots signify our results and the the Tencent AI team's results respectively. The contour lines show the F1-score.}
+    \label{fig:tam}
+\end{figure}
+
+In figures~\ref{fig:tmm} and~\ref{fig:tam}
 we have plotted our own results as well as the results of all the systems that participated in the \acrshort{tedl} task at TAC-KBP 2017.
 As can be seen in these plots, our system is relatively performant compared to the other entries.
 
 \section{Graphical User Interface}
 \begin{figure*}
     \centering
-    \includegraphics{news_ui3.png}
+    \includegraphics[width=\textwidth]{news_ui3.png}
     \caption{The web based \acrshort{gui} showing the result of running the network on the description of a news article acquired from \href{https://newsapi.org}{newsapi.org}.}
     \label{fig:my_label}
 \end{figure*}
 
-We developed a web based \acrfull{gui} using Flask for the backend and \href{https://elm-lang.org}{elm} for the frontend. The \acrshort{gui} fetches descriptions of news articles and feeds them to the network and entity linker. Each entity that was successfully linked becomes a link to Wikipedia. When the user hovers over such an entity a summary is shown including its Wikidata label, an image and a short description. 
+We developed a web based \acrfull{gui} using Flask for the backend and \href{https://elm-lang.org}{Elm} for the frontend. The \acrshort{gui} fetches descriptions of news articles and feeds them to the neural network and the entity linker. Each entity that was successfully linked becomes a link to Wikipedia. When the user hovers over such an entity a summary is shown including its Wikidata label, an image and a short description. 
 The news information is fetched from \href{https://newsapi.org}{newsapi.org} and the summary data is acquired using the Wikidata SPARQL Query Service.
+
 \section{Future work}
+Our initial goal was to investigate whether the results are reproducible and additionally to potentially add support for other languages, seeking similar performance. As we underestimated the workload, we did not have time to extend the system described in \citep{YangThe2017} and therefore we set extension of the system as a goal in future work.
+
 \subsection{Mention Detection}
-In the future we intend to replace our dense output layer with a \acrfull{crf} layer as per \citep{YangThe2017} because we expect it to yield significant performance increases in in mention detection and type classification.
-For Chinese we currently use CoreNLP for word segmentation but this might introduce errors since there are no word delimiters in Chinese. One way to avoid this problem is to only work with the character sequence. When we attempted this it decreased the performance of our system. However, we did not add the CoreNLP word boundaries as a feature as was done by Yang et al. \citep{YangThe2017}. % TODO
-In order to speed up training while simultaneously reducing the network's dependence on external tools and giving us greater control over our embeddings we intend to pre-train a separate network to replace the features for which we currently depend on CoreNLP.
+In the future we intend to replace our dense output layer with a \acrfull{crf} layer as per \citep{YangThe2017} because we expect it to yield significant performance increases in \acrshort{ner} and classification.
+
+For Chinese we currently use CoreNLP for word segmentation but this might introduce errors since there are no word delimiters in Chinese. One way to avoid this problem is to only work with the character sequence. When we attempted this it decreased the performance of our system. However, we did not add the CoreNLP word boundaries as a feature as was done by Yang et al. \citep{YangThe2017}.
+
+In order to speed up training while simultaneously reducing the network's dependence on external tools and giving us greater control over our embeddings, we intend to pre-train a separate network to replace the features for which we currently depend on CoreNLP.
+
+A possible improvement to our word embeddings would be to train an \textit{unknown} word embedding which can be concatenated to form word embeddings from characters in order to resolve \acrshort{oov} problems as described by Lample et al. \citep{Lample2016NeuralRecognition}.
 
 \subsection{Entity Linking}
-%The TAI system %TODO: Normalize references to this
 Yang et al. \citep{YangThe2017}
-used LambdaMART ranking with several handcrafted features such as number of languages on Wikipedia and a metric based on PageRank on Wikipedia to achieve better linking. We would like to implement this kind of ranking and at least a few of these features.
+used LambdaMART ranking with several handcrafted features such as number of languages on Wikipedia and a metric based on PageRank on Wikipedia to achieve better linking. We would like to implement this kind of ranking and at least a few of these features. \cite{Burges2010FromOverview}
 
-\section{Related work}
+\subsection{Graphical User Interface}
+
+To make the \acrshort{gui} more usable we would like to optimize the speed as well as the memory footprint of the server.
+To achieve this we will look into switching to another data structure for containing the mapping from entity name to Wikidata entity number.
+If fast enough performance can be achieved we would like to create an interface where the user can write text and \acrshort{edl} is performed in real time as the text is typed.
+
+Another feature that we plan to introduce is the annotation of websites. The user would provide an URL and select a language and the \acrshort{gui} would render the website annotated as in the current interface using the predictions of our system.
 
 \section{Conclusion}
 Reproducing the performance in the system built by \cite{YangThe2017} proved to be a difficult task in part due to critical details being left out of the paper, not having access to the same training data, as well as our relative inexperience working with machine learning models.
-Given these difficulties we still managed to achieve high performance 
+Given these difficulties we still managed to achieve relatively good results.
+Our system is particularly good at \acrlong{md} while our results in \acrlong{el} are still unsatisfactory.
+
+Our intention for the future is to reach feature parity with the TAI system and to extend the language support beyond the current trilingual domain.
+Some major features that we predict would yield significant improvements to our \acrfull{md} are the previously mentioned character-to-word embeddings as per Lample et al. \citep{Lample2016NeuralRecognition} and a \acrshort{crf} layer.
+A major feature we would like to add to our graphical interface is an option to annotate any site or article given a URL and the language it is written in.
 
 %% Acknowledgments
 \begin{acks}
 We would like to thank Pierre Nugues and Marcus Klang for their guidance and support throughout the project.
 A special thanks to Marcus for creating Docria and providing us with the data we needed in accessible formats.
-%TODO: Improve
 \end{acks}
 
 
