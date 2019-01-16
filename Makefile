@@ -40,6 +40,10 @@ process-zh:
 process-en:
 	python3 src/process.py corpus/tac/lang/en/eng.2015.eval.pickle corpus/tac/lang/en/eng.2015.train.pickle corpus/tac/lang/en/eng.2016.eval.pickle glove/glove.6B.100d.pickle model.en.pickle en corpus/wikimap_en.pickle --predict corpus/tac/lang/en/eng.2017.eval.pickle
 
+plot:
+	python3 tedl_parser.py tedl/* strong_typed_mention_match plot_tmm.png "(0.844,0.586)" "(0.817,0.759)"
+	python3 tedl_parser.py tedl/* strong_typed_all_match plot_tam.png "(0.602,0.418)" "(0.760,0.613)"
+
 neleval:
 	./run_neleval.sh
 
