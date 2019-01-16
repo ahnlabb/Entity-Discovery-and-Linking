@@ -1,0 +1,271 @@
+========================================================================
+TAC KBP 2017 TRI-LINGUAL ENTITY DISCOVERY AND LINKING EVALUATION RESULTS
+========================================================================
+
+
+Team ID:  CRIM
+Organization:  Computer Research Institute of Montreal
+
+
+*************************************************************
+
+Run ID:  CRIM1
+Languages addressed: English
+Did the run access the live Web during the evaluation window:  No
+Did the run use the Wikipedia links in the Reference KB: Yes
+Did the run use the relation/slot information encoded in the Reference KB: Yes
+Did the run use the text descriptions in the nodes of the Reference KB: No
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.870	0.212	0.341	strong_mention_match
+0.826	0.202	0.324	strong_typed_mention_match
+0.660	0.161	0.259	strong_typed_all_match
+0.669	0.146	0.239	strong_typed_link_match
+0.644	0.199	0.304	strong_typed_nil_match
+0.649	0.175	0.276	entity_match
+0.750	0.183	0.294	mention_ceaf
+0.722	0.176	0.283	typed_mention_ceaf
+0.643	0.157	0.252	typed_mention_ceaf_plus
+0.776	0.121	0.209	b_cubed
+0.622	0.101	0.175	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.870	0.749	0.805	strong_mention_match
+0.826	0.711	0.764	strong_typed_mention_match
+0.660	0.568	0.610	strong_typed_all_match
+0.669	0.549	0.603	strong_typed_link_match
+0.644	0.606	0.624	strong_typed_nil_match
+0.649	0.607	0.627	entity_match
+0.750	0.646	0.694	mention_ceaf
+0.722	0.621	0.668	typed_mention_ceaf
+0.643	0.554	0.595	typed_mention_ceaf_plus
+0.776	0.569	0.657	b_cubed
+0.622	0.486	0.546	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.000	0.000	0.000	strong_mention_match
+0.000	0.000	0.000	strong_typed_mention_match
+0.000	0.000	0.000	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.000	0.000	0.000	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.000	0.000	0.000	mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf_plus
+0.000	0.000	0.000	b_cubed
+0.000	0.000	0.000	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.000	0.000	0.000	strong_mention_match
+0.000	0.000	0.000	strong_typed_mention_match
+0.000	0.000	0.000	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.000	0.000	0.000	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.000	0.000	0.000	mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf_plus
+0.000	0.000	0.000	b_cubed
+0.000	0.000	0.000	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  CRIM2
+Languages addressed: English
+Did the run access the live Web during the evaluation window:  No
+Did the run use the Wikipedia links in the Reference KB: Yes
+Did the run use the relation/slot information encoded in the Reference KB: Yes
+Did the run use the text descriptions in the nodes of the Reference KB: No
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.848	0.218	0.346	strong_mention_match
+0.781	0.200	0.319	strong_typed_mention_match
+0.611	0.157	0.249	strong_typed_all_match
+0.618	0.141	0.229	strong_typed_link_match
+0.598	0.196	0.295	strong_typed_nil_match
+0.617	0.184	0.284	entity_match
+0.718	0.184	0.293	mention_ceaf
+0.675	0.173	0.276	typed_mention_ceaf
+0.596	0.153	0.244	typed_mention_ceaf_plus
+0.757	0.123	0.212	b_cubed
+0.592	0.102	0.174	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.848	0.767	0.805	strong_mention_match
+0.781	0.706	0.742	strong_typed_mention_match
+0.611	0.552	0.580	strong_typed_all_match
+0.618	0.530	0.571	strong_typed_link_match
+0.598	0.596	0.597	strong_typed_nil_match
+0.617	0.640	0.628	entity_match
+0.718	0.650	0.682	mention_ceaf
+0.675	0.611	0.642	typed_mention_ceaf
+0.596	0.539	0.566	typed_mention_ceaf_plus
+0.757	0.563	0.645	b_cubed
+0.592	0.471	0.525	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.000	0.000	0.000	strong_mention_match
+0.000	0.000	0.000	strong_typed_mention_match
+0.000	0.000	0.000	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.000	0.000	0.000	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.000	0.000	0.000	mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf_plus
+0.000	0.000	0.000	b_cubed
+0.000	0.000	0.000	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.000	0.000	0.000	strong_mention_match
+0.000	0.000	0.000	strong_typed_mention_match
+0.000	0.000	0.000	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.000	0.000	0.000	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.000	0.000	0.000	mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf_plus
+0.000	0.000	0.000	b_cubed
+0.000	0.000	0.000	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  CRIM3
+Languages addressed: English
+Did the run access the live Web during the evaluation window:  No
+Did the run use the Wikipedia links in the Reference KB: Yes
+Did the run use the relation/slot information encoded in the Reference KB: Yes
+Did the run use the text descriptions in the nodes of the Reference KB: No
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.837	0.220	0.348	strong_mention_match
+0.776	0.204	0.323	strong_typed_mention_match
+0.610	0.160	0.254	strong_typed_all_match
+0.618	0.142	0.231	strong_typed_link_match
+0.598	0.204	0.304	strong_typed_nil_match
+0.602	0.174	0.270	entity_match
+0.711	0.187	0.296	mention_ceaf
+0.672	0.176	0.280	typed_mention_ceaf
+0.595	0.156	0.247	typed_mention_ceaf_plus
+0.740	0.126	0.215	b_cubed
+0.582	0.104	0.176	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.837	0.775	0.805	strong_mention_match
+0.776	0.719	0.747	strong_typed_mention_match
+0.610	0.565	0.587	strong_typed_all_match
+0.618	0.537	0.574	strong_typed_link_match
+0.598	0.621	0.609	strong_typed_nil_match
+0.602	0.602	0.602	entity_match
+0.711	0.658	0.684	mention_ceaf
+0.672	0.622	0.646	typed_mention_ceaf
+0.595	0.551	0.572	typed_mention_ceaf_plus
+0.740	0.584	0.653	b_cubed
+0.582	0.490	0.532	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.000	0.000	0.000	strong_mention_match
+0.000	0.000	0.000	strong_typed_mention_match
+0.000	0.000	0.000	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.000	0.000	0.000	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.000	0.000	0.000	mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf_plus
+0.000	0.000	0.000	b_cubed
+0.000	0.000	0.000	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.000	0.000	0.000	strong_mention_match
+0.000	0.000	0.000	strong_typed_mention_match
+0.000	0.000	0.000	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.000	0.000	0.000	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.000	0.000	0.000	mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf_plus
+0.000	0.000	0.000	b_cubed
+0.000	0.000	0.000	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  CRIM4
+Languages addressed: English
+Did the run access the live Web during the evaluation window:  No
+Did the run use the Wikipedia links in the Reference KB: Yes
+Did the run use the relation/slot information encoded in the Reference KB: Yes
+Did the run use the text descriptions in the nodes of the Reference KB: No
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.846	0.216	0.344	strong_mention_match
+0.781	0.199	0.318	strong_typed_mention_match
+0.614	0.157	0.250	strong_typed_all_match
+0.607	0.140	0.228	strong_typed_link_match
+0.627	0.196	0.299	strong_typed_nil_match
+0.596	0.185	0.282	entity_match
+0.714	0.182	0.290	mention_ceaf
+0.674	0.172	0.274	typed_mention_ceaf
+0.600	0.153	0.244	typed_mention_ceaf_plus
+0.749	0.122	0.210	b_cubed
+0.589	0.101	0.172	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.846	0.760	0.801	strong_mention_match
+0.781	0.703	0.740	strong_typed_mention_match
+0.614	0.552	0.582	strong_typed_all_match
+0.607	0.529	0.565	strong_typed_link_match
+0.627	0.599	0.612	strong_typed_nil_match
+0.596	0.641	0.618	entity_match
+0.714	0.642	0.676	mention_ceaf
+0.674	0.606	0.638	typed_mention_ceaf
+0.600	0.539	0.568	typed_mention_ceaf_plus
+0.749	0.560	0.641	b_cubed
+0.589	0.469	0.522	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.000	0.000	0.000	strong_mention_match
+0.000	0.000	0.000	strong_typed_mention_match
+0.000	0.000	0.000	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.000	0.000	0.000	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.000	0.000	0.000	mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf_plus
+0.000	0.000	0.000	b_cubed
+0.000	0.000	0.000	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.000	0.000	0.000	strong_mention_match
+0.000	0.000	0.000	strong_typed_mention_match
+0.000	0.000	0.000	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.000	0.000	0.000	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.000	0.000	0.000	mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf_plus
+0.000	0.000	0.000	b_cubed
+0.000	0.000	0.000	b_cubed_plus

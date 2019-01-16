@@ -1,0 +1,617 @@
+==============================================================
+TAC KBP 2017 KB CONSTRUCTION: COMPONENT EDL EVALUATION RESULTS
+==============================================================
+
+
+Team ID:  TinkerBell
+Organization:  RPI, UIUC, Stanford, Columbia, Cornell, JHU, UPenn
+
+
+*************************************************************
+
+Run ID:  TinkerBell_KB_XLING_1 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.832	0.673	0.744	strong_mention_match
+0.768	0.622	0.688	strong_typed_mention_match
+0.626	0.507	0.560	strong_typed_all_match
+0.689	0.511	0.587	strong_typed_link_match
+0.510	0.498	0.504	strong_typed_nil_match
+0.731	0.649	0.688	entity_match
+0.706	0.572	0.632	mention_ceaf
+0.669	0.542	0.599	typed_mention_ceaf
+0.607	0.491	0.543	typed_mention_ceaf_plus
+0.723	0.470	0.570	b_cubed
+0.585	0.408	0.481	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.775	0.667	0.717	strong_mention_match
+0.715	0.615	0.661	strong_typed_mention_match
+0.579	0.498	0.535	strong_typed_all_match
+0.592	0.498	0.541	strong_typed_link_match
+0.555	0.497	0.525	strong_typed_nil_match
+0.636	0.682	0.658	entity_match
+0.660	0.567	0.610	mention_ceaf
+0.618	0.531	0.571	typed_mention_ceaf
+0.541	0.465	0.501	typed_mention_ceaf_plus
+0.674	0.488	0.566	b_cubed
+0.528	0.412	0.463	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.848	0.629	0.722	strong_mention_match
+0.796	0.591	0.678	strong_typed_mention_match
+0.651	0.483	0.554	strong_typed_all_match
+0.781	0.506	0.614	strong_typed_link_match
+0.404	0.413	0.408	strong_typed_nil_match
+0.799	0.649	0.717	entity_match
+0.752	0.558	0.640	mention_ceaf
+0.719	0.534	0.613	typed_mention_ceaf
+0.640	0.475	0.545	typed_mention_ceaf_plus
+0.786	0.440	0.564	b_cubed
+0.633	0.377	0.473	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.866	0.743	0.800	strong_mention_match
+0.785	0.674	0.725	strong_typed_mention_match
+0.641	0.550	0.592	strong_typed_all_match
+0.670	0.529	0.591	strong_typed_link_match
+0.590	0.597	0.594	strong_typed_nil_match
+0.764	0.621	0.685	entity_match
+0.729	0.625	0.673	mention_ceaf
+0.687	0.589	0.634	typed_mention_ceaf
+0.628	0.539	0.580	typed_mention_ceaf_plus
+0.715	0.548	0.620	b_cubed
+0.593	0.479	0.530	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  TinkerBell_KB_XLING_2 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.832	0.673	0.744	strong_mention_match
+0.768	0.622	0.688	strong_typed_mention_match
+0.626	0.507	0.560	strong_typed_all_match
+0.689	0.511	0.587	strong_typed_link_match
+0.510	0.498	0.504	strong_typed_nil_match
+0.731	0.649	0.688	entity_match
+0.706	0.572	0.632	mention_ceaf
+0.669	0.542	0.599	typed_mention_ceaf
+0.607	0.491	0.543	typed_mention_ceaf_plus
+0.723	0.470	0.570	b_cubed
+0.585	0.408	0.481	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.775	0.667	0.717	strong_mention_match
+0.715	0.615	0.661	strong_typed_mention_match
+0.579	0.498	0.535	strong_typed_all_match
+0.592	0.498	0.541	strong_typed_link_match
+0.555	0.497	0.525	strong_typed_nil_match
+0.636	0.682	0.658	entity_match
+0.660	0.567	0.610	mention_ceaf
+0.618	0.531	0.571	typed_mention_ceaf
+0.541	0.465	0.501	typed_mention_ceaf_plus
+0.674	0.488	0.566	b_cubed
+0.528	0.412	0.463	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.848	0.629	0.722	strong_mention_match
+0.796	0.591	0.678	strong_typed_mention_match
+0.651	0.483	0.554	strong_typed_all_match
+0.781	0.506	0.614	strong_typed_link_match
+0.404	0.413	0.408	strong_typed_nil_match
+0.799	0.649	0.717	entity_match
+0.752	0.558	0.640	mention_ceaf
+0.719	0.534	0.613	typed_mention_ceaf
+0.640	0.475	0.545	typed_mention_ceaf_plus
+0.786	0.440	0.564	b_cubed
+0.633	0.377	0.473	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.866	0.743	0.800	strong_mention_match
+0.785	0.674	0.725	strong_typed_mention_match
+0.641	0.550	0.592	strong_typed_all_match
+0.670	0.529	0.591	strong_typed_link_match
+0.590	0.597	0.594	strong_typed_nil_match
+0.764	0.621	0.685	entity_match
+0.729	0.625	0.673	mention_ceaf
+0.687	0.589	0.634	typed_mention_ceaf
+0.628	0.539	0.580	typed_mention_ceaf_plus
+0.715	0.548	0.620	b_cubed
+0.593	0.479	0.530	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  TinkerBell_KB_XLING_3 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.832	0.673	0.744	strong_mention_match
+0.768	0.622	0.688	strong_typed_mention_match
+0.626	0.507	0.560	strong_typed_all_match
+0.689	0.511	0.587	strong_typed_link_match
+0.510	0.498	0.504	strong_typed_nil_match
+0.731	0.649	0.688	entity_match
+0.706	0.572	0.632	mention_ceaf
+0.669	0.542	0.599	typed_mention_ceaf
+0.607	0.491	0.543	typed_mention_ceaf_plus
+0.723	0.470	0.570	b_cubed
+0.585	0.408	0.481	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.775	0.667	0.717	strong_mention_match
+0.715	0.615	0.661	strong_typed_mention_match
+0.579	0.498	0.535	strong_typed_all_match
+0.592	0.498	0.541	strong_typed_link_match
+0.555	0.497	0.525	strong_typed_nil_match
+0.636	0.682	0.658	entity_match
+0.660	0.567	0.610	mention_ceaf
+0.618	0.531	0.571	typed_mention_ceaf
+0.541	0.465	0.501	typed_mention_ceaf_plus
+0.674	0.488	0.566	b_cubed
+0.528	0.412	0.463	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.848	0.629	0.722	strong_mention_match
+0.796	0.591	0.678	strong_typed_mention_match
+0.651	0.483	0.554	strong_typed_all_match
+0.781	0.506	0.614	strong_typed_link_match
+0.404	0.413	0.408	strong_typed_nil_match
+0.799	0.649	0.717	entity_match
+0.752	0.558	0.640	mention_ceaf
+0.719	0.534	0.613	typed_mention_ceaf
+0.640	0.475	0.545	typed_mention_ceaf_plus
+0.786	0.440	0.564	b_cubed
+0.633	0.377	0.473	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.866	0.743	0.800	strong_mention_match
+0.785	0.674	0.725	strong_typed_mention_match
+0.641	0.550	0.592	strong_typed_all_match
+0.670	0.529	0.591	strong_typed_link_match
+0.590	0.597	0.594	strong_typed_nil_match
+0.764	0.621	0.685	entity_match
+0.729	0.625	0.673	mention_ceaf
+0.687	0.589	0.634	typed_mention_ceaf
+0.628	0.539	0.580	typed_mention_ceaf_plus
+0.715	0.548	0.620	b_cubed
+0.593	0.479	0.530	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  TinkerBell_KB_XLING_4 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.832	0.673	0.744	strong_mention_match
+0.768	0.622	0.688	strong_typed_mention_match
+0.626	0.507	0.560	strong_typed_all_match
+0.689	0.510	0.587	strong_typed_link_match
+0.510	0.498	0.504	strong_typed_nil_match
+0.731	0.649	0.687	entity_match
+0.706	0.572	0.632	mention_ceaf
+0.669	0.542	0.599	typed_mention_ceaf
+0.607	0.491	0.543	typed_mention_ceaf_plus
+0.723	0.470	0.569	b_cubed
+0.585	0.408	0.481	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.775	0.667	0.717	strong_mention_match
+0.715	0.615	0.661	strong_typed_mention_match
+0.578	0.497	0.535	strong_typed_all_match
+0.592	0.498	0.541	strong_typed_link_match
+0.555	0.497	0.524	strong_typed_nil_match
+0.635	0.681	0.657	entity_match
+0.659	0.567	0.610	mention_ceaf
+0.617	0.531	0.571	typed_mention_ceaf
+0.541	0.465	0.500	typed_mention_ceaf_plus
+0.674	0.488	0.566	b_cubed
+0.528	0.411	0.463	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.848	0.629	0.722	strong_mention_match
+0.796	0.591	0.678	strong_typed_mention_match
+0.651	0.483	0.554	strong_typed_all_match
+0.781	0.506	0.614	strong_typed_link_match
+0.404	0.413	0.408	strong_typed_nil_match
+0.799	0.649	0.717	entity_match
+0.752	0.558	0.640	mention_ceaf
+0.719	0.534	0.613	typed_mention_ceaf
+0.640	0.475	0.545	typed_mention_ceaf_plus
+0.786	0.440	0.564	b_cubed
+0.633	0.377	0.473	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.866	0.743	0.800	strong_mention_match
+0.785	0.674	0.725	strong_typed_mention_match
+0.641	0.550	0.592	strong_typed_all_match
+0.670	0.529	0.591	strong_typed_link_match
+0.590	0.597	0.594	strong_typed_nil_match
+0.764	0.621	0.685	entity_match
+0.729	0.625	0.673	mention_ceaf
+0.687	0.589	0.634	typed_mention_ceaf
+0.628	0.539	0.580	typed_mention_ceaf_plus
+0.715	0.548	0.620	b_cubed
+0.593	0.479	0.530	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  TinkerBell_KB_XLING_5 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.832	0.673	0.744	strong_mention_match
+0.768	0.622	0.688	strong_typed_mention_match
+0.626	0.507	0.560	strong_typed_all_match
+0.689	0.511	0.587	strong_typed_link_match
+0.510	0.498	0.504	strong_typed_nil_match
+0.731	0.649	0.688	entity_match
+0.706	0.572	0.632	mention_ceaf
+0.669	0.542	0.599	typed_mention_ceaf
+0.607	0.491	0.543	typed_mention_ceaf_plus
+0.723	0.470	0.570	b_cubed
+0.585	0.408	0.481	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.775	0.667	0.717	strong_mention_match
+0.715	0.615	0.661	strong_typed_mention_match
+0.579	0.498	0.535	strong_typed_all_match
+0.592	0.498	0.541	strong_typed_link_match
+0.555	0.497	0.525	strong_typed_nil_match
+0.636	0.682	0.658	entity_match
+0.660	0.567	0.610	mention_ceaf
+0.618	0.531	0.571	typed_mention_ceaf
+0.541	0.465	0.501	typed_mention_ceaf_plus
+0.674	0.488	0.566	b_cubed
+0.528	0.412	0.463	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.848	0.629	0.722	strong_mention_match
+0.796	0.591	0.678	strong_typed_mention_match
+0.651	0.483	0.554	strong_typed_all_match
+0.781	0.506	0.614	strong_typed_link_match
+0.404	0.413	0.408	strong_typed_nil_match
+0.799	0.649	0.717	entity_match
+0.752	0.558	0.640	mention_ceaf
+0.719	0.534	0.613	typed_mention_ceaf
+0.640	0.475	0.545	typed_mention_ceaf_plus
+0.786	0.440	0.564	b_cubed
+0.633	0.377	0.473	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.866	0.743	0.800	strong_mention_match
+0.785	0.674	0.725	strong_typed_mention_match
+0.641	0.550	0.592	strong_typed_all_match
+0.670	0.529	0.591	strong_typed_link_match
+0.590	0.597	0.594	strong_typed_nil_match
+0.764	0.621	0.685	entity_match
+0.729	0.625	0.673	mention_ceaf
+0.687	0.589	0.634	typed_mention_ceaf
+0.628	0.539	0.580	typed_mention_ceaf_plus
+0.715	0.548	0.620	b_cubed
+0.593	0.479	0.530	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  TinkerBell_KB_ENG_1 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.775	0.667	0.717	strong_mention_match
+0.715	0.615	0.661	strong_typed_mention_match
+0.579	0.498	0.535	strong_typed_all_match
+0.592	0.498	0.541	strong_typed_link_match
+0.555	0.497	0.525	strong_typed_nil_match
+0.636	0.682	0.658	entity_match
+0.660	0.567	0.610	mention_ceaf
+0.618	0.531	0.571	typed_mention_ceaf
+0.541	0.465	0.501	typed_mention_ceaf_plus
+0.674	0.488	0.566	b_cubed
+0.528	0.412	0.463	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  TinkerBell_KB_ENG_2 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.775	0.667	0.717	strong_mention_match
+0.715	0.615	0.661	strong_typed_mention_match
+0.579	0.498	0.535	strong_typed_all_match
+0.592	0.498	0.541	strong_typed_link_match
+0.555	0.497	0.525	strong_typed_nil_match
+0.636	0.682	0.658	entity_match
+0.660	0.567	0.610	mention_ceaf
+0.618	0.531	0.571	typed_mention_ceaf
+0.541	0.465	0.501	typed_mention_ceaf_plus
+0.674	0.488	0.566	b_cubed
+0.528	0.412	0.463	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  TinkerBell_KB_ENG_3 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.775	0.667	0.717	strong_mention_match
+0.715	0.615	0.661	strong_typed_mention_match
+0.579	0.498	0.535	strong_typed_all_match
+0.592	0.498	0.541	strong_typed_link_match
+0.555	0.497	0.525	strong_typed_nil_match
+0.636	0.682	0.658	entity_match
+0.660	0.567	0.610	mention_ceaf
+0.618	0.531	0.571	typed_mention_ceaf
+0.541	0.465	0.501	typed_mention_ceaf_plus
+0.674	0.488	0.566	b_cubed
+0.528	0.412	0.463	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  TinkerBell_KB_ENG_4 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.775	0.667	0.717	strong_mention_match
+0.715	0.615	0.661	strong_typed_mention_match
+0.579	0.498	0.535	strong_typed_all_match
+0.592	0.498	0.541	strong_typed_link_match
+0.555	0.497	0.525	strong_typed_nil_match
+0.636	0.682	0.658	entity_match
+0.660	0.567	0.610	mention_ceaf
+0.618	0.531	0.571	typed_mention_ceaf
+0.541	0.465	0.501	typed_mention_ceaf_plus
+0.674	0.488	0.566	b_cubed
+0.528	0.412	0.463	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  TinkerBell_KB_ENG_5 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.775	0.667	0.717	strong_mention_match
+0.715	0.615	0.661	strong_typed_mention_match
+0.579	0.498	0.535	strong_typed_all_match
+0.592	0.498	0.541	strong_typed_link_match
+0.555	0.497	0.525	strong_typed_nil_match
+0.636	0.682	0.658	entity_match
+0.660	0.567	0.610	mention_ceaf
+0.618	0.531	0.571	typed_mention_ceaf
+0.541	0.465	0.501	typed_mention_ceaf_plus
+0.674	0.488	0.566	b_cubed
+0.528	0.412	0.463	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  TinkerBell_KB_CMN_1 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.848	0.629	0.722	strong_mention_match
+0.796	0.591	0.678	strong_typed_mention_match
+0.651	0.483	0.554	strong_typed_all_match
+0.781	0.506	0.614	strong_typed_link_match
+0.404	0.413	0.408	strong_typed_nil_match
+0.799	0.649	0.717	entity_match
+0.752	0.558	0.640	mention_ceaf
+0.719	0.534	0.613	typed_mention_ceaf
+0.640	0.475	0.545	typed_mention_ceaf_plus
+0.786	0.440	0.564	b_cubed
+0.633	0.377	0.473	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  TinkerBell_KB_CMN_2 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.848	0.629	0.722	strong_mention_match
+0.796	0.591	0.678	strong_typed_mention_match
+0.651	0.483	0.554	strong_typed_all_match
+0.781	0.506	0.614	strong_typed_link_match
+0.404	0.413	0.408	strong_typed_nil_match
+0.799	0.649	0.717	entity_match
+0.752	0.558	0.640	mention_ceaf
+0.719	0.534	0.613	typed_mention_ceaf
+0.640	0.475	0.545	typed_mention_ceaf_plus
+0.786	0.440	0.564	b_cubed
+0.633	0.377	0.473	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  TinkerBell_KB_CMN_3 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.848	0.629	0.722	strong_mention_match
+0.796	0.591	0.678	strong_typed_mention_match
+0.651	0.483	0.554	strong_typed_all_match
+0.781	0.506	0.614	strong_typed_link_match
+0.404	0.413	0.408	strong_typed_nil_match
+0.799	0.649	0.717	entity_match
+0.752	0.558	0.640	mention_ceaf
+0.719	0.534	0.613	typed_mention_ceaf
+0.640	0.475	0.545	typed_mention_ceaf_plus
+0.786	0.440	0.564	b_cubed
+0.633	0.377	0.473	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  TinkerBell_KB_CMN_4 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.848	0.629	0.722	strong_mention_match
+0.796	0.591	0.678	strong_typed_mention_match
+0.651	0.483	0.554	strong_typed_all_match
+0.781	0.506	0.614	strong_typed_link_match
+0.404	0.413	0.408	strong_typed_nil_match
+0.799	0.649	0.717	entity_match
+0.752	0.558	0.640	mention_ceaf
+0.719	0.534	0.613	typed_mention_ceaf
+0.640	0.475	0.545	typed_mention_ceaf_plus
+0.786	0.440	0.564	b_cubed
+0.633	0.377	0.473	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  TinkerBell_KB_CMN_5 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.848	0.629	0.722	strong_mention_match
+0.796	0.591	0.678	strong_typed_mention_match
+0.651	0.483	0.554	strong_typed_all_match
+0.781	0.506	0.614	strong_typed_link_match
+0.404	0.413	0.408	strong_typed_nil_match
+0.799	0.649	0.717	entity_match
+0.752	0.558	0.640	mention_ceaf
+0.719	0.534	0.613	typed_mention_ceaf
+0.640	0.475	0.545	typed_mention_ceaf_plus
+0.786	0.440	0.564	b_cubed
+0.633	0.377	0.473	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  TinkerBell_KB_SPA_1 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.866	0.743	0.800	strong_mention_match
+0.785	0.674	0.725	strong_typed_mention_match
+0.641	0.550	0.592	strong_typed_all_match
+0.670	0.529	0.591	strong_typed_link_match
+0.590	0.597	0.594	strong_typed_nil_match
+0.764	0.621	0.685	entity_match
+0.729	0.625	0.673	mention_ceaf
+0.687	0.589	0.634	typed_mention_ceaf
+0.628	0.539	0.580	typed_mention_ceaf_plus
+0.715	0.548	0.620	b_cubed
+0.593	0.479	0.530	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  TinkerBell_KB_SPA_2 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.866	0.743	0.800	strong_mention_match
+0.785	0.674	0.725	strong_typed_mention_match
+0.641	0.550	0.592	strong_typed_all_match
+0.670	0.529	0.591	strong_typed_link_match
+0.590	0.597	0.594	strong_typed_nil_match
+0.764	0.621	0.685	entity_match
+0.729	0.625	0.673	mention_ceaf
+0.687	0.589	0.634	typed_mention_ceaf
+0.628	0.539	0.580	typed_mention_ceaf_plus
+0.715	0.548	0.620	b_cubed
+0.593	0.479	0.530	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  TinkerBell_KB_SPA_3 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.866	0.743	0.800	strong_mention_match
+0.785	0.674	0.725	strong_typed_mention_match
+0.641	0.550	0.592	strong_typed_all_match
+0.670	0.529	0.591	strong_typed_link_match
+0.590	0.597	0.594	strong_typed_nil_match
+0.764	0.621	0.685	entity_match
+0.729	0.625	0.673	mention_ceaf
+0.687	0.589	0.634	typed_mention_ceaf
+0.628	0.539	0.580	typed_mention_ceaf_plus
+0.715	0.548	0.620	b_cubed
+0.593	0.479	0.530	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  TinkerBell_KB_SPA_4 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.866	0.743	0.800	strong_mention_match
+0.785	0.674	0.725	strong_typed_mention_match
+0.641	0.550	0.592	strong_typed_all_match
+0.670	0.529	0.591	strong_typed_link_match
+0.590	0.597	0.594	strong_typed_nil_match
+0.764	0.621	0.685	entity_match
+0.729	0.625	0.673	mention_ceaf
+0.687	0.589	0.634	typed_mention_ceaf
+0.628	0.539	0.580	typed_mention_ceaf_plus
+0.715	0.548	0.620	b_cubed
+0.593	0.479	0.530	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  TinkerBell_KB_SPA_5 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.866	0.743	0.800	strong_mention_match
+0.785	0.674	0.725	strong_typed_mention_match
+0.641	0.550	0.592	strong_typed_all_match
+0.670	0.529	0.591	strong_typed_link_match
+0.590	0.597	0.594	strong_typed_nil_match
+0.764	0.621	0.685	entity_match
+0.729	0.625	0.673	mention_ceaf
+0.687	0.589	0.634	typed_mention_ceaf
+0.628	0.539	0.580	typed_mention_ceaf_plus
+0.715	0.548	0.620	b_cubed
+0.593	0.479	0.530	b_cubed_plus

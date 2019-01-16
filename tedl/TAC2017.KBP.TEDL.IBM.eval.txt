@@ -1,0 +1,339 @@
+========================================================================
+TAC KBP 2017 TRI-LINGUAL ENTITY DISCOVERY AND LINKING EVALUATION RESULTS
+========================================================================
+
+
+Team ID:  IBM
+Organization:  IBM Research
+Team ID:  IBM_Research
+Organization:  IBM Research
+
+
+*************************************************************
+
+Run ID:  IBM1
+Languages addressed: Chinese, English, Spanish
+Did the run access the live Web during the evaluation window:  No
+Did the run use the Wikipedia links in the Reference KB: Yes
+Did the run use the relation/slot information encoded in the Reference KB: No
+Did the run use the text descriptions in the nodes of the Reference KB: No
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.888	0.645	0.747	strong_mention_match
+0.850	0.617	0.715	strong_typed_mention_match
+0.695	0.505	0.585	strong_typed_all_match
+0.756	0.505	0.605	strong_typed_link_match
+0.583	0.506	0.542	strong_typed_nil_match
+0.814	0.614	0.700	entity_match
+0.774	0.562	0.651	mention_ceaf
+0.750	0.545	0.631	typed_mention_ceaf
+0.686	0.498	0.577	typed_mention_ceaf_plus
+0.789	0.453	0.576	b_cubed
+0.661	0.401	0.499	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.923	0.680	0.783	strong_mention_match
+0.886	0.653	0.752	strong_typed_mention_match
+0.787	0.581	0.668	strong_typed_all_match
+0.793	0.606	0.687	strong_typed_link_match
+0.776	0.530	0.630	strong_typed_nil_match
+0.828	0.707	0.763	entity_match
+0.869	0.640	0.737	mention_ceaf
+0.840	0.619	0.713	typed_mention_ceaf
+0.781	0.576	0.663	typed_mention_ceaf_plus
+0.853	0.550	0.669	b_cubed
+0.771	0.502	0.608	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.852	0.602	0.706	strong_mention_match
+0.815	0.576	0.675	strong_typed_mention_match
+0.624	0.441	0.517	strong_typed_all_match
+0.726	0.454	0.559	strong_typed_link_match
+0.425	0.405	0.415	strong_typed_nil_match
+0.804	0.577	0.672	entity_match
+0.734	0.519	0.608	mention_ceaf
+0.715	0.506	0.593	typed_mention_ceaf
+0.618	0.437	0.512	typed_mention_ceaf_plus
+0.745	0.410	0.529	b_cubed
+0.584	0.338	0.428	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.904	0.672	0.771	strong_mention_match
+0.862	0.641	0.735	strong_typed_mention_match
+0.704	0.523	0.600	strong_typed_all_match
+0.760	0.490	0.596	strong_typed_link_match
+0.621	0.597	0.608	strong_typed_nil_match
+0.811	0.574	0.672	entity_match
+0.804	0.597	0.685	mention_ceaf
+0.777	0.578	0.663	typed_mention_ceaf
+0.689	0.512	0.587	typed_mention_ceaf_plus
+0.807	0.507	0.623	b_cubed
+0.672	0.445	0.535	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  IBM2
+Languages addressed: Chinese, English, Spanish
+Did the run access the live Web during the evaluation window:  No
+Did the run use the Wikipedia links in the Reference KB: Yes
+Did the run use the relation/slot information encoded in the Reference KB: No
+Did the run use the text descriptions in the nodes of the Reference KB: No
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.888	0.645	0.747	strong_mention_match
+0.850	0.617	0.715	strong_typed_mention_match
+0.695	0.505	0.585	strong_typed_all_match
+0.756	0.504	0.605	strong_typed_link_match
+0.582	0.506	0.541	strong_typed_nil_match
+0.813	0.613	0.699	entity_match
+0.774	0.562	0.651	mention_ceaf
+0.750	0.544	0.631	typed_mention_ceaf
+0.686	0.498	0.577	typed_mention_ceaf_plus
+0.789	0.453	0.575	b_cubed
+0.660	0.401	0.499	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.923	0.680	0.783	strong_mention_match
+0.886	0.653	0.752	strong_typed_mention_match
+0.787	0.581	0.668	strong_typed_all_match
+0.793	0.606	0.687	strong_typed_link_match
+0.776	0.530	0.630	strong_typed_nil_match
+0.828	0.707	0.763	entity_match
+0.869	0.640	0.737	mention_ceaf
+0.840	0.619	0.713	typed_mention_ceaf
+0.781	0.576	0.663	typed_mention_ceaf_plus
+0.853	0.550	0.669	b_cubed
+0.771	0.502	0.608	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.852	0.602	0.706	strong_mention_match
+0.815	0.576	0.675	strong_typed_mention_match
+0.624	0.441	0.517	strong_typed_all_match
+0.726	0.454	0.559	strong_typed_link_match
+0.425	0.405	0.415	strong_typed_nil_match
+0.804	0.577	0.672	entity_match
+0.734	0.519	0.608	mention_ceaf
+0.715	0.506	0.593	typed_mention_ceaf
+0.618	0.437	0.512	typed_mention_ceaf_plus
+0.745	0.410	0.529	b_cubed
+0.584	0.338	0.428	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.904	0.672	0.771	strong_mention_match
+0.862	0.641	0.735	strong_typed_mention_match
+0.702	0.522	0.599	strong_typed_all_match
+0.760	0.489	0.595	strong_typed_link_match
+0.617	0.597	0.607	strong_typed_nil_match
+0.809	0.571	0.670	entity_match
+0.803	0.597	0.685	mention_ceaf
+0.776	0.577	0.662	typed_mention_ceaf
+0.687	0.511	0.586	typed_mention_ceaf_plus
+0.806	0.507	0.622	b_cubed
+0.670	0.443	0.534	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  IBM3
+Languages addressed: Chinese, English, Spanish
+Did the run access the live Web during the evaluation window:  No
+Did the run use the Wikipedia links in the Reference KB: Yes
+Did the run use the relation/slot information encoded in the Reference KB: No
+Did the run use the text descriptions in the nodes of the Reference KB: No
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.888	0.645	0.747	strong_mention_match
+0.850	0.617	0.715	strong_typed_mention_match
+0.692	0.502	0.582	strong_typed_all_match
+0.754	0.501	0.602	strong_typed_link_match
+0.577	0.505	0.539	strong_typed_nil_match
+0.809	0.607	0.694	entity_match
+0.772	0.561	0.649	mention_ceaf
+0.748	0.543	0.629	typed_mention_ceaf
+0.682	0.496	0.574	typed_mention_ceaf_plus
+0.789	0.451	0.574	b_cubed
+0.657	0.399	0.496	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.922	0.680	0.783	strong_mention_match
+0.886	0.653	0.752	strong_typed_mention_match
+0.780	0.575	0.662	strong_typed_all_match
+0.787	0.599	0.680	strong_typed_link_match
+0.766	0.528	0.625	strong_typed_nil_match
+0.818	0.697	0.753	entity_match
+0.866	0.639	0.735	mention_ceaf
+0.838	0.617	0.711	typed_mention_ceaf
+0.775	0.571	0.657	typed_mention_ceaf_plus
+0.853	0.548	0.667	b_cubed
+0.764	0.496	0.602	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.852	0.602	0.706	strong_mention_match
+0.815	0.576	0.675	strong_typed_mention_match
+0.624	0.441	0.517	strong_typed_all_match
+0.726	0.454	0.559	strong_typed_link_match
+0.425	0.405	0.415	strong_typed_nil_match
+0.804	0.577	0.672	entity_match
+0.734	0.519	0.608	mention_ceaf
+0.715	0.506	0.593	typed_mention_ceaf
+0.618	0.437	0.512	typed_mention_ceaf_plus
+0.745	0.410	0.529	b_cubed
+0.584	0.338	0.428	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.904	0.672	0.771	strong_mention_match
+0.862	0.641	0.735	strong_typed_mention_match
+0.699	0.519	0.596	strong_typed_all_match
+0.762	0.484	0.592	strong_typed_link_match
+0.608	0.598	0.603	strong_typed_nil_match
+0.806	0.564	0.663	entity_match
+0.800	0.594	0.682	mention_ceaf
+0.773	0.575	0.659	typed_mention_ceaf
+0.683	0.508	0.582	typed_mention_ceaf_plus
+0.807	0.503	0.620	b_cubed
+0.667	0.439	0.529	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  IBM4
+Languages addressed: Chinese, English, Spanish
+Did the run access the live Web during the evaluation window:  No
+Did the run use the Wikipedia links in the Reference KB: Yes
+Did the run use the relation/slot information encoded in the Reference KB: No
+Did the run use the text descriptions in the nodes of the Reference KB: No
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.858	0.739	0.794	strong_mention_match
+0.817	0.704	0.756	strong_typed_mention_match
+0.623	0.537	0.577	strong_typed_all_match
+0.700	0.506	0.587	strong_typed_link_match
+0.512	0.612	0.557	strong_typed_nil_match
+0.715	0.616	0.662	entity_match
+0.684	0.589	0.633	mention_ceaf
+0.662	0.570	0.612	typed_mention_ceaf
+0.596	0.513	0.552	typed_mention_ceaf_plus
+0.703	0.499	0.583	b_cubed
+0.569	0.426	0.487	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.876	0.813	0.843	strong_mention_match
+0.837	0.777	0.806	strong_typed_mention_match
+0.671	0.623	0.646	strong_typed_all_match
+0.680	0.608	0.642	strong_typed_link_match
+0.656	0.652	0.654	strong_typed_nil_match
+0.642	0.708	0.673	entity_match
+0.735	0.682	0.707	mention_ceaf
+0.709	0.658	0.683	typed_mention_ceaf
+0.643	0.597	0.619	typed_mention_ceaf_plus
+0.731	0.624	0.674	b_cubed
+0.628	0.536	0.578	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.829	0.658	0.733	strong_mention_match
+0.790	0.627	0.699	strong_typed_mention_match
+0.587	0.466	0.520	strong_typed_all_match
+0.705	0.455	0.553	strong_typed_link_match
+0.404	0.499	0.446	strong_typed_nil_match
+0.765	0.581	0.660	entity_match
+0.676	0.537	0.599	mention_ceaf
+0.657	0.521	0.581	typed_mention_ceaf
+0.563	0.447	0.498	typed_mention_ceaf_plus
+0.681	0.445	0.539	b_cubed
+0.525	0.359	0.426	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.878	0.784	0.828	strong_mention_match
+0.832	0.743	0.785	strong_typed_mention_match
+0.621	0.555	0.586	strong_typed_all_match
+0.716	0.491	0.582	strong_typed_link_match
+0.515	0.699	0.593	strong_typed_nil_match
+0.750	0.576	0.652	entity_match
+0.708	0.632	0.668	mention_ceaf
+0.684	0.611	0.645	typed_mention_ceaf
+0.594	0.530	0.560	typed_mention_ceaf_plus
+0.720	0.559	0.630	b_cubed
+0.576	0.470	0.518	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  IBM5
+Languages addressed: Chinese, English, Spanish
+Did the run access the live Web during the evaluation window:  No
+Did the run use the Wikipedia links in the Reference KB: Yes
+Did the run use the relation/slot information encoded in the Reference KB: No
+Did the run use the text descriptions in the nodes of the Reference KB: No
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.888	0.645	0.747	strong_mention_match
+0.850	0.617	0.715	strong_typed_mention_match
+0.696	0.506	0.586	strong_typed_all_match
+0.756	0.506	0.606	strong_typed_link_match
+0.585	0.506	0.542	strong_typed_nil_match
+0.814	0.614	0.700	entity_match
+0.775	0.563	0.653	mention_ceaf
+0.751	0.546	0.632	typed_mention_ceaf
+0.687	0.499	0.578	typed_mention_ceaf_plus
+0.789	0.454	0.576	b_cubed
+0.662	0.402	0.500	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.923	0.680	0.783	strong_mention_match
+0.886	0.653	0.752	strong_typed_mention_match
+0.787	0.581	0.668	strong_typed_all_match
+0.793	0.606	0.687	strong_typed_link_match
+0.776	0.530	0.630	strong_typed_nil_match
+0.828	0.707	0.763	entity_match
+0.869	0.640	0.737	mention_ceaf
+0.840	0.619	0.713	typed_mention_ceaf
+0.781	0.576	0.663	typed_mention_ceaf_plus
+0.853	0.550	0.669	b_cubed
+0.771	0.502	0.608	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.852	0.602	0.706	strong_mention_match
+0.815	0.576	0.675	strong_typed_mention_match
+0.624	0.441	0.517	strong_typed_all_match
+0.726	0.454	0.559	strong_typed_link_match
+0.425	0.405	0.415	strong_typed_nil_match
+0.804	0.577	0.672	entity_match
+0.734	0.519	0.608	mention_ceaf
+0.715	0.506	0.593	typed_mention_ceaf
+0.618	0.437	0.512	typed_mention_ceaf_plus
+0.745	0.410	0.529	b_cubed
+0.584	0.338	0.428	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.904	0.672	0.771	strong_mention_match
+0.862	0.641	0.735	strong_typed_mention_match
+0.707	0.525	0.603	strong_typed_all_match
+0.761	0.493	0.598	strong_typed_link_match
+0.625	0.597	0.610	strong_typed_nil_match
+0.812	0.574	0.673	entity_match
+0.806	0.599	0.687	mention_ceaf
+0.778	0.578	0.664	typed_mention_ceaf
+0.691	0.514	0.590	typed_mention_ceaf_plus
+0.807	0.508	0.624	b_cubed
+0.674	0.447	0.537	b_cubed_plus

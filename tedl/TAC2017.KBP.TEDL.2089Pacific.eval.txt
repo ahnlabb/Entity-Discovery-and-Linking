@@ -1,0 +1,337 @@
+========================================================================
+TAC KBP 2017 TRI-LINGUAL ENTITY DISCOVERY AND LINKING EVALUATION RESULTS
+========================================================================
+
+
+Team ID:  2089Pacific
+Organization:  Alibaba Group and Nanjing University
+
+
+*************************************************************
+
+Run ID:  2089Pacific1
+Languages addressed: English
+Did the run access the live Web during the evaluation window:  No
+Did the run use the Wikipedia links in the Reference KB: No
+Did the run use the relation/slot information encoded in the Reference KB: No
+Did the run use the text descriptions in the nodes of the Reference KB: No
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.863	0.233	0.367	strong_mention_match
+0.831	0.224	0.353	strong_typed_mention_match
+0.589	0.159	0.250	strong_typed_all_match
+0.713	0.128	0.217	strong_typed_link_match
+0.479	0.234	0.315	strong_typed_nil_match
+0.848	0.141	0.241	entity_match
+0.574	0.155	0.244	mention_ceaf
+0.562	0.152	0.239	typed_mention_ceaf
+0.492	0.133	0.209	typed_mention_ceaf_plus
+0.743	0.106	0.186	b_cubed
+0.541	0.083	0.145	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.863	0.822	0.842	strong_mention_match
+0.831	0.791	0.811	strong_typed_mention_match
+0.589	0.561	0.574	strong_typed_all_match
+0.713	0.482	0.575	strong_typed_link_match
+0.479	0.715	0.574	strong_typed_nil_match
+0.848	0.487	0.619	entity_match
+0.574	0.547	0.561	mention_ceaf
+0.562	0.535	0.548	typed_mention_ceaf
+0.492	0.469	0.480	typed_mention_ceaf_plus
+0.743	0.510	0.605	b_cubed
+0.541	0.417	0.471	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.000	0.000	0.000	strong_mention_match
+0.000	0.000	0.000	strong_typed_mention_match
+0.000	0.000	0.000	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.000	0.000	0.000	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.000	0.000	0.000	mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf_plus
+0.000	0.000	0.000	b_cubed
+0.000	0.000	0.000	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.000	0.000	0.000	strong_mention_match
+0.000	0.000	0.000	strong_typed_mention_match
+0.000	0.000	0.000	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.000	0.000	0.000	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.000	0.000	0.000	mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf_plus
+0.000	0.000	0.000	b_cubed
+0.000	0.000	0.000	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  2089Pacific2
+Languages addressed: English
+Did the run access the live Web during the evaluation window:  No
+Did the run use the Wikipedia links in the Reference KB: No
+Did the run use the relation/slot information encoded in the Reference KB: No
+Did the run use the text descriptions in the nodes of the Reference KB: No
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.863	0.234	0.368	strong_mention_match
+0.827	0.224	0.353	strong_typed_mention_match
+0.588	0.159	0.250	strong_typed_all_match
+0.727	0.128	0.218	strong_typed_link_match
+0.469	0.234	0.312	strong_typed_nil_match
+0.846	0.141	0.242	entity_match
+0.576	0.156	0.245	mention_ceaf
+0.562	0.152	0.240	typed_mention_ceaf
+0.491	0.133	0.209	typed_mention_ceaf_plus
+0.751	0.106	0.185	b_cubed
+0.544	0.083	0.145	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.863	0.824	0.843	strong_mention_match
+0.827	0.790	0.808	strong_typed_mention_match
+0.588	0.561	0.574	strong_typed_all_match
+0.727	0.483	0.580	strong_typed_link_match
+0.469	0.714	0.566	strong_typed_nil_match
+0.846	0.490	0.621	entity_match
+0.576	0.550	0.563	mention_ceaf
+0.562	0.537	0.549	typed_mention_ceaf
+0.491	0.469	0.480	typed_mention_ceaf_plus
+0.751	0.510	0.607	b_cubed
+0.544	0.418	0.473	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.000	0.000	0.000	strong_mention_match
+0.000	0.000	0.000	strong_typed_mention_match
+0.000	0.000	0.000	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.000	0.000	0.000	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.000	0.000	0.000	mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf_plus
+0.000	0.000	0.000	b_cubed
+0.000	0.000	0.000	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.000	0.000	0.000	strong_mention_match
+0.000	0.000	0.000	strong_typed_mention_match
+0.000	0.000	0.000	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.000	0.000	0.000	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.000	0.000	0.000	mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf_plus
+0.000	0.000	0.000	b_cubed
+0.000	0.000	0.000	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  2089Pacific3
+Languages addressed: English
+Did the run access the live Web during the evaluation window:  No
+Did the run use the Wikipedia links in the Reference KB: No
+Did the run use the relation/slot information encoded in the Reference KB: No
+Did the run use the text descriptions in the nodes of the Reference KB: No
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.879	0.228	0.362	strong_mention_match
+0.850	0.220	0.350	strong_typed_mention_match
+0.607	0.157	0.250	strong_typed_all_match
+0.727	0.126	0.215	strong_typed_link_match
+0.498	0.231	0.316	strong_typed_nil_match
+0.854	0.138	0.238	entity_match
+0.591	0.153	0.243	mention_ceaf
+0.578	0.150	0.238	typed_mention_ceaf
+0.507	0.131	0.209	typed_mention_ceaf_plus
+0.762	0.104	0.182	b_cubed
+0.559	0.082	0.143	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.879	0.803	0.840	strong_mention_match
+0.850	0.776	0.811	strong_typed_mention_match
+0.607	0.554	0.579	strong_typed_all_match
+0.727	0.476	0.575	strong_typed_link_match
+0.498	0.706	0.584	strong_typed_nil_match
+0.854	0.480	0.615	entity_match
+0.591	0.539	0.564	mention_ceaf
+0.578	0.528	0.552	typed_mention_ceaf
+0.507	0.463	0.484	typed_mention_ceaf_plus
+0.762	0.498	0.603	b_cubed
+0.559	0.409	0.473	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.000	0.000	0.000	strong_mention_match
+0.000	0.000	0.000	strong_typed_mention_match
+0.000	0.000	0.000	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.000	0.000	0.000	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.000	0.000	0.000	mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf_plus
+0.000	0.000	0.000	b_cubed
+0.000	0.000	0.000	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.000	0.000	0.000	strong_mention_match
+0.000	0.000	0.000	strong_typed_mention_match
+0.000	0.000	0.000	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.000	0.000	0.000	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.000	0.000	0.000	mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf_plus
+0.000	0.000	0.000	b_cubed
+0.000	0.000	0.000	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  2089Pacific4
+Languages addressed: English
+Did the run access the live Web during the evaluation window:  No
+Did the run use the Wikipedia links in the Reference KB: No
+Did the run use the relation/slot information encoded in the Reference KB: No
+Did the run use the text descriptions in the nodes of the Reference KB: No
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.859	0.233	0.366	strong_mention_match
+0.818	0.222	0.349	strong_typed_mention_match
+0.584	0.158	0.249	strong_typed_all_match
+0.726	0.128	0.217	strong_typed_link_match
+0.463	0.232	0.309	strong_typed_nil_match
+0.846	0.141	0.242	entity_match
+0.575	0.156	0.245	mention_ceaf
+0.560	0.152	0.239	typed_mention_ceaf
+0.490	0.133	0.209	typed_mention_ceaf_plus
+0.747	0.106	0.185	b_cubed
+0.541	0.083	0.144	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.859	0.821	0.839	strong_mention_match
+0.818	0.782	0.800	strong_typed_mention_match
+0.584	0.558	0.571	strong_typed_all_match
+0.726	0.482	0.579	strong_typed_link_match
+0.463	0.708	0.560	strong_typed_nil_match
+0.846	0.490	0.621	entity_match
+0.575	0.550	0.562	mention_ceaf
+0.560	0.536	0.548	typed_mention_ceaf
+0.490	0.468	0.479	typed_mention_ceaf_plus
+0.747	0.510	0.606	b_cubed
+0.541	0.418	0.471	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.000	0.000	0.000	strong_mention_match
+0.000	0.000	0.000	strong_typed_mention_match
+0.000	0.000	0.000	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.000	0.000	0.000	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.000	0.000	0.000	mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf_plus
+0.000	0.000	0.000	b_cubed
+0.000	0.000	0.000	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.000	0.000	0.000	strong_mention_match
+0.000	0.000	0.000	strong_typed_mention_match
+0.000	0.000	0.000	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.000	0.000	0.000	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.000	0.000	0.000	mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf_plus
+0.000	0.000	0.000	b_cubed
+0.000	0.000	0.000	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  2089Pacific5
+Languages addressed: English
+Did the run access the live Web during the evaluation window:  No
+Did the run use the Wikipedia links in the Reference KB: No
+Did the run use the relation/slot information encoded in the Reference KB: No
+Did the run use the text descriptions in the nodes of the Reference KB: No
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.875	0.227	0.360	strong_mention_match
+0.840	0.218	0.346	strong_typed_mention_match
+0.603	0.156	0.248	strong_typed_all_match
+0.726	0.126	0.215	strong_typed_link_match
+0.493	0.229	0.313	strong_typed_nil_match
+0.854	0.138	0.238	entity_match
+0.590	0.153	0.243	mention_ceaf
+0.576	0.149	0.237	typed_mention_ceaf
+0.506	0.131	0.208	typed_mention_ceaf_plus
+0.758	0.103	0.182	b_cubed
+0.557	0.082	0.142	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.875	0.799	0.835	strong_mention_match
+0.840	0.767	0.802	strong_typed_mention_match
+0.603	0.551	0.576	strong_typed_all_match
+0.726	0.474	0.574	strong_typed_link_match
+0.493	0.699	0.578	strong_typed_nil_match
+0.854	0.480	0.615	entity_match
+0.590	0.539	0.563	mention_ceaf
+0.576	0.526	0.550	typed_mention_ceaf
+0.506	0.462	0.483	typed_mention_ceaf_plus
+0.758	0.497	0.601	b_cubed
+0.557	0.408	0.471	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.000	0.000	0.000	strong_mention_match
+0.000	0.000	0.000	strong_typed_mention_match
+0.000	0.000	0.000	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.000	0.000	0.000	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.000	0.000	0.000	mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf_plus
+0.000	0.000	0.000	b_cubed
+0.000	0.000	0.000	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.000	0.000	0.000	strong_mention_match
+0.000	0.000	0.000	strong_typed_mention_match
+0.000	0.000	0.000	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.000	0.000	0.000	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.000	0.000	0.000	mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf_plus
+0.000	0.000	0.000	b_cubed
+0.000	0.000	0.000	b_cubed_plus

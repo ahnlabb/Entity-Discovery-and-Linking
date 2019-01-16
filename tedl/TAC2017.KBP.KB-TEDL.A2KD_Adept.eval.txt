@@ -1,0 +1,291 @@
+==============================================================
+TAC KBP 2017 KB CONSTRUCTION: COMPONENT EDL EVALUATION RESULTS
+==============================================================
+
+
+Team ID:  A2KD_Adept
+Organization:  Raytheon BBN Technologies
+
+
+*************************************************************
+
+Run ID:  A2KD_Adept_KB_XLING_1 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.763	0.462	0.575	strong_mention_match
+0.641	0.387	0.483	strong_typed_mention_match
+0.454	0.275	0.342	strong_typed_all_match
+0.583	0.276	0.374	strong_typed_link_match
+0.295	0.272	0.283	strong_typed_nil_match
+0.636	0.339	0.443	entity_match
+0.589	0.356	0.444	mention_ceaf
+0.534	0.323	0.402	typed_mention_ceaf
+0.451	0.273	0.340	typed_mention_ceaf_plus
+0.641	0.256	0.366	b_cubed
+0.448	0.199	0.276	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.730	0.795	0.761	strong_mention_match
+0.547	0.595	0.570	strong_typed_mention_match
+0.413	0.450	0.431	strong_typed_all_match
+0.574	0.443	0.500	strong_typed_link_match
+0.271	0.463	0.342	strong_typed_nil_match
+0.674	0.601	0.635	entity_match
+0.556	0.606	0.580	mention_ceaf
+0.475	0.517	0.496	typed_mention_ceaf
+0.411	0.448	0.429	typed_mention_ceaf_plus
+0.589	0.528	0.557	b_cubed
+0.429	0.417	0.423	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.798	0.562	0.660	strong_mention_match
+0.739	0.520	0.611	strong_typed_mention_match
+0.496	0.349	0.410	strong_typed_all_match
+0.590	0.354	0.443	strong_typed_link_match
+0.330	0.334	0.332	strong_typed_nil_match
+0.602	0.451	0.515	entity_match
+0.654	0.460	0.540	mention_ceaf
+0.621	0.437	0.513	typed_mention_ceaf
+0.493	0.347	0.407	typed_mention_ceaf_plus
+0.703	0.345	0.463	b_cubed
+0.473	0.255	0.331	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.000	0.000	0.000	strong_mention_match
+0.000	0.000	0.000	strong_typed_mention_match
+0.000	0.000	0.000	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.000	0.000	0.000	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.000	0.000	0.000	mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf_plus
+0.000	0.000	0.000	b_cubed
+0.000	0.000	0.000	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  A2KD_Adept_KB_XLING_2 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ALL English, Chinese, and Spanish documents:
+Prec	Recall	F1	Metric
+0.763	0.462	0.575	strong_mention_match
+0.641	0.387	0.483	strong_typed_mention_match
+0.454	0.275	0.342	strong_typed_all_match
+0.583	0.276	0.374	strong_typed_link_match
+0.295	0.272	0.283	strong_typed_nil_match
+0.636	0.339	0.443	entity_match
+0.589	0.356	0.444	mention_ceaf
+0.534	0.323	0.402	typed_mention_ceaf
+0.451	0.273	0.340	typed_mention_ceaf_plus
+0.641	0.256	0.366	b_cubed
+0.448	0.199	0.276	b_cubed_plus
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.730	0.795	0.761	strong_mention_match
+0.547	0.595	0.570	strong_typed_mention_match
+0.413	0.450	0.431	strong_typed_all_match
+0.574	0.443	0.500	strong_typed_link_match
+0.271	0.463	0.342	strong_typed_nil_match
+0.674	0.601	0.635	entity_match
+0.556	0.606	0.580	mention_ceaf
+0.475	0.517	0.496	typed_mention_ceaf
+0.411	0.448	0.429	typed_mention_ceaf_plus
+0.589	0.528	0.557	b_cubed
+0.429	0.417	0.423	b_cubed_plus
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.798	0.562	0.660	strong_mention_match
+0.739	0.520	0.611	strong_typed_mention_match
+0.496	0.349	0.410	strong_typed_all_match
+0.590	0.354	0.443	strong_typed_link_match
+0.330	0.334	0.332	strong_typed_nil_match
+0.602	0.451	0.515	entity_match
+0.654	0.460	0.540	mention_ceaf
+0.621	0.437	0.513	typed_mention_ceaf
+0.493	0.347	0.407	typed_mention_ceaf_plus
+0.703	0.345	0.463	b_cubed
+0.473	0.255	0.331	b_cubed_plus
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.000	0.000	0.000	strong_mention_match
+0.000	0.000	0.000	strong_typed_mention_match
+0.000	0.000	0.000	strong_typed_all_match
+0.000	0.000	0.000	strong_typed_link_match
+0.000	0.000	0.000	strong_typed_nil_match
+0.000	0.000	0.000	entity_match
+0.000	0.000	0.000	mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf
+0.000	0.000	0.000	typed_mention_ceaf_plus
+0.000	0.000	0.000	b_cubed
+0.000	0.000	0.000	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  A2KD_Adept_KB_ENG_1 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.730	0.795	0.761	strong_mention_match
+0.661	0.719	0.689	strong_typed_mention_match
+0.473	0.515	0.493	strong_typed_all_match
+0.593	0.459	0.518	strong_typed_link_match
+0.366	0.622	0.461	strong_typed_nil_match
+0.678	0.603	0.639	entity_match
+0.569	0.619	0.593	mention_ceaf
+0.534	0.581	0.556	typed_mention_ceaf
+0.460	0.500	0.479	typed_mention_ceaf_plus
+0.653	0.515	0.576	b_cubed
+0.460	0.415	0.436	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  A2KD_Adept_KB_ENG_2 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.730	0.795	0.761	strong_mention_match
+0.661	0.719	0.689	strong_typed_mention_match
+0.473	0.515	0.493	strong_typed_all_match
+0.593	0.459	0.518	strong_typed_link_match
+0.366	0.622	0.461	strong_typed_nil_match
+0.678	0.603	0.639	entity_match
+0.569	0.619	0.593	mention_ceaf
+0.534	0.581	0.556	typed_mention_ceaf
+0.460	0.500	0.479	typed_mention_ceaf_plus
+0.653	0.515	0.576	b_cubed
+0.460	0.415	0.436	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  A2KD_Adept_KB_ENG_3 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.730	0.794	0.761	strong_mention_match
+0.660	0.719	0.688	strong_typed_mention_match
+0.469	0.511	0.489	strong_typed_all_match
+0.589	0.454	0.513	strong_typed_link_match
+0.364	0.622	0.459	strong_typed_nil_match
+0.678	0.604	0.639	entity_match
+0.557	0.606	0.581	mention_ceaf
+0.523	0.569	0.545	typed_mention_ceaf
+0.445	0.484	0.463	typed_mention_ceaf_plus
+0.588	0.528	0.557	b_cubed
+0.428	0.416	0.422	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  A2KD_Adept_KB_ENG_4 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.730	0.794	0.761	strong_mention_match
+0.660	0.719	0.688	strong_typed_mention_match
+0.469	0.511	0.489	strong_typed_all_match
+0.589	0.454	0.513	strong_typed_link_match
+0.364	0.622	0.459	strong_typed_nil_match
+0.678	0.604	0.639	entity_match
+0.557	0.606	0.581	mention_ceaf
+0.523	0.569	0.545	typed_mention_ceaf
+0.445	0.484	0.463	typed_mention_ceaf_plus
+0.588	0.528	0.557	b_cubed
+0.428	0.416	0.422	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  A2KD_Adept_KB_CMN_1 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.798	0.562	0.660	strong_mention_match
+0.736	0.518	0.608	strong_typed_mention_match
+0.494	0.348	0.408	strong_typed_all_match
+0.586	0.352	0.440	strong_typed_link_match
+0.331	0.334	0.332	strong_typed_nil_match
+0.602	0.451	0.516	entity_match
+0.633	0.446	0.523	mention_ceaf
+0.598	0.421	0.494	typed_mention_ceaf
+0.490	0.345	0.405	typed_mention_ceaf_plus
+0.710	0.334	0.454	b_cubed
+0.475	0.256	0.333	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  A2KD_Adept_KB_CMN_2 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.798	0.562	0.660	strong_mention_match
+0.736	0.518	0.608	strong_typed_mention_match
+0.494	0.348	0.408	strong_typed_all_match
+0.586	0.352	0.440	strong_typed_link_match
+0.331	0.334	0.332	strong_typed_nil_match
+0.602	0.451	0.516	entity_match
+0.633	0.446	0.523	mention_ceaf
+0.598	0.421	0.494	typed_mention_ceaf
+0.490	0.345	0.405	typed_mention_ceaf_plus
+0.710	0.334	0.454	b_cubed
+0.475	0.256	0.333	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  A2KD_Adept_KB_CMN_3 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.798	0.562	0.660	strong_mention_match
+0.734	0.517	0.606	strong_typed_mention_match
+0.494	0.348	0.408	strong_typed_all_match
+0.585	0.352	0.439	strong_typed_link_match
+0.333	0.336	0.335	strong_typed_nil_match
+0.602	0.450	0.515	entity_match
+0.657	0.462	0.543	mention_ceaf
+0.619	0.436	0.512	typed_mention_ceaf
+0.490	0.345	0.405	typed_mention_ceaf_plus
+0.702	0.347	0.465	b_cubed
+0.475	0.256	0.333	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  A2KD_Adept_KB_CMN_4 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.798	0.562	0.660	strong_mention_match
+0.734	0.517	0.606	strong_typed_mention_match
+0.494	0.348	0.408	strong_typed_all_match
+0.585	0.352	0.439	strong_typed_link_match
+0.333	0.336	0.335	strong_typed_nil_match
+0.602	0.450	0.515	entity_match
+0.657	0.462	0.543	mention_ceaf
+0.619	0.436	0.512	typed_mention_ceaf
+0.490	0.345	0.405	typed_mention_ceaf_plus
+0.702	0.347	0.465	b_cubed
+0.475	0.256	0.333	b_cubed_plus

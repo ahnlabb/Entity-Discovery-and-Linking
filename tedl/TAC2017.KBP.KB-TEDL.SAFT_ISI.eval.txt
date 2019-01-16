@@ -1,0 +1,67 @@
+==============================================================
+TAC KBP 2017 KB CONSTRUCTION: COMPONENT EDL EVALUATION RESULTS
+==============================================================
+
+
+Team ID:  SAFT_ISI
+Organization:  USC Information Sciences Institute
+
+
+*************************************************************
+
+Run ID:  SAFT_ISI_KB_ENG_1 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY English documents:
+Prec	Recall	F1	Metric
+0.559	0.705	0.624	strong_mention_match
+0.317	0.399	0.353	strong_typed_mention_match
+0.195	0.246	0.218	strong_typed_all_match
+0.136	0.088	0.107	strong_typed_link_match
+0.226	0.554	0.321	strong_typed_nil_match
+0.669	0.505	0.576	entity_match
+0.398	0.502	0.444	mention_ceaf
+0.216	0.272	0.241	typed_mention_ceaf
+0.160	0.202	0.179	typed_mention_ceaf_plus
+0.431	0.437	0.434	b_cubed
+0.281	0.361	0.316	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  SAFT_ISI_KB_CMN_1 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY Chinese documents:
+Prec	Recall	F1	Metric
+0.682	0.474	0.559	strong_mention_match
+0.388	0.269	0.318	strong_typed_mention_match
+0.315	0.219	0.258	strong_typed_all_match
+0.281	0.176	0.216	strong_typed_link_match
+0.386	0.345	0.364	strong_typed_nil_match
+0.623	0.444	0.518	entity_match
+0.611	0.424	0.501	mention_ceaf
+0.350	0.243	0.287	typed_mention_ceaf
+0.306	0.213	0.251	typed_mention_ceaf_plus
+0.570	0.324	0.413	b_cubed
+0.462	0.288	0.355	b_cubed_plus
+
+
+*************************************************************
+
+Run ID:  SAFT_ISI_KB_SPA_1 
+See full details of run under Cold Start KB: Composite KB evaluation results
+
+ONLY Spanish documents:
+Prec	Recall	F1	Metric
+0.409	0.504	0.451	strong_mention_match
+0.227	0.280	0.251	strong_typed_mention_match
+0.199	0.246	0.220	strong_typed_all_match
+0.196	0.116	0.146	strong_typed_link_match
+0.201	0.535	0.292	strong_typed_nil_match
+0.640	0.466	0.539	entity_match
+0.340	0.419	0.376	mention_ceaf
+0.183	0.225	0.202	typed_mention_ceaf
+0.162	0.200	0.179	typed_mention_ceaf_plus
+0.295	0.352	0.321	b_cubed
+0.247	0.321	0.279	b_cubed_plus
