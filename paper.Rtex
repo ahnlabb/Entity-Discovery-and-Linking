@@ -1,4 +1,9 @@
-\documentclass[sigplan,10pt]{acmart}
+\documentclass[11pt,a4paper]{article}
+\usepackage[hyperref]{acl2018}
+\usepackage{times}
+\usepackage{latexsym}
+
+\usepackage{url}
 
 % review option: For printing line numbers:
 %\documentclass[sigplan,10pt,review]{acmart} 
@@ -9,11 +14,16 @@
 %printacmref=false, means don't show acm reference
 
 
-\acmConference[Course paper, EDAN70]{Project in computer science}{Lund University}{Sweden}
-\acmYear{\today}
-\acmISBN{} % \acmISBN{978-x-xxxx-xxxx-x/YY/MM}
-\acmDOI{} % \acmDOI{10.1145/nnnnnnn.nnnnnnn}
-\startPage{1}
+\author{First Author \\
+  Affiliation / Address line 1 \\
+  Affiliation / Address line 2 \\
+  Affiliation / Address line 3 \\
+  {\tt email@domain} \\\And
+  Second Author \\
+  Affiliation / Address line 1 \\
+  Affiliation / Address line 2 \\
+  Affiliation / Address line 3 \\
+  {\tt email@domain} \\}
 
 \setcopyright{none}
 
