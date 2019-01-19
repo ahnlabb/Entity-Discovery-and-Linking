@@ -1,7 +1,10 @@
 import base64
-from pathlib import Path
 from argparse import ArgumentParser
+from pathlib import Path
 from pickle import dump, load
+
+basis = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+
 
 def get_args():
     parser = ArgumentParser()
@@ -9,6 +12,16 @@ def get_args():
     parser.add_argument('wkd2fb', type=Path, help='')
     parser.add_argument('out', type=Path, help='')
     return parser.parse_args()
+
+
+def int2base(num):
+    base = len(basis)
+    out = []
+    while num >= base:
+        out.append(basis[num % base])
+        num //= base
+    out.append(basis[num])
+    return ''.join(out)
 
 
 def get_wikimap(wiki_dir, wkd2fb):
@@ -20,8 +33,9 @@ def get_wikimap(wiki_dir, wkd2fb):
             for line in f:
                 split = line.rfind(',')
                 try:
-                    wkd = int(line[split+1:])
-                    wikimap[line[:split]] = fbmap.get(wkd, 'wkd'+str(base64.b64encode(wkd.to_bytes((wkd.bit_length() + 7) // 8, byteorder='little'))))
+                    wkd = int(line[split + 1:])
+                    wikimap[line[:split]] = (fbmap.get(
+                        wkd, 'wkd' + int2base(wkd)), wkd)
                 except ValueError:
                     pass
     return wikimap

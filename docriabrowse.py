@@ -1,12 +1,13 @@
 import curses
-from itertools import zip_longest, chain
 from argparse import ArgumentParser
+from itertools import chain, zip_longest
 from pathlib import Path
-from docria.storage import DocumentIO
-from docria.model import Document, Node, Text, NodeLayerCollection
 
+from docria.model import Document, Node, NodeLayerCollection, Text
+from docria.storage import DocumentIO
 
 ESC = 27
+
 
 def get_args():
     parser = ArgumentParser()
@@ -14,12 +15,14 @@ def get_args():
     parser.add_argument('-n', '--name_property', default='id')
     return parser.parse_args()
 
+
 class IterViewer(object):
     def min(self):
         return 0
 
     def __len__(self):
         return 0
+
 
 class ListDecorator(IterViewer):
     def __init__(self, itr):
@@ -61,7 +64,9 @@ class DocIter(ListDecorator):
 class DocViewer(ListDecorator):
     def __init__(self, doc):
         self.doc = doc
-        super().__init__(chain(self.doc.props.values(), self.doc.layers.values(), self.doc.texts.values()))
+        super().__init__(
+            chain(self.doc.props.values(), self.doc.layers.values(),
+                  self.doc.texts.values()))
 
     def __iter__(self):
         for key in self.doc.props:
@@ -83,12 +88,14 @@ class NodeCollectionViewer(ListDecorator):
         for node in self.lst:
             yield f'{node._id}: {compact_node(node)}'
 
+
 def compact_node(node):
     if 'target' in node:
         return node['target']
     if 'text' in node:
         return node['text']
     return repr(dict(node.items()))
+
 
 class VarsViewer(IterViewer):
     def __init__(self, obj):
@@ -97,6 +104,7 @@ class VarsViewer(IterViewer):
     def __iter__(self):
         for k, v in self.varlist.items():
             yield f'{k}: {v}'
+
 
 class NodeViewer(ListDecorator):
     def __init__(self, obj):
@@ -110,24 +118,37 @@ class NodeViewer(ListDecorator):
 class TypeViewer(IterViewer):
     def __init__(self, obj):
         self.obj = obj
+
     def __iter__(self):
         yield str(type(self.obj))
 
+
+class TextViewer(IterViewer):
+    def __init__(self, obj):
+        self.obj = obj
+
+    def __iter__(self):
+        for line in str(self.obj).split('\n'):
+            yield line[:80]
+
+
 def wrap(obj):
-    if type(obj) is Document:
-        return DocViewer(obj)
-    if type(obj) is NodeLayerCollection:
-        return NodeCollectionViewer(obj)
-    if type(obj) is Node:
-        return NodeViewer(obj)
-    return TypeViewer(obj)
+    handlers = {
+        Document: DocViewer,
+        NodeLayerCollection: NodeCollectionViewer,
+        Node: NodeViewer,
+        Text: TextViewer
+    }
+    return handlers.get(type(obj), TypeViewer)(obj)
 
 
 def create_main_loop(doc):
     return lambda stdscr: main(stdscr, doc)
 
+
 def render(line, cols):
     return ('{:<%d}' % cols).format(line)
+
 
 def main(stdscr, docs):
     stdscr.nodelay(0)
@@ -137,13 +158,18 @@ def main(stdscr, docs):
     top = docs
     parents = []
 
+    offset = 0
     while True:
         rows = curses.LINES
         curidx = min(max(top.min(), curidx), rows)
-        offset = max(0, curidx - rows + 3)
-        cur = wrap(top[curidx])
+        #offset = max(0, curidx - rows + 3)
+        offset = max(0, offset)
+        cur = wrap(top[curidx + offset])
 
-        lines = zip_longest(top, cur, fillvalue='')
+        itr = iter(top)
+        for _ in range(offset):
+            next(itr)
+        lines = zip_longest(itr, cur, fillvalue='')
         for i in range(rows - 1):
             try:
                 doc, meta = next(lines)
@@ -172,7 +198,7 @@ def main(stdscr, docs):
             curidx -= 1
         elif action == 'down':
             curidx += 1
-            if curidx > rows:
+            if curidx + 10 > rows:
                 shift = 1
                 offset += shift
                 curidx -= shift
@@ -188,21 +214,23 @@ def main(stdscr, docs):
                 parents.append((top, curidx))
                 top = cur
                 curidx = 0
+                offset = 0
                 stdscr.clear()
         elif action == 'back':
             top, curidx = parents.pop()
             stdscr.clear()
 
+
 actions = {
-        curses.KEY_UP: 'up',
-        ord('k'): 'up',
-        curses.KEY_DOWN: 'down',
-        ord('j'): 'down',
-        ord('q'): 'exit',
-        ord('\n'): 'forward',
-        ord('l'): 'forward',
-        ord('h'): 'back'
-        }
+    curses.KEY_UP: 'up',
+    ord('k'): 'up',
+    curses.KEY_DOWN: 'down',
+    ord('j'): 'down',
+    ord('q'): 'exit',
+    ord('\n'): 'forward',
+    ord('l'): 'forward',
+    ord('h'): 'back'
+}
 
 if __name__ == '__main__':
     args = get_args()

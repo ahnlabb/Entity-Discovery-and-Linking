@@ -1,7 +1,8 @@
-from docria.storage import DocumentIO
-from docria.algorithm import span_translate
 from argparse import ArgumentParser
 from pathlib import Path
+
+from docria.algorithm import span_translate
+from docria.storage import DocumentIO
 
 
 def docria_to_neleval(docs, layer, no_outside=True):
@@ -15,13 +16,18 @@ def docria_to_neleval(docs, layer, no_outside=True):
                 continue
             start, stop = node.fld.xml.start, node.fld.xml.stop
             form = ' '.join(str(main[start:stop]).split())
-            row = ['XYZ', format(i, '05d'), form, docid + ':' + str(start) + '-' + str(stop - 1),
-                   node.fld.target, node.fld.label, node.fld.type, '1.0']
+            row = [
+                'XYZ',
+                format(i, '05d'), form,
+                docid + ':' + str(start) + '-' + str(stop - 1),
+                node.fld.target, node.fld.label, node.fld.type, '1.0'
+            ]
             rows.append('\t'.join(row))
             i += 1
     if rows:
         return '\n'.join(rows)
     return ''
+
 
 def get_args():
     parser = ArgumentParser()
