@@ -1,7 +1,7 @@
 \documentclass[11pt,a4paper]{article}
 \usepackage[hyperref]{acl2018}
-\usepackage{times}
-\usepackage{latexsym}
+%\usepackage{times}
+%\usepackage{latexsym}
 
 \usepackage{url}
 
